@@ -1,0 +1,16 @@
+$id: https://inspectah.local/schemas/source.yaml
+$schema: https://json-schema.org/draft/2020-12/schema
+title: Source
+type: object
+properties:
+  id:
+    type: string
+  name:
+    type: string
+  fields:
+    type: array
+    items:
+      type: object
+required:
+  - id
+  - name

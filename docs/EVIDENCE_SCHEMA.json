@@ -1,0 +1,8 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://inspectah.local/schemas/evidence_manifest_stub.json",
+  "title": "Evidence Manifest (Stub)",
+  "type": "object",
+  "properties": {},
+  "additionalProperties": true
+}

@@ -1,0 +1,26 @@
+openapi: 3.0.3
+info:
+  title: Inspectah Explore API
+  version: 0.1.0
+paths:
+  /explore:
+    get:
+      summary: List items with filters
+      responses:
+        '200':
+          description: OK
+  /explore/export:
+    post:
+      summary: Export query results
+      responses:
+        '200':
+          description: OK
+components:
+  schemas:
+    ExploreResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            type: object

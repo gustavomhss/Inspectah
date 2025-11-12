@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://inspectah.local/schemas/item.json",
+  "title": "Item",
+  "type": "object",
+  "properties": {
+    "id": {"type": "string"},
+    "source_id": {"type": "string"}
+  },
+  "required": ["id", "source_id"]
+}

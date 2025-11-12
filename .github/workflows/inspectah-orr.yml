@@ -1,0 +1,10 @@
+name: Inspectah ORR
+on:
+  workflow_dispatch:
+jobs:
+  noop:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare out dir
+        run: mkdir -p out

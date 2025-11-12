@@ -1,0 +1,6 @@
+# Legal ToS Allowlist
+
+tos_hash=0000000000000000000000000000000000000000000000000000000000000000
+timestamp=1970-01-01T00:00:00Z
+
+Conteúdo será preenchido no D6/T7.

@@ -1,0 +1,36 @@
+openapi: 3.0.3
+info:
+  title: Inspectah Sources API
+  version: 0.1.0
+paths:
+  /sources:
+    post:
+      summary: Create a source
+      responses:
+        '201':
+          description: Created
+  /sources/{id}/fields:
+    post:
+      summary: Update fields for a source
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Updated
+  /sources/validate:
+    post:
+      summary: Dry-run a source definition
+      responses:
+        '200':
+          description: OK
+components:
+  schemas:
+    Source:
+      type: object
+      properties:
+        id:
+          type: string
