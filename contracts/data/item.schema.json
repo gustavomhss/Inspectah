@@ -1,11 +1,49 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://inspectah.local/schemas/item.json",
-  "title": "Item",
+  "title": "Inspectah Item",
   "type": "object",
+  "required": [
+    "item_id",
+    "source_id",
+    "canonical_url",
+    "event_time",
+    "observed_at",
+    "indexed_at",
+    "timezone",
+    "extractor_version",
+    "user_agent",
+    "allowlist_proof_ref",
+    "fetched_payload_sha256",
+    "extracted_fields_sha256",
+    "fields",
+    "hashes"
+  ],
   "properties": {
-    "id": {"type": "string"},
-    "source_id": {"type": "string"}
-  },
-  "required": ["id", "source_id"]
+    "item_id": {"type": "string"},
+    "source_id": {"type": "string"},
+    "canonical_url": {"type": "string", "format": "uri"},
+    "title": {"type": "string"},
+    "excerpt": {"type": "string"},
+    "event_time": {"type": "string", "format": "date-time"},
+    "observed_at": {"type": "string", "format": "date-time"},
+    "indexed_at": {"type": "string", "format": "date-time"},
+    "timezone": {"type": "string", "pattern": "^[A-Za-z_]+/[A-Za-z_]+$"},
+    "extractor_version": {"type": "string"},
+    "user_agent": {"type": "string"},
+    "allowlist_proof_ref": {"type": "string"},
+    "fetched_payload_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "extracted_fields_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "fields": {"type": "object", "additionalProperties": true},
+    "hashes": {
+      "type": "object",
+      "required": ["payload_sha256", "manifest_sha256"],
+      "properties": {
+        "payload_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "manifest_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+      }
+    },
+    "signatures": {"type": "array", "items": {"type": "string"}},
+    "integrity_checked_at": {"type": "string", "format": "date-time"}
+  }
 }

@@ -1,0 +1,39 @@
+{
+  "fields": [
+    {
+      "name": "title_clean",
+      "path": "$.title",
+      "type": "string",
+      "status": "ok",
+      "value": "inspectah announcement"
+    },
+    {
+      "name": "price_value",
+      "path": "$.price",
+      "type": "number",
+      "status": "ok",
+      "value": 199.99
+    },
+    {
+      "name": "published_on",
+      "path": "$.published_at",
+      "type": "timestamp",
+      "status": "ok",
+      "value": "2024-01-01T12:34:56+00:00"
+    },
+    {
+      "name": "category_enum",
+      "path": "$.category",
+      "type": "enum",
+      "status": "ok",
+      "value": "news"
+    },
+    {
+      "name": "tag_first",
+      "path": "$.details.tags[0]",
+      "type": "string",
+      "status": "ok",
+      "value": "Launch"
+    }
+  ]
+}

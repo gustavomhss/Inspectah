@@ -1,0 +1,31 @@
+fields:
+  - name: title_clean
+    path: $.title
+    type: string
+    transforms:
+      - name: trim
+      - name: lower
+  - name: price_value
+    path: $.price
+    type: number
+    transforms:
+      - name: parse_float
+  - name: published_on
+    path: $.published_at
+    type: timestamp
+    transforms:
+      - name: parse_date
+  - name: category_enum
+    path: $.category
+    type: enum
+    transforms:
+      - name: to_enum
+        args:
+          allow: [news, announcement]
+  - name: tag_first
+    path: $.details.tags[0]
+    type: string
+    transforms:
+      - name: regex_extract
+        args:
+          pattern: "^(.*)$"

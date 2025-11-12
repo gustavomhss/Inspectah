@@ -1,36 +1,414 @@
-openapi: 3.0.3
-info:
-  title: Inspectah Sources API
-  version: 0.1.0
-paths:
-  /sources:
-    post:
-      summary: Create a source
-      responses:
-        '201':
-          description: Created
-  /sources/{id}/fields:
-    post:
-      summary: Update fields for a source
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Updated
-  /sources/validate:
-    post:
-      summary: Dry-run a source definition
-      responses:
-        '200':
-          description: OK
-components:
-  schemas:
-    Source:
-      type: object
-      properties:
-        id:
-          type: string
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Inspectah Sources API",
+    "version": "0.1.0"
+  },
+  "servers": [
+    {
+      "url": "https://inspectah.local/api"
+    }
+  ],
+  "components": {
+    "schemas": {
+      "AuthConfig": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "none",
+              "basic",
+              "bearer"
+            ]
+          },
+          "basic": {
+            "type": "object",
+            "properties": {
+              "username": {
+                "type": "string"
+              },
+              "password_ref": {
+                "type": "string"
+              }
+            }
+          },
+          "bearer": {
+            "type": "object",
+            "properties": {
+              "token_ref": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "AllowlistProof": {
+        "type": "object",
+        "required": [
+          "domain",
+          "tos_hash",
+          "fetched_at"
+        ],
+        "properties": {
+          "domain": {
+            "type": "string"
+          },
+          "tos_hash": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "fetched_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "RobotsStatus": {
+        "type": "object",
+        "required": [
+          "hash",
+          "checked_at"
+        ],
+        "properties": {
+          "hash": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "checked_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Transform": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "enum": [
+              "trim",
+              "lower",
+              "upper",
+              "parse_int",
+              "parse_float",
+              "parse_date",
+              "coalesce",
+              "regex_extract",
+              "split",
+              "join",
+              "to_enum"
+            ]
+          },
+          "args": {
+            "type": "object"
+          }
+        }
+      },
+      "FieldSpec": {
+        "type": "object",
+        "required": [
+          "name",
+          "path",
+          "type"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string",
+            "description": "JSONPath expression"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "string",
+              "number",
+              "integer",
+              "boolean",
+              "timestamp",
+              "enum",
+              "array"
+            ]
+          },
+          "transforms": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Transform"
+            }
+          },
+          "enum": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "required": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      },
+      "SourceCreateRequest": {
+        "type": "object",
+        "required": [
+          "name",
+          "kind",
+          "endpoint",
+          "allowlist_proof",
+          "robots_status"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "rss",
+              "api"
+            ]
+          },
+          "endpoint": {
+            "type": "string",
+            "format": "uri"
+          },
+          "poll_interval_seconds": {
+            "type": "integer",
+            "minimum": 60
+          },
+          "rate_limit_per_minute": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "auth": {
+            "$ref": "#/components/schemas/AuthConfig"
+          },
+          "allowlist_proof": {
+            "$ref": "#/components/schemas/AllowlistProof"
+          },
+          "robots_status": {
+            "$ref": "#/components/schemas/RobotsStatus"
+          }
+        }
+      },
+      "SourceResponse": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "kind",
+          "endpoint",
+          "extractor_version",
+          "created_at"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "endpoint": {
+            "type": "string",
+            "format": "uri"
+          },
+          "extractor_version": {
+            "type": "integer"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "FieldUpdateRequest": {
+        "type": "object",
+        "required": [
+          "fields"
+        ],
+        "properties": {
+          "fields": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/FieldSpec"
+            }
+          }
+        }
+      },
+      "FieldValidateResponse": {
+        "type": "object",
+        "required": [
+          "fields",
+          "errors"
+        ],
+        "properties": {
+          "fields": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "name",
+                "value",
+                "status"
+              ],
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "value": {},
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "ok",
+                    "error"
+                  ]
+                },
+                "error": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/sources": {
+      "post": {
+        "summary": "Register a new source",
+        "operationId": "createSource",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SourceCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "409": {
+            "description": "Source already exists"
+          }
+        }
+      }
+    },
+    "/sources/{id}/fields": {
+      "post": {
+        "summary": "Update field definitions for a source",
+        "operationId": "updateFields",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FieldUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "extractor_version",
+                    "reindex_scheduled"
+                  ],
+                  "properties": {
+                    "extractor_version": {
+                      "type": "integer"
+                    },
+                    "reindex_scheduled": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "404": {
+            "description": "Source not found"
+          }
+        }
+      }
+    },
+    "/sources/validate": {
+      "post": {
+        "summary": "Dry-run a source definition without persisting",
+        "operationId": "validateSource",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FieldUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Validation report",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FieldValidateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          }
+        }
+      }
+    }
+  }
+}
