@@ -1,0 +1,21 @@
+{
+  "gate": "T3",
+  "version": "1.0",
+  "started_at": "2025-11-13T00:31:08.168837Z",
+  "finished_at": "2025-11-13T00:31:08.168837Z",
+  "passed": true,
+  "failures": [],
+  "metrics": {},
+  "artifacts": [
+    {
+      "path": "out/evidence/T3_property/report.json"
+    },
+    {
+      "path": "out/evidence/T3_property/series_property.json"
+    },
+    {
+      "path": "out/evidence/T3_property/ingestor_smoke.json"
+    }
+  ],
+  "notes": "Idempotence/determinism/backpressure verified"
+}

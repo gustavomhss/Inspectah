@@ -1,0 +1,24 @@
+{
+  "files": [
+    {
+      "path": "T3_property/report.json",
+      "sha256": "a063c1045b6f772779bcb0caf3c0dd253292c673188de34f89551915dc5218c6",
+      "bytes": 604
+    },
+    {
+      "path": "T3_property/series_property.json",
+      "sha256": "24f52eb8461e63874704b707178937cd3ce841ce93da34773204a54f0c5b8dd1",
+      "bytes": 151
+    },
+    {
+      "path": "T3_property/ingestor_smoke.json",
+      "sha256": "dd7b25358adaa9d16e8af24267b4319889fb56e9fd238c4ea59e7c76a07a34d9",
+      "bytes": 203
+    },
+    {
+      "path": "T3_property/series_ingest.json",
+      "sha256": "c0b5afed826153605f818b446682c8804a253aa04deb078a91d1e7fc48e26e3b",
+      "bytes": 106
+    }
+  ]
+}
