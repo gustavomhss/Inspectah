@@ -1,0 +1,7 @@
+{
+  "gate": "T7_CI",
+  "version": "1.0",
+  "passed": true,
+  "failures": [],
+  "notes": "CI local executado"
+}

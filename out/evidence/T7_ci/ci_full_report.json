@@ -1,0 +1,21 @@
+{
+  "stages": [
+    {
+      "script": "lint.sh",
+      "status": "passed"
+    },
+    {
+      "script": "tests.sh",
+      "status": "passed"
+    },
+    {
+      "script": "bench.sh",
+      "status": "passed"
+    },
+    {
+      "script": "release_check.sh",
+      "status": "passed"
+    }
+  ],
+  "passed": true
+}

@@ -1,0 +1,42 @@
+{
+  "passed": true,
+  "results": [
+    {
+      "runner": "T0_sanity",
+      "command": "/Users/gustavoschneiter/Documents/Inspectah/bin/orr_sanity.sh",
+      "returncode": 0,
+      "duration_ms": 178
+    },
+    {
+      "runner": "T2_unit",
+      "command": "/Users/gustavoschneiter/Documents/Inspectah/bin/orr_t2.sh",
+      "returncode": 0,
+      "duration_ms": 997
+    },
+    {
+      "runner": "T3_property",
+      "command": "/Users/gustavoschneiter/Documents/Inspectah/bin/orr_t3.sh",
+      "returncode": 0,
+      "duration_ms": 2536
+    },
+    {
+      "runner": "T4_golden",
+      "command": "/Users/gustavoschneiter/Documents/Inspectah/bin/orr_t4.sh",
+      "returncode": 0,
+      "duration_ms": 433
+    },
+    {
+      "runner": "T5_bench",
+      "command": "/Users/gustavoschneiter/Documents/Inspectah/bin/orr_t5.sh",
+      "returncode": 0,
+      "duration_ms": 235
+    },
+    {
+      "runner": "T6_T7",
+      "command": "/Users/gustavoschneiter/Documents/Inspectah/bin/orr_t6_t7.sh",
+      "returncode": 0,
+      "duration_ms": 413
+    }
+  ],
+  "artifact_snapshot": "out/evidence/T7_ci/tests_artifacts"
+}

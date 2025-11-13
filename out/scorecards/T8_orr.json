@@ -1,0 +1,11 @@
+{
+  "gate": "T8_ORR",
+  "version": "1.0",
+  "passed": true,
+  "artifacts": [
+    {
+      "path": "out/evidence/T8_orr/orr_report.json"
+    }
+  ],
+  "notes": "Operational Readiness Review"
+}
