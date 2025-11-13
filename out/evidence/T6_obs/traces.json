@@ -1,0 +1,33 @@
+[
+  {
+    "trace_id": "trace-1",
+    "root": {
+      "span": "api_call",
+      "start": 1763003311.1272829,
+      "duration_ms": 60,
+      "children": [
+        {
+          "span": "vault",
+          "duration_ms": 25,
+          "children": [
+            {
+              "span": "db_write",
+              "duration_ms": 10,
+              "children": []
+            }
+          ]
+        },
+        {
+          "span": "fts",
+          "duration_ms": 18,
+          "children": []
+        },
+        {
+          "span": "export",
+          "duration_ms": 22,
+          "children": []
+        }
+      ]
+    }
+  }
+]

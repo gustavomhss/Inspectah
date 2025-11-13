@@ -1,0 +1,9 @@
+{
+  "alarms": [
+    {"name": "latency_p95_high", "condition": "latency_ms.p95 > 200", "action": "page"},
+    {"name": "latency_p99_high", "condition": "latency_ms.p99 > 400", "action": "page"},
+    {"name": "backpressure_age_high", "condition": "queue_age_seconds > 600", "action": "scale"},
+    {"name": "export_slow", "condition": "export_latency_ms > 300", "action": "investigate"},
+    {"name": "ingestor_retry_high", "condition": "ingestor_retries > 3", "action": "alert"}
+  ]
+}

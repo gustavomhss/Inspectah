@@ -1,0 +1,34 @@
+{
+  "files": [
+    {
+      "path": "evidence/T6_obs/logs.json",
+      "sha256": "7a80a9096c16e10c59fda14b6fb8dd93e8cdc139644ac26c45b381204df2880d",
+      "bytes": 2362
+    },
+    {
+      "path": "evidence/T6_obs/metrics.json",
+      "sha256": "ec04b9da5d7c52e87e5ebfa06b9b42f005be3139848e9daf28e7811c4eb02ca4",
+      "bytes": 582
+    },
+    {
+      "path": "evidence/T6_obs/report.json",
+      "sha256": "4b8318b113591ee2bf12e03c8cca78185bfc96040e41b47ec84b0d6f6290d3f5",
+      "bytes": 878
+    },
+    {
+      "path": "evidence/T6_obs/smoke.json",
+      "sha256": "31b90bf80f99d3bc07e359e2d3fec42493613b316bf3e359c0eec545c97ca8a6",
+      "bytes": 79
+    },
+    {
+      "path": "evidence/T6_obs/traces.json",
+      "sha256": "1c5385c3771e2b551c3977348e7003d1a7244be53e3c712f4771d977faf4f620",
+      "bytes": 611
+    },
+    {
+      "path": "evidence/T7_ci/ci_report.json",
+      "sha256": "84bd37bf4c81926d23b5fe76daa4f41732d2f1375621388c8692bfabb0c14c49",
+      "bytes": 119
+    }
+  ]
+}
