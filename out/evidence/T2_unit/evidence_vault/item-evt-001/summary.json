@@ -1,0 +1,10 @@
+{
+  "item_id": "item-evt-001",
+  "payload_path": "/Users/gustavoschneiter/Documents/Inspectah/out/evidence/T2_unit/evidence_vault/item-evt-001/payload.json",
+  "manifest_path": "/Users/gustavoschneiter/Documents/Inspectah/out/evidence/T2_unit/evidence_vault/item-evt-001/manifest.json",
+  "hashes": {
+    "payload_sha256": "00a7922d6731dd33d491898b5417d594edd27a6985780db4ada8c8d708d9ed12",
+    "manifest_sha256": "480b6a99f7ec26a6cbc8aa99609a2b2924018253c40163b0ac85bc1db435357c"
+  },
+  "generated_at": "2025-11-13T00:07:55.447503Z"
+}

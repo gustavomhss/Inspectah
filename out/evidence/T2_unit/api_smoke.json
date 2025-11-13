@@ -1,0 +1,200 @@
+{
+  "source": {
+    "id": "source-001",
+    "name": "Inspectah Feed",
+    "kind": "rss",
+    "endpoint": "https://example.com/rss",
+    "allowlist_proof": {
+      "domain": "example.com",
+      "tos_hash": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "fetched_at": "2024-01-01T00:00:00Z"
+    },
+    "robots_status": {
+      "hash": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "checked_at": "2024-01-01T00:00:00Z"
+    },
+    "extractor_version": 2,
+    "created_at": "2025-11-13T00:07:55.811049Z",
+    "fields": [
+      {
+        "name": "title_clean",
+        "path": "$.title",
+        "type": "string",
+        "transforms": [
+          {
+            "name": "trim"
+          },
+          {
+            "name": "lower"
+          }
+        ]
+      },
+      {
+        "name": "price_value",
+        "path": "$.price",
+        "type": "number",
+        "transforms": [
+          {
+            "name": "parse_float"
+          }
+        ]
+      },
+      {
+        "name": "published_on",
+        "path": "$.published_at",
+        "type": "timestamp",
+        "transforms": [
+          {
+            "name": "parse_date"
+          }
+        ]
+      },
+      {
+        "name": "category_enum",
+        "path": "$.category",
+        "type": "enum",
+        "transforms": [
+          {
+            "name": "to_enum",
+            "args": {
+              "allow": [
+                "news",
+                "announcement"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "name": "tag_first",
+        "path": "$.details.tags[0]",
+        "type": "string",
+        "transforms": [
+          {
+            "name": "regex_extract",
+            "args": {
+              "pattern": "^(.*)$"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "fields_update": {
+    "extractor_version": 2,
+    "reindex_scheduled": true,
+    "dry_run": {
+      "fields": [
+        {
+          "name": "title_clean",
+          "path": "$.title",
+          "type": "string",
+          "status": "ok",
+          "value": "inspectah announcement"
+        },
+        {
+          "name": "price_value",
+          "path": "$.price",
+          "type": "number",
+          "status": "ok",
+          "value": 199.99
+        },
+        {
+          "name": "published_on",
+          "path": "$.published_at",
+          "type": "timestamp",
+          "status": "ok",
+          "value": "2024-01-01T12:34:56+00:00"
+        },
+        {
+          "name": "category_enum",
+          "path": "$.category",
+          "type": "enum",
+          "status": "ok",
+          "value": "news"
+        },
+        {
+          "name": "tag_first",
+          "path": "$.details.tags[0]",
+          "type": "string",
+          "status": "ok",
+          "value": "Launch"
+        }
+      ]
+    }
+  },
+  "validation": {
+    "fields": [
+      {
+        "name": "title_clean",
+        "path": "$.title",
+        "type": "string",
+        "status": "ok",
+        "value": "inspectah announcement"
+      },
+      {
+        "name": "price_value",
+        "path": "$.price",
+        "type": "number",
+        "status": "ok",
+        "value": 199.99
+      },
+      {
+        "name": "published_on",
+        "path": "$.published_at",
+        "type": "timestamp",
+        "status": "ok",
+        "value": "2024-01-01T12:34:56+00:00"
+      },
+      {
+        "name": "category_enum",
+        "path": "$.category",
+        "type": "enum",
+        "status": "ok",
+        "value": "news"
+      },
+      {
+        "name": "tag_first",
+        "path": "$.details.tags[0]",
+        "type": "string",
+        "status": "ok",
+        "value": "Launch"
+      }
+    ],
+    "errors": []
+  },
+  "explore": {
+    "items": [
+      {
+        "item_id": "item-evt-001",
+        "source_id": "source-alpha",
+        "canonical_url": "https://example.com/launch",
+        "title": "Inspectah Launch",
+        "excerpt": "",
+        "event_time": "2024-01-01T00:00:00Z",
+        "observed_at": "2024-01-01T00:00:05Z",
+        "indexed_at": "2024-01-01T00:00:10Z",
+        "fields": {
+          "title": "Inspectah Launch",
+          "category": "news",
+          "score": 100
+        },
+        "evidence": {
+          "manifest_path": "/Users/gustavoschneiter/Documents/Inspectah/out/evidence/T2_unit/evidence_vault/item-evt-001/manifest.json",
+          "payload_path": "/Users/gustavoschneiter/Documents/Inspectah/out/evidence/T2_unit/evidence_vault/item-evt-001/payload.json",
+          "manifest_sha256": "480b6a99f7ec26a6cbc8aa99609a2b2924018253c40163b0ac85bc1db435357c",
+          "payload_sha256": "00a7922d6731dd33d491898b5417d594edd27a6985780db4ada8c8d708d9ed12"
+        }
+      }
+    ],
+    "page": 1,
+    "page_size": 1,
+    "total": 1
+  },
+  "export": {
+    "format": "json",
+    "artifact_path": "/Users/gustavoschneiter/Documents/Inspectah/out/evidence/T2_unit/evidence_vault/item-evt-001/manifest.json",
+    "checksum": "ef393f398a6a76b19e1ca4c883ad20fa58515312ffd04564a0aef8bbd10191ba"
+  },
+  "captured_at": 1762992476.1471622
+}

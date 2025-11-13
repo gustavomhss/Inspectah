@@ -1,0 +1,23 @@
+{
+  "item_id": "item-evt-001",
+  "source_id": "source-alpha",
+  "canonical_url": "https://example.com/launch",
+  "event_time": "2024-01-01T00:00:00Z",
+  "observed_at": "2024-01-01T00:00:05Z",
+  "indexed_at": "2024-01-01T00:00:10Z",
+  "timezone": "UTC",
+  "extractor_version": "1.0.0",
+  "user_agent": "Inspectah/0.1",
+  "allowlist_proof_ref": "allowlist:example.com:2024-01-01",
+  "fields": {
+    "title": "Inspectah Launch",
+    "category": "news",
+    "score": 100
+  },
+  "fetched_payload_sha256": "00a7922d6731dd33d491898b5417d594edd27a6985780db4ada8c8d708d9ed12",
+  "extracted_fields_sha256": "17d2a18bd3dbe99da61b454b9c56bdb8485b705af539c348b5cc126072dd4d9c",
+  "hashes": {
+    "payload_sha256": "00a7922d6731dd33d491898b5417d594edd27a6985780db4ada8c8d708d9ed12",
+    "manifest_sha256": "480b6a99f7ec26a6cbc8aa99609a2b2924018253c40163b0ac85bc1db435357c"
+  }
+}

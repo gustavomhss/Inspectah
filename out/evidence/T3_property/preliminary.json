@@ -1,0 +1,8 @@
+{
+  "item_id": "item-evt-001",
+  "checks": {
+    "payload_hash_match": true,
+    "manifest_hash_match": true,
+    "temporal_order": true
+  }
+}
