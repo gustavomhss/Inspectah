@@ -1,0 +1,14 @@
+{
+  "source_id": "api_market_prices",
+  "canonical_key": "SKU-FEIJ-1KG",
+  "canonical_url": "SKU-FEIJ-1KG",
+  "observed_at": "2025-11-10T12:30:00+00:00",
+  "fields": {
+    "sku": "SKU-FEIJ-1KG",
+    "product": "Feijão Carioca 1kg",
+    "price": 9.75,
+    "currency": "BRL",
+    "region": "SP",
+    "last_update": "2025-11-10T12:30:00Z"
+  }
+}

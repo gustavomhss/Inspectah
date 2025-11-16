@@ -1,0 +1,43 @@
+{
+  "items": [
+    {
+      "item_id": "api-202410-901",
+      "product_name": "Arroz agulhinha 5kg",
+      "category": "graos",
+      "unit": "5kg",
+      "price_brl": 28.10,
+      "region": "Zona Norte",
+      "reported_at": "2024-10-18T10:05:00-03:00",
+      "source_url": "https://feirasegura.prefeitura.sp.gov.br/api/itens/arroz-20241018",
+      "notes": "Preço coletado na Feira Segura Santana",
+      "program": "Feira Segura",
+      "volatility_index": 0.18
+    },
+    {
+      "item_id": "api-202410-902",
+      "product_name": "Feijão carioca 1kg",
+      "category": "graos",
+      "unit": "1kg",
+      "price_brl": 14.20,
+      "region": "Zona Leste",
+      "reported_at": "2024-10-18T10:30:00-03:00",
+      "source_url": "https://feirasegura.prefeitura.sp.gov.br/api/itens/feijao-20241018",
+      "notes": "Lotes novos entregues pela cooperativa Sapopemba",
+      "program": "Feira Segura",
+      "volatility_index": 0.05
+    },
+    {
+      "item_id": "api-202410-903",
+      "product_name": "Frango resfriado inteiro",
+      "category": "proteinas",
+      "unit": "1kg",
+      "price_brl": 13.20,
+      "region": "Zona Sul",
+      "reported_at": "2024-10-18T11:00:00-03:00",
+      "source_url": "https://feirasegura.prefeitura.sp.gov.br/api/itens/frango-20241018",
+      "notes": "Campanha de proteína acessível",
+      "program": "Feira Segura",
+      "volatility_index": 0.22
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "checks": {
+    "idempotence": {
+      "passed": true,
+      "details": {
+        "duplicates": 999
+      }
+    },
+    "determinism": {
+      "passed": true,
+      "details": {
+        "unique_hashes": 10
+      }
+    },
+    "ordering": {
+      "passed": true,
+      "details": {
+        "violations": 0
+      }
+    },
+    "backpressure": {
+      "passed": true,
+      "details": {
+        "max_depth": 57,
+        "final_depth": 0
+      }
+    },
+    "reindex": {
+      "passed": true,
+      "details": {
+        "changed_fields": 1
+      }
+    }
+  },
+  "generated_at": "2025-11-13T00:31:07.983020Z"
+}

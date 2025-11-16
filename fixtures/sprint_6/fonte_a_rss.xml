@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Boletim Sindicato de Mercados SP</title>
+    <link>https://dados.sindicato-sp.org/boletim</link>
+    <description>Indicadores semanais da cesta básica municipal</description>
+    <item>
+      <title>Arroz agulhinha 5kg cai para R$ 27,80</title>
+      <guid>rss-202410-001</guid>
+      <link>https://dados.sindicato-sp.org/boletim/arroz-2780</link>
+      <category>graos</category>
+      <unit>5kg</unit>
+      <price currency="BRL">27.80</price>
+      <region>Zona Norte</region>
+      <pubDate>2024-10-18T09:45:00-03:00</pubDate>
+      <description>Queda semanal de 4% no arroz beneficiado vendido em redes atacadistas.</description>
+      <notes>Reforçar monitoramento nos próximos 3 ciclos.</notes>
+    </item>
+    <item>
+      <title>Feijão carioca 1kg mantém estabilidade</title>
+      <guid>rss-202410-002</guid>
+      <link>https://dados.sindicato-sp.org/boletim/feijao-1390</link>
+      <category>graos</category>
+      <unit>1kg</unit>
+      <price currency="BRL">13.90</price>
+      <region>Zona Leste</region>
+      <pubDate>2024-10-18T10:10:00-03:00</pubDate>
+      <description>Rede atacarejo mantém preço promocional do feijão carioca.</description>
+      <notes>Oferta válida até domingo, estoque regular.</notes>
+    </item>
+    <item>
+      <title>Sabonete neutro 90g com reajuste leve</title>
+      <guid>rss-202410-003</guid>
+      <link>https://dados.sindicato-sp.org/boletim/sabonete-390</link>
+      <category>higiene</category>
+      <unit>90g</unit>
+      <price currency="BRL">3.90</price>
+      <region>Centro</region>
+      <pubDate>2024-10-17T16:30:00-03:00</pubDate>
+      <description>Fabricantes ajustam preços após alta de insumos importados.</description>
+      <notes>Monitorar impacto na cesta de higiene.</notes>
+    </item>
+  </channel>
+</rss>

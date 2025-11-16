@@ -1,0 +1,9 @@
+{
+  "title": "Inspectah Ingestor",
+  "panels": [
+    {"metric": "items_fetched_total", "goal": 500},
+    {"metric": "items_indexed_total", "goal": 495},
+    {"metric": "queue_depth", "threshold": 20},
+    {"metric": "queue_age_seconds", "threshold": 600}
+  ]
+}

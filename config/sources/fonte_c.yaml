@@ -1,0 +1,38 @@
+id: fonte_c
+name: Painel HTML Mercado Municipal
+domain: dominio_piloto
+type: html_plain
+description: >-
+  Painel semanal publicado pelo Mercado Municipal com extratos em HTML
+  semântico para cada item monitorado.
+transport:
+  url: https://mercadomunicipal.sp.gov.br/painel/cesta-basica
+  authentication: none
+  format: html
+sample_file: fixtures/sprint_6/fonte_c_html.html
+timezone: America/Sao_Paulo
+polling:
+  cadence: daily
+  interval_minutes: 1440
+  window_start: "08:00"
+  window_end: "12:00"
+dedup:
+  strategy: canonical_fields
+  fields:
+    - product_name
+    - unit
+    - region
+canonical:
+  timestamp_field: reported_at
+  url_field: source_url
+  summary_field: notes
+slo:
+  freshness_minutes_p95: 1440
+  availability: 0.95
+retention_days: 30
+owner:
+  organization: Mercado Municipal de São Paulo
+  contact: mailto:alpha+mercadomunicipal@sigma.local
+notes:
+  - Conteúdo é publicado como HTML estático; captura deve baixar arquivo integral.
+  - Principal referência para itens de higiene.

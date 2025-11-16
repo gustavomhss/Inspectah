@@ -1,0 +1,14 @@
+{
+  "artifacts": [
+    {
+      "path": "out/release/inspectah_v0_1_bundle.zip",
+      "bytes": 71528,
+      "sha256": "56daa8d5de6c857745f7ee13219c0e9db65409c7940826140134ef14ad53b6de"
+    },
+    {
+      "path": "out/release/inspectah_v0_1_bundle.sha256",
+      "bytes": 104,
+      "sha256": "c8354fca3bf23fb39db6f92c306bf08a9bb8e9de9deefc5d8afa8f12b887c146"
+    }
+  ]
+}

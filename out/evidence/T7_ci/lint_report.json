@@ -1,0 +1,34 @@
+{
+  "passed": true,
+  "checks": [
+    {
+      "name": "required_files",
+      "missing": []
+    },
+    {
+      "name": "dashboards",
+      "results": [
+        {
+          "file": "/Users/gustavoschneiter/Documents/Inspectah/docs/dashboards/alarms.json",
+          "valid": true
+        },
+        {
+          "file": "/Users/gustavoschneiter/Documents/Inspectah/docs/dashboards/backpressure_dashboard.json",
+          "valid": true
+        },
+        {
+          "file": "/Users/gustavoschneiter/Documents/Inspectah/docs/dashboards/fts_export_dashboard.json",
+          "valid": true
+        },
+        {
+          "file": "/Users/gustavoschneiter/Documents/Inspectah/docs/dashboards/ingestor_dashboard.json",
+          "valid": true
+        },
+        {
+          "file": "/Users/gustavoschneiter/Documents/Inspectah/docs/dashboards/latency_dashboard.json",
+          "valid": true
+        }
+      ]
+    }
+  ]
+}

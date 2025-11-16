@@ -1,0 +1,15 @@
+{
+  "gate": "T6_T7",
+  "version": "1.0",
+  "passed": true,
+  "failures": [],
+  "artifacts": [
+    {
+      "path": "out/evidence/T6_obs/report.json"
+    },
+    {
+      "path": "out/evidence/T7_ci/ci_report.json"
+    }
+  ],
+  "notes": "Observabilidade + CI validados"
+}

@@ -1,0 +1,38 @@
+id: fonte_a
+name: Boletim RSS Sindicato SP
+domain: dominio_piloto
+type: rss
+description: >-
+  Feed público do Sindicato de Mercados de São Paulo com atualizações horárias
+  sobre a cesta básica municipal.
+transport:
+  url: https://dados.sindicato-sp.org/boletim/rss
+  authentication: none
+  format: rss
+sample_file: fixtures/sprint_6/fonte_a_rss.xml
+timezone: America/Sao_Paulo
+polling:
+  cadence: hourly
+  interval_minutes: 60
+  window_start: "06:00"
+  window_end: "22:00"
+dedup:
+  strategy: canonical_fields
+  fields:
+    - product_name
+    - unit
+    - region
+canonical:
+  timestamp_field: reported_at
+  url_field: source_url
+  summary_field: notes
+slo:
+  freshness_minutes_p95: 90
+  availability: 0.98
+retention_days: 30
+owner:
+  organization: Sindicato dos Mercados Varejistas de SP
+  contact: mailto:alpha+mercados@sigma.local
+notes:
+  - Campos canônicos alinhados com config/fields/dominio_piloto.yaml
+  - Referência cruzada com boletins impressos recebidos no Observatório.

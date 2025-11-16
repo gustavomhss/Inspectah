@@ -1,0 +1,60 @@
+{
+  "gates": [
+    {
+      "gate_id": "D9-G0",
+      "status": "PASS",
+      "checked_by": "Codex",
+      "checked_at": "2025-11-13T22:50:39Z",
+      "evidence_path": "evidence/d9_g0_preflight_checklist.md",
+      "notes": "Pré-flight concluído com leitura integral dos capítulos e registro de riscos iniciais."
+    },
+    {
+      "gate_id": "D9-G1",
+      "status": "PASS",
+      "checked_by": "Codex",
+      "checked_at": "2025-11-13T22:50:39Z",
+      "evidence_path": "evidence/d9_g1_blueprint_overview_checklist.md",
+      "notes": "Blueprint e overview coerentes com Cap.1; sem TBD."
+    },
+    {
+      "gate_id": "D9-G2",
+      "status": "PASS",
+      "checked_by": "Codex",
+      "checked_at": "2025-11-13T22:50:39Z",
+      "evidence_path": "evidence/d9_g2_field_designer_checklist.md",
+      "notes": "Tipos, transforms e computed fields especificados (ação D9-FD-001 aplicada com IEL e fallback obrigatório)."
+    },
+    {
+      "gate_id": "D9-G3",
+      "status": "PASS",
+      "checked_by": "Codex",
+      "checked_at": "2025-11-13T22:50:39Z",
+      "evidence_path": "evidence/d9_g3_explore_api_integracoes_checklist.md",
+      "notes": "Contratos de Explore API, exports e webhooks revisados; rate limit v0 (D9-API-001) documentado com plano de teste."
+    },
+    {
+      "gate_id": "D9-G4",
+      "status": "PASS",
+      "checked_by": "Codex",
+      "checked_at": "2025-11-13T22:50:39Z",
+      "evidence_path": "evidence/d9_g4_data_model_lgpd_checklist.md",
+      "notes": "Modelo de dados e guardrails LGPD/ToS alinhados; ação D9-LGPD-001 definiu CE Object Store (S3 compatível, sa-east-1, SSE-KMS)."
+    },
+    {
+      "gate_id": "D9-G5",
+      "status": "PASS",
+      "checked_by": "Codex",
+      "checked_at": "2025-11-13T22:53:35Z",
+      "evidence_path": "evidence/d9_g5_roadmap_playbook_checklist.md",
+      "notes": "Roadmap v0/v1/v1.x e playbook de evolução integrados."
+    },
+    {
+      "gate_id": "D9-G6",
+      "status": "PASS",
+      "checked_by": "Codex",
+      "checked_at": "2025-11-13T22:53:35Z",
+      "evidence_path": "evidence/d9_g6_superprompt_codex_checklist.md",
+      "notes": "Superprompt autocontido e alinhado ao patch D9-FD-001 (IEL detalhada)."
+    }
+  ]
+}

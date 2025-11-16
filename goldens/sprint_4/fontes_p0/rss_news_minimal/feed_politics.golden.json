@@ -1,0 +1,18 @@
+[
+  {
+    "source_id": "rss_news_minimal",
+    "title": "Comissão debate orçamento",
+    "url": "https://news.local/politics/budget",
+    "published_at": "Wed, 12 Nov 2025 10:30:00 GMT",
+    "summary": "Debate intenso sobre orçamento público.",
+    "source_name": "News Local"
+  },
+  {
+    "source_id": "rss_news_minimal",
+    "title": "Parlamento aprova nova lei",
+    "url": "https://news.local/politics/law",
+    "published_at": "Wed, 12 Nov 2025 09:00:00 GMT",
+    "summary": "Resumo da nova lei aprovada.",
+    "source_name": "News Local"
+  }
+]

@@ -1,0 +1,28 @@
+{
+  "items": [
+    {
+      "sku": "SKU-ARROZ-1KG",
+      "product": "Arroz Tipo 1 1kg",
+      "price": 21.9,
+      "currency": "BRL",
+      "region": "SP",
+      "last_update": "2025-11-10T12:00:00Z"
+    },
+    {
+      "sku": "SKU-FEIJ-1KG",
+      "product": "Feijão Carioca 1kg",
+      "price": 9.75,
+      "currency": "BRL",
+      "region": "SP",
+      "last_update": "2025-11-10T12:30:00Z"
+    },
+    {
+      "sku": "SKU-AZOLEO-900ML",
+      "product": "Óleo de Soja 900ml",
+      "price": 8.49,
+      "currency": "BRL",
+      "region": "SP",
+      "last_update": "2025-11-10T13:10:00Z"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Politics Feed</title>
+    <link>https://news.local/politics</link>
+    <item>
+      <title>Parlamento aprova nova lei</title>
+      <link>https://news.local/politics/law</link>
+      <pubDate>Wed, 12 Nov 2025 09:00:00 GMT</pubDate>
+      <description>Resumo da nova lei aprovada.</description>
+      <source_name>News Local</source_name>
+    </item>
+    <item>
+      <title>Comissão debate orçamento</title>
+      <link>https://news.local/politics/budget</link>
+      <pubDate>Wed, 12 Nov 2025 10:30:00 GMT</pubDate>
+      <description>Debate intenso sobre orçamento público.</description>
+      <source_name>News Local</source_name>
+    </item>
+  </channel>
+</rss>

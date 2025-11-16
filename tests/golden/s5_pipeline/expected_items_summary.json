@@ -1,0 +1,16 @@
+{
+  "items_total": 6,
+  "bundles_total": 6,
+  "items_by_state": {
+    "S0": 0,
+    "S1": 6,
+    "S2": 6,
+    "S3": 6,
+    "S4": 6
+  },
+  "items_by_source": {
+    "rss_economia": 2,
+    "api_investimentos": 2,
+    "html_obras": 2
+  }
+}

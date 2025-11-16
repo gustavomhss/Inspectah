@@ -1,0 +1,45 @@
+{
+  "metadata": {
+    "id": "rss_news_minimal",
+    "name": "RSS News Minimal",
+    "description": "Feed RSS simplificado usado como fonte de notícias priorizadas.",
+    "type": "rss",
+    "priority": "P0",
+    "risk_level": "low",
+    "owners": {
+      "product": "eduardo.ferreira@inspectah",
+      "engineering": "codex@inspectah"
+    }
+  },
+  "ingest": {
+    "mode": "pull",
+    "endpoint": "fixtures://sprint_4/rss_news_minimal",
+    "method": "GET",
+    "headers": [],
+    "cadence_minutes": 15,
+    "staleness_tolerance_minutes": 60,
+    "auth": null
+  },
+  "parsing": {
+    "parser": "rss_news_minimal_parser"
+  },
+  "deduplication": {
+    "keys": ["url"],
+    "strategy": "hash"
+  },
+  "timestamps": {
+    "field": "published_at",
+    "timezone": "UTC"
+  },
+  "field_schema_id": "rss_news_minimal",
+  "evidence_policy": {
+    "store_raw_payload": true,
+    "manifest_versioned": true
+  },
+  "observability": {
+    "metrics_namespace": "inspectah.rss_news_minimal",
+    "labels": {
+      "source_id": "rss_news_minimal"
+    }
+  }
+}

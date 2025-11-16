@@ -1,0 +1,20 @@
+[
+  {
+    "source_id": "html_market_watch",
+    "collected_at": "2025-11-01T00:00:00Z",
+    "sku": "HMW-0001",
+    "product": "Leite Integral 1L",
+    "price": 4.99,
+    "location": "SP",
+    "observed_at": "2025-11-10T07:30:00-03:00"
+  },
+  {
+    "source_id": "html_market_watch",
+    "collected_at": "2025-11-01T00:00:00Z",
+    "sku": "HMW-0002",
+    "product": "Queijo Minas 500g",
+    "price": 22.5,
+    "location": "SP",
+    "observed_at": "2025-11-10T07:35:00-03:00"
+  }
+]

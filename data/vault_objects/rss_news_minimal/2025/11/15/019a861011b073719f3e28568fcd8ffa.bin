@@ -1,0 +1,13 @@
+{
+  "source_id": "rss_news_minimal",
+  "canonical_key": "http://example.com/articles/second",
+  "canonical_url": "http://example.com/articles/second",
+  "observed_at": "Fri, 21 Nov 1997 09:55:06 -0600",
+  "fields": {
+    "title": "Second Item",
+    "url": "http://example.com/articles/second",
+    "published_at": "Fri, 21 Nov 1997 09:55:06 -0600",
+    "summary": "Beta insights",
+    "source_name": "RSS News Minimal"
+  }
+}

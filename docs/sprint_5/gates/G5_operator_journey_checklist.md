@@ -1,0 +1,22 @@
+# G5 — Operator Journey Checklist
+
+- [ ] Confirmar que os gates anteriores estão PASS:
+  - [ ] `out/s5_gates/G1_schema_contracts/scorecard.json`
+  - [ ] `out/s5_gates/G2_components/scorecard.json`
+  - [ ] `out/s5_gates/G3_pipeline_fixtures/scorecard.json`
+  - [ ] `out/s5_gates/G4_ai_integration/scorecard.json`
+- [ ] Garantir que os fixtures em `fixtures/s5/` e a pipeline (`bin/s5_gate_g3_pipeline_fixtures.sh`) estão funcionando.
+- [ ] (Opcional) Limpar `data/index/` e `data/evidence/` caso deseje ambiente fresco para o teste.
+- [ ] Abrir a UI Admin (`python -m inspectah.ui.admin_sources`):
+  - [ ] Listar fontes existentes.
+  - [ ] Cadastrar ou editar a fonte de teste descrita no cenário G5.
+  - [ ] Ativar a fonte e salvar o registry (`inspectah/config/sources_registry.yaml`).
+- [ ] Executar um ciclo de ingestão com fixtures (`python -m inspectah.pipeline.pipeline_fixtures` ou pipeline equivalente) para gerar itens S4.
+- [ ] Abrir a UI Explore (`python -m inspectah.ui.explore`):
+  - [ ] Selecionar a fonte configurada.
+  - [ ] Filtrar por equivalence_key quando aplicável.
+  - [ ] Abrir um item, verificando bundle_path, texto (`text.txt`) e claims estruturados.
+- [ ] Registrar feedback no `out/s5_gates/G5_operator_journey/report.md`:
+  - [ ] clareza das telas/menus.
+  - [ ] dificuldades ou erros encontrados.
+  - [ ] tempo total gasto na jornada.

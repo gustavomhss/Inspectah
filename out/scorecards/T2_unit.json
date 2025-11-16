@@ -1,0 +1,19 @@
+{
+  "gate": "T2_unit",
+  "version": "1.0",
+  "started_at": "2025-11-13T18:30:44Z",
+  "finished_at": "2025-11-13T18:30:45Z",
+  "passed": true,
+  "failures": [],
+  "metrics": {
+    "exit_code": 0
+  },
+  "artifacts": [
+    {
+      "path": "out/evidence/T2_unit/unittest.log",
+      "sha256": "fc23540c8545d4075fe2f0420accd022e74e5566176c3bd4c597964ff02c2e14",
+      "bytes": 106
+    }
+  ],
+  "notes": ""
+}

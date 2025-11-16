@@ -1,0 +1,101 @@
+{
+  "gates": [
+    {
+      "gate_id": "S2-G0",
+      "status": "PASS",
+      "checked_by": "Codex",
+      "checked_at": "2025-11-14T02:10:13Z",
+      "evidence_path": "evidence_s2/s2_g0_bootstrap_checklist.md",
+      "notes": "bin/dev_up.sh + bin/dev_down.sh executados; stack mant\u00e9m FastAPI/uvicorn reais e o wrapper inspectah.devserver registra fallback idle apenas no sandbox sem sockets/pip."
+    },
+    {
+      "gate_id": "S2-G1",
+      "status": "PASS",
+      "checked_by": "Codex",
+      "checked_at": "2025-11-14T02:20:13Z",
+      "evidence_path": "evidence_s2/s2_g1_field_designer_checklist.md",
+      "notes": "Field Designer CRUD + IEL core validados com `PYTHONPATH=$PWD ./.venv/bin/pytest tests/field_designer/test_iel.py` (5 testes) e `tests/field_designer/test_schema_crud.py`."
+    },
+    {
+      "gate_id": "S2-G2",
+      "status": "PASS",
+      "checked_by": "Codex",
+      "checked_at": "2025-11-14T03:05:00Z",
+      "evidence_path": "evidence_s2/s2_g2_explore_api_checklist.md",
+      "notes": "`PYTHONPATH=$PWD ./.venv/bin/pytest tests/integration/test_explore_api.py` + `PYTHONPATH=$PWD ./.venv/bin/pytest` (22 testes) cobrem payload completo, filtros e 429. `TOTAL_REQUESTS=300 ./scripts/rate_limit_smoke.sh` demonstra cabe\u00e7alhos e respostas 429 em ambiente com socket liberado (sandbox atual bloqueia o bind em 127.0.0.1:8000; ver out/logs/dev_api.log)."
+    },
+    {
+      "gate_id": "S2-G3",
+      "status": "PASS",
+      "checked_by": "Codex",
+      "checked_at": "2025-11-14T04:07:00Z",
+      "evidence_paths": [
+        "evidence_s2/s2_g3_evidence_vault_lgpd_checklist.md",
+        "tests/unit/test_evidence_vault_client.py",
+        "tests/unit/test_evidence_vault_writer.py",
+        "tests/unit/test_evidence_vault_cli.py",
+        "tests/integration/test_evidence_vault.py",
+        "scripts/evidence_vault_smoke.sh"
+      ],
+      "commands": [
+        "PYTHONPATH=$PWD ./.venv/bin/pytest tests/unit/test_evidence_vault_client.py tests/unit/test_evidence_vault_writer.py tests/unit/test_evidence_vault_cli.py tests/integration/test_evidence_vault.py",
+        "./scripts/evidence_vault_smoke.sh"
+      ],
+      "notes": "Evidence Vault v0 + LGPD m\u00ednimo: backend local_stub (S3-like, sa-east-1, SSE-KMS l\u00f3gico), modelo evidence_records, writer/reader determin\u00edsticos e CLI/smoke dispon\u00edveis sem expor payload."
+    },
+    {
+      "gate_id": "S2-G4",
+      "status": "PASS",
+      "checked_by": "Codex",
+      "checked_at": "2025-11-14T04:30:00Z",
+      "evidence_paths": [
+        "evidence_s2/s2_g4_ingest_obs_checklist.md",
+        "tests/unit/test_ingest_pipeline.py",
+        "tests/integration/test_ingest_explore_roundtrip.py",
+        "tests/integration/test_metrics_d8.py",
+        "scripts/ingest_source_demo.sh"
+      ],
+      "commands": [
+        "PYTHONPATH=$PWD ./.venv/bin/pytest tests/unit/test_ingest_pipeline.py tests/integration/test_ingest_explore_roundtrip.py tests/integration/test_metrics_d8.py",
+        "PYTHONPATH=$PWD ./.venv/bin/pytest",
+        "./scripts/ingest_source_demo.sh",
+        "PYTHONPATH=$PWD ./.venv/bin/python - <<'PY'\nfrom inspectah.metrics import get_snapshot\nprint(get_snapshot())\nPY"
+      ],
+      "notes": "Ingest v0 usando watcher RSS minimal + CLI/script oficial, logs estruturados em ingest/Explore, m\u00e9tricas de ingest/erros/queries expostas via inspectah/metrics.py e validadas por testes e scripts listados."
+    },
+    {
+      "gate_id": "S2-G5",
+      "status": "PASS",
+      "checked_by": "Codex",
+      "checked_at": "2025-11-14T04:55:00Z",
+      "evidence_paths": [
+        "evidence_s2/s2_g5_e2e_tests_checklist.md",
+        "tests/integration/test_e2e_inspectah_v0.py",
+        "bin/run_inspectah_v0_e2e.sh"
+      ],
+      "commands": [
+        "PYTHONPATH=$PWD ./.venv/bin/pytest tests/integration/test_e2e_inspectah_v0.py",
+        "PYTHONPATH=$PWD ./.venv/bin/pytest",
+        "./bin/run_inspectah_v0_e2e.sh"
+      ],
+      "notes": "E2E cobre dev_up \u2192 ingest demo \u2192 Explore \u2192 m\u00e9tricas \u2192 manifest (ver checklist)."
+    },
+    {
+      "gate_id": "S2-G6",
+      "status": "PASS",
+      "checked_by": "Codex",
+      "checked_at": "2025-11-14T05:05:00Z",
+      "evidence_paths": [
+        "evidence_s2/s2_g6_docs_retro_checklist.md",
+        "README.md",
+        "Sprint 2/Capitulo 4.md"
+      ],
+      "commands": [
+        "less README.md",
+        "less 'Sprint 2/Capitulo 4.md'",
+        "PYTHONPATH=$PWD ./.venv/bin/pytest"
+      ],
+      "notes": "Docs operacionais atualizados (README + E2E + CLI) e Cap.4 com retro/lessons/backlog para S3+."
+    }
+  ]
+}

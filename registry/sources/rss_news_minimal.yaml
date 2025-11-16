@@ -1,0 +1,8 @@
+{
+  "id": "rss_news_minimal",
+  "type": "rss",
+  "name": "RSS News Minimal",
+  "url": "https://example.com/rss",
+  "schedule_minutes": 5,
+  "enabled": true
+}

@@ -1,0 +1,73 @@
+{
+  "schema_id": "api_market_prices",
+  "source_id": "api_market_prices",
+  "version": 1,
+  "fields": [
+    {
+      "name": "sku",
+      "display_name": "SKU",
+      "type": "string",
+      "required": true,
+      "example": "SKU-0001",
+      "description": "Identificador único enviado pelo parceiro.",
+      "is_primary_identifier": true,
+      "tags": ["dedup_key", "evidence_core"],
+      "slo_impact": ["evidence_completeness_rate"]
+    },
+    {
+      "name": "product",
+      "display_name": "Produto",
+      "type": "string",
+      "required": true,
+      "example": "Arroz Tipo 1",
+      "description": "Nome comercial do item.",
+      "is_primary_identifier": false,
+      "tags": ["evidence_core"],
+      "slo_impact": []
+    },
+    {
+      "name": "price",
+      "display_name": "Preço",
+      "type": "number",
+      "required": true,
+      "example": 8.99,
+      "description": "Preço listado na moeda local.",
+      "is_primary_identifier": false,
+      "tags": ["evidence_core"],
+      "slo_impact": ["detection_latency_p95_min"]
+    },
+    {
+      "name": "currency",
+      "display_name": "Moeda",
+      "type": "string",
+      "required": true,
+      "example": "BRL",
+      "description": "Código de moeda ISO.",
+      "is_primary_identifier": false,
+      "tags": ["evidence_core"],
+      "slo_impact": []
+    },
+    {
+      "name": "region",
+      "display_name": "Região",
+      "type": "string",
+      "required": true,
+      "example": "SP",
+      "description": "Unidade geográfica usada em deduplicação.",
+      "is_primary_identifier": false,
+      "tags": ["dedup_key"],
+      "slo_impact": []
+    },
+    {
+      "name": "last_update",
+      "display_name": "Atualizado em",
+      "type": "datetime",
+      "required": true,
+      "example": "2025-11-10T09:15:00Z",
+      "description": "Timestamp do parceiro usado para detectar staleness.",
+      "is_primary_identifier": false,
+      "tags": ["timestamp"],
+      "slo_impact": ["detection_latency_p95_min"]
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "source_id": "rss_news_minimal",
+  "canonical_key": "https://Example.com/articles/first/",
+  "canonical_url": "https://Example.com/articles/first/",
+  "observed_at": "Tue, 03 Jun 2003 09:39:21 GMT",
+  "fields": {
+    "title": "First Item",
+    "url": "https://Example.com/articles/first/",
+    "published_at": "Tue, 03 Jun 2003 09:39:21 GMT",
+    "summary": "Alpha news update",
+    "source_name": "RSS News Minimal"
+  }
+}

@@ -1,0 +1,62 @@
+{
+  "schema_id": "html_market_watch",
+  "source_id": "html_market_watch",
+  "version": 1,
+  "fields": [
+    {
+      "name": "sku",
+      "display_name": "SKU",
+      "type": "string",
+      "required": true,
+      "example": "HMW-0002",
+      "description": "Identificador derivado do HTML",
+      "is_primary_identifier": true,
+      "tags": ["dedup_key"],
+      "slo_impact": ["evidence_completeness_rate"]
+    },
+    {
+      "name": "product",
+      "display_name": "Produto",
+      "type": "string",
+      "required": true,
+      "example": "Café Torrado",
+      "description": "Nome exibido no card HTML",
+      "is_primary_identifier": false,
+      "tags": ["evidence_core"],
+      "slo_impact": []
+    },
+    {
+      "name": "price",
+      "display_name": "Preço",
+      "type": "number",
+      "required": false,
+      "example": 15.49,
+      "description": "Preço promocional encontrado na página",
+      "is_primary_identifier": false,
+      "tags": ["evidence_core"],
+      "slo_impact": []
+    },
+    {
+      "name": "location",
+      "display_name": "Local",
+      "type": "string",
+      "required": true,
+      "example": "RJ",
+      "description": "Localidade exibida no HTML",
+      "is_primary_identifier": false,
+      "tags": ["dedup_key"],
+      "slo_impact": []
+    },
+    {
+      "name": "observed_at",
+      "display_name": "Observado em",
+      "type": "datetime",
+      "required": true,
+      "example": "2025-11-09T08:00:00-03:00",
+      "description": "Timestamp interno do snapshot",
+      "is_primary_identifier": false,
+      "tags": ["timestamp"],
+      "slo_impact": ["detection_latency_p95_min"]
+    }
+  ]
+}

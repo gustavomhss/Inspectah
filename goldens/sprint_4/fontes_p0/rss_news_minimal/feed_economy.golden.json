@@ -1,0 +1,18 @@
+[
+  {
+    "source_id": "rss_news_minimal",
+    "title": "Inflação desacelera",
+    "url": "https://news.local/economy/inflation",
+    "published_at": "Thu, 13 Nov 2025 09:15:00 GMT",
+    "summary": "IPCA indica leve queda.",
+    "source_name": "Economy Watch"
+  },
+  {
+    "source_id": "rss_news_minimal",
+    "title": "Mercado sobe 2%",
+    "url": "https://news.local/economy/market-up",
+    "published_at": "Thu, 13 Nov 2025 08:00:00 GMT",
+    "summary": "Bolsa reage positivamente a anúncios.",
+    "source_name": "Economy Watch"
+  }
+]

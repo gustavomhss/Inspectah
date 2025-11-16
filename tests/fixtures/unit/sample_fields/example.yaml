@@ -1,0 +1,7 @@
+fields:
+  - name: title
+    path: $.title
+    type: string
+  - name: published_at
+    path: $.published_at
+    type: timestamp

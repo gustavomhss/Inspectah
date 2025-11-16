@@ -1,0 +1,10 @@
+{
+  "title": "Inspectah Latency",
+  "panels": [
+    {"metric": "latency_ms", "operation": "api_create", "slo_p95_ms": 200},
+    {"metric": "latency_ms", "operation": "api_explore", "slo_p95_ms": 200},
+    {"metric": "latency_ms", "operation": "vault_manifest", "slo_p95_ms": 200},
+    {"metric": "latency_ms", "operation": "fts_query", "slo_p95_ms": 200},
+    {"metric": "latency_ms", "operation": "export_job", "slo_p95_ms": 200}
+  ]
+}

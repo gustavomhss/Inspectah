@@ -1,0 +1,14 @@
+{
+  "source_id": "api_market_prices",
+  "canonical_key": "SKU-AZOLEO-900ML",
+  "canonical_url": "SKU-AZOLEO-900ML",
+  "observed_at": "2025-11-10T13:10:00+00:00",
+  "fields": {
+    "sku": "SKU-AZOLEO-900ML",
+    "product": "Óleo de Soja 900ml",
+    "price": 8.49,
+    "currency": "BRL",
+    "region": "SP",
+    "last_update": "2025-11-10T13:10:00Z"
+  }
+}

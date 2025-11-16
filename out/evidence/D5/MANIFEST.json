@@ -1,0 +1,24 @@
+{
+  "files": [
+    {
+      "path": "evidence/T5_bench/bench_raw.json",
+      "sha256": "2b4a8871e7976ca6a49273ca09eec9007a1d5a6aaab7fb37d8f19856c0f50baa",
+      "bytes": 3529
+    },
+    {
+      "path": "evidence/T5_bench/bench_smoke.json",
+      "sha256": "736a70382f843f57d53dbe239a2013f93163727d8dd10823e4ec8280f0d0c464",
+      "bytes": 94
+    },
+    {
+      "path": "evidence/T5_bench/bench_summary.json",
+      "sha256": "237d1c25379c5c407a26e989a2e097ee58249b58b08e5ea36b86f78274cb6c8b",
+      "bytes": 1710
+    },
+    {
+      "path": "evidence/T5_bench/series_latency.json",
+      "sha256": "ff6d881a72e4920e2c133de03316b7c008cadd736068b6ff8042a788022aa7f5",
+      "bytes": 1796
+    }
+  ]
+}

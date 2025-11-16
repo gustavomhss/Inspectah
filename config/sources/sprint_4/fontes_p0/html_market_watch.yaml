@@ -1,0 +1,45 @@
+{
+  "metadata": {
+    "id": "html_market_watch",
+    "name": "HTML Market Watch",
+    "description": "Snapshots HTML capturados nos mercados monitorados pela Sprint 4.",
+    "type": "html",
+    "priority": "P0",
+    "risk_level": "medium",
+    "owners": {
+      "product": "renata.souza@inspectah",
+      "engineering": "codex@inspectah"
+    }
+  },
+  "ingest": {
+    "mode": "pull",
+    "endpoint": "fixtures://sprint_4/html_market_watch",
+    "method": "GET",
+    "headers": [],
+    "cadence_minutes": 60,
+    "staleness_tolerance_minutes": 180,
+    "auth": null
+  },
+  "parsing": {
+    "parser": "html_market_watch_parser"
+  },
+  "deduplication": {
+    "keys": ["sku", "location"],
+    "strategy": "hash"
+  },
+  "timestamps": {
+    "field": "observed_at",
+    "timezone": "America/Sao_Paulo"
+  },
+  "field_schema_id": "html_market_watch",
+  "evidence_policy": {
+    "store_raw_payload": true,
+    "capture_screenshot": true
+  },
+  "observability": {
+    "metrics_namespace": "inspectah.html_market_watch",
+    "labels": {
+      "source_id": "html_market_watch"
+    }
+  }
+}

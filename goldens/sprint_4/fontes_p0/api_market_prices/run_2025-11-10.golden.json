@@ -1,0 +1,35 @@
+[
+  {
+    "source_id": "api_market_prices",
+    "collected_at": "2025-11-10T09:30:00Z",
+    "sku": "SKU-1001",
+    "product": "Arroz Premium 1kg",
+    "price": 8.99,
+    "currency": "BRL",
+    "region": "SP",
+    "last_update": "2025-11-10T09:15:00Z",
+    "promo_label": "Leve 3 pague 2"
+  },
+  {
+    "source_id": "api_market_prices",
+    "collected_at": "2025-11-10T09:30:00Z",
+    "sku": "SKU-1002",
+    "product": "Feijão Carioca 1kg",
+    "price": 7.49,
+    "currency": "BRL",
+    "region": "SP",
+    "last_update": "2025-11-10T09:10:00Z",
+    "promo_label": null
+  },
+  {
+    "source_id": "api_market_prices",
+    "collected_at": "2025-11-10T09:30:00Z",
+    "sku": "SKU-1003",
+    "product": "Açúcar Refinado 1kg",
+    "price": 5.29,
+    "currency": "BRL",
+    "region": "SP",
+    "last_update": "2025-11-10T09:05:00Z",
+    "promo_label": "Preço do dia"
+  }
+]
