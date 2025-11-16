@@ -1,0 +1,17 @@
+{
+  "id": "html_market_watch",
+  "name": "HTML Market Watch",
+  "type": "html",
+  "description": "Snapshot HTML simples dos preços coletados manualmente em mercados locais.",
+  "sample_file": "tests/fixtures/field_designer/html_market_snapshot.html",
+  "dedup_fields": ["product.sku"],
+  "canonical_path": "product.sku",
+  "timestamp_path": "product.observed_at",
+  "fields": [
+    {"name": "sku", "type": "string", "path": "product.sku"},
+    {"name": "product", "type": "string", "path": "product.name"},
+    {"name": "price", "type": "number", "path": "product.price"},
+    {"name": "location", "type": "string", "path": "product.location"},
+    {"name": "observed_at", "type": "datetime", "path": "product.observed_at"}
+  ]
+}

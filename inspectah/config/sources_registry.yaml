@@ -1,0 +1,31 @@
+{
+  "sources": [
+    {
+      "id": "rss_economia",
+      "type": "rss",
+      "url": "fixtures/s5/rss_feed.xml",
+      "frequency": "PT1H",
+      "timeout": 5,
+      "parse_spec": {"fixture": "rss_feed.xml"},
+      "enabled": true
+    },
+    {
+      "id": "api_investimentos",
+      "type": "api",
+      "url": "fixtures/s5/api_feed.json",
+      "frequency": "PT30M",
+      "timeout": 5,
+      "parse_spec": {"fixture": "api_feed.json"},
+      "enabled": true
+    },
+    {
+      "id": "html_obras",
+      "type": "html",
+      "url": "fixtures/s5/html_page.html",
+      "frequency": "PT2H",
+      "timeout": 5,
+      "parse_spec": {"fixture": "html_page.html"},
+      "enabled": true
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+ID: {id}
+Tipo: {type}
+URL: {url}
+Frequency: {frequency}
+Timeout: {timeout}s
+Enabled: {enabled}
+Fixture: {fixture}
+-----------------------------

@@ -1,0 +1,16 @@
+[
+  {
+    "id": "api-1",
+    "headline": "PIB cresce 3%",
+    "published_at": "2025-03-09T14:00:00Z",
+    "summary": "Governo informa que o PIB subiu 3% no último trimestre.",
+    "facts": {"metric": "pib_q4", "value": 3.0, "unit": "%"}
+  },
+  {
+    "id": "api-2",
+    "headline": "Exportações recordes",
+    "published_at": "2025-03-09T16:00:00Z",
+    "summary": "Exportações bateram recorde em fevereiro.",
+    "facts": {"metric": "exportacoes_fev", "value": 100.0, "unit": "bi"}
+  }
+]

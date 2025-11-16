@@ -1,0 +1,45 @@
+{
+  "metadata": {
+    "id": "api_market_prices",
+    "name": "API Mercado Preços",
+    "description": "Endpoint JSON acompanhado pelos fixtures reais da Sprint 4 com amostra de preços varejistas.",
+    "type": "api",
+    "priority": "P0",
+    "risk_level": "low",
+    "owners": {
+      "product": "bianca.martins@inspectah",
+      "engineering": "codex@inspectah"
+    }
+  },
+  "ingest": {
+    "mode": "pull",
+    "endpoint": "fixtures://sprint_4/api_market_prices",
+    "method": "GET",
+    "headers": [],
+    "cadence_minutes": 30,
+    "staleness_tolerance_minutes": 120,
+    "auth": "vault://sprint4/api_market_prices"
+  },
+  "parsing": {
+    "parser": "api_market_prices_parser"
+  },
+  "deduplication": {
+    "keys": ["sku", "region"],
+    "strategy": "hash"
+  },
+  "timestamps": {
+    "field": "last_update",
+    "timezone": "UTC"
+  },
+  "field_schema_id": "api_market_prices",
+  "evidence_policy": {
+    "store_raw_payload": true,
+    "manifest_versioned": true
+  },
+  "observability": {
+    "metrics_namespace": "inspectah.api_market_prices",
+    "labels": {
+      "source_id": "api_market_prices"
+    }
+  }
+}

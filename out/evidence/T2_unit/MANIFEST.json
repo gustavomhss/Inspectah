@@ -1,24 +1,9 @@
 {
   "files": [
     {
-      "path": "T2_unit/field_designer_dryrun.json",
-      "sha256": "d77ca61bbbeb76021d7f7da3f6ebea5f48e02f1b8486f07e740dcd14a1f9d7ca",
-      "bytes": 758
-    },
-    {
-      "path": "T2_unit/api_smoke.json",
-      "sha256": "dcc268f46dabd05a02c0d75a2b49d9b542cfa0c8c20f6be034993e1e6e09a932",
-      "bytes": 5042
-    },
-    {
-      "path": "T2_unit/api_smoke.log",
-      "sha256": "8c783428ca2956a86a99943e125a30a34529bb446fc45d5c0873a06d2245dd34",
-      "bytes": 45
-    },
-    {
-      "path": "T2_unit/evidence_vault/MANIFEST.json",
-      "sha256": "60c7561a6c09ab4fc04d988985865732db466a1fb83f2b0dc436d6de806d5b38",
-      "bytes": 736
+      "path": "out/evidence/T2_unit/unittest.log",
+      "sha256": "fc23540c8545d4075fe2f0420accd022e74e5566176c3bd4c597964ff02c2e14",
+      "bytes": 106
     }
   ]
 }

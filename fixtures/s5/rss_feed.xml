@@ -1,0 +1,17 @@
+<rss version="2.0">
+  <channel>
+    <title>Economia News</title>
+    <item>
+      <guid>rss-1</guid>
+      <title>Inflação fecha em 4,5%</title>
+      <pubDate>Mon, 10 Mar 2025 10:00:00 GMT</pubDate>
+      <description>Segundo o IBGE, o índice X fechou em 4,5%.</description>
+    </item>
+    <item>
+      <guid>rss-2</guid>
+      <title>Produção industrial sobe</title>
+      <pubDate>Mon, 10 Mar 2025 12:00:00 GMT</pubDate>
+      <description>Produção industrial cresceu 2% em fevereiro.</description>
+    </item>
+  </channel>
+</rss>

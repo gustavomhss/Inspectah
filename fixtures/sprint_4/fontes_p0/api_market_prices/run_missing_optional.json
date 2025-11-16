@@ -1,0 +1,22 @@
+{
+  "source_id": "api_market_prices",
+  "collected_at": "2025-11-12T08:20:00Z",
+  "items": [
+    {
+      "sku": "SKU-3001",
+      "product": "Café Torrado 500g",
+      "price": 13.99,
+      "currency": "BRL",
+      "region": "RJ",
+      "last_update": "2025-11-12T08:05:00Z"
+    },
+    {
+      "sku": "SKU-3002",
+      "product": "Leite Integral 1L",
+      "price": 4.50,
+      "currency": "BRL",
+      "region": "RJ",
+      "last_update": "2025-11-12T08:02:00Z"
+    }
+  ]
+}

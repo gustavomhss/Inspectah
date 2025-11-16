@@ -1,0 +1,17 @@
+{
+  "id": "rss_news_minimal",
+  "name": "RSS News Minimal",
+  "type": "rss",
+  "description": "Feed sintético usado para validar o Field Designer com RSS realista.",
+  "sample_file": "tests/fixtures/rss_sample.xml",
+  "dedup_fields": ["item.link"],
+  "canonical_path": "item.link",
+  "timestamp_path": "item.published",
+  "fields": [
+    {"name": "title", "type": "string", "path": "item.title"},
+    {"name": "url", "type": "string", "path": "item.link"},
+    {"name": "published_at", "type": "datetime", "path": "item.published"},
+    {"name": "summary", "type": "string", "path": "item.description"},
+    {"name": "source_name", "type": "string", "path": "metadata.source_name", "default": "RSS News Minimal"}
+  ]
+}

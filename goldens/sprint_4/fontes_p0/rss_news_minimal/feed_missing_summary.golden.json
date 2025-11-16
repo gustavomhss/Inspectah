@@ -1,0 +1,18 @@
+[
+  {
+    "source_id": "rss_news_minimal",
+    "title": "Relatório ambiental",
+    "url": "https://news.local/mixed/environment",
+    "published_at": "Fri, 14 Nov 2025 12:10:00 GMT",
+    "summary": "Resumo do relatório apresentado.",
+    "source_name": "Eco News"
+  },
+  {
+    "source_id": "rss_news_minimal",
+    "title": "Evento tecnológico",
+    "url": "https://news.local/mixed/tech-event",
+    "published_at": "Fri, 14 Nov 2025 11:00:00 GMT",
+    "summary": null,
+    "source_name": "Tech Radar"
+  }
+]

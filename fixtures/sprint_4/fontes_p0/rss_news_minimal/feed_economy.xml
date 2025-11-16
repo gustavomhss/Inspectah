@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Economy Feed</title>
+    <link>https://news.local/economy</link>
+    <item>
+      <title>Mercado sobe 2%</title>
+      <link>https://news.local/economy/market-up</link>
+      <pubDate>Thu, 13 Nov 2025 08:00:00 GMT</pubDate>
+      <description>Bolsa reage positivamente a anúncios.</description>
+      <source_name>Economy Watch</source_name>
+    </item>
+    <item>
+      <title>Inflação desacelera</title>
+      <link>https://news.local/economy/inflation</link>
+      <pubDate>Thu, 13 Nov 2025 09:15:00 GMT</pubDate>
+      <description>IPCA indica leve queda.</description>
+      <source_name>Economy Watch</source_name>
+    </item>
+  </channel>
+</rss>

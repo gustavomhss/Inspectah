@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://inspectah.dev/schemas/inspectah_item_v0_1.json",
+  "title": "Inspectah Item v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "source_id": {"type": "string", "minLength": 1},
+    "item_id": {"type": "string", "minLength": 1},
+    "bundle_id": {"type": "string", "minLength": 1},
+    "state": {
+      "type": "string",
+      "enum": ["S0", "S1", "S2", "S3", "S4"]
+    },
+    "run_id": {"type": "string", "minLength": 1},
+    "watcher_type": {"type": "string", "minLength": 1},
+    "fetched_at": {"type": "string", "format": "date-time"},
+    "request_url": {"type": "string", "format": "uri"},
+    "status_code": {"type": "integer"},
+    "response_size_bytes": {"type": "integer", "minimum": 0},
+    "content_type": {"type": "string"},
+    "headline": {"type": "string"},
+    "published_at": {"type": ["string", "null"], "format": "date-time"},
+    "entities": {
+      "type": "array",
+      "items": {"type": "string"},
+      "uniqueItems": true
+    },
+    "facts": {
+      "type": "object",
+      "additionalProperties": {
+        "oneOf": [
+          {"type": "string"},
+          {"type": "number"},
+          {"type": "boolean"}
+        ]
+      }
+    },
+    "claims": {
+      "type": "array",
+      "items": {"$ref": "inspectah_claim_v0_1.json#"}
+    },
+    "equivalence_key": {"type": "string", "minLength": 1},
+    "confidence_local": {"type": "number", "minimum": 0, "maximum": 1},
+    "reasoning_short": {"type": "string"},
+    "text_sha256": {"type": "string", "pattern": "^[A-Fa-f0-9]{64}$"},
+    "bundle_path": {"type": "string"}
+  },
+  "required": [
+    "source_id",
+    "item_id",
+    "bundle_id",
+    "state",
+    "run_id",
+    "watcher_type",
+    "fetched_at",
+    "request_url",
+    "status_code",
+    "response_size_bytes",
+    "content_type",
+    "equivalence_key",
+    "confidence_local"
+  ],
+  "dependencies": {
+    "claims": ["equivalence_key"]
+  }
+}

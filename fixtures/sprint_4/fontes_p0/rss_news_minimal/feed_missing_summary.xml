@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Mixed Feed</title>
+    <link>https://news.local/mixed</link>
+    <item>
+      <title>Evento tecnológico</title>
+      <link>https://news.local/mixed/tech-event</link>
+      <pubDate>Fri, 14 Nov 2025 11:00:00 GMT</pubDate>
+      <source_name>Tech Radar</source_name>
+    </item>
+    <item>
+      <title>Relatório ambiental</title>
+      <link>https://news.local/mixed/environment</link>
+      <pubDate>Fri, 14 Nov 2025 12:10:00 GMT</pubDate>
+      <description>Resumo do relatório apresentado.</description>
+      <source_name>Eco News</source_name>
+    </item>
+  </channel>
+</rss>

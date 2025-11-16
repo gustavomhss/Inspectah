@@ -1,0 +1,62 @@
+{
+  "schema_id": "rss_news_minimal",
+  "source_id": "rss_news_minimal",
+  "version": 1,
+  "fields": [
+    {
+      "name": "title",
+      "display_name": "Título",
+      "type": "string",
+      "required": true,
+      "example": "Mercado sobe 2%",
+      "description": "Título do item RSS",
+      "is_primary_identifier": false,
+      "tags": ["evidence_core"],
+      "slo_impact": []
+    },
+    {
+      "name": "url",
+      "display_name": "URL",
+      "type": "string",
+      "required": true,
+      "example": "https://noticias.example/mercado",
+      "description": "Link canônico da notícia",
+      "is_primary_identifier": true,
+      "tags": ["dedup_key"],
+      "slo_impact": ["evidence_completeness_rate"]
+    },
+    {
+      "name": "published_at",
+      "display_name": "Publicado em",
+      "type": "datetime",
+      "required": true,
+      "example": "2025-11-12T12:30:00Z",
+      "description": "Horário do item no feed",
+      "is_primary_identifier": false,
+      "tags": ["timestamp"],
+      "slo_impact": ["detection_latency_p95_min"]
+    },
+    {
+      "name": "summary",
+      "display_name": "Resumo",
+      "type": "string",
+      "required": false,
+      "example": "Resumo textual da notícia",
+      "description": "Trecho do conteúdo",
+      "is_primary_identifier": false,
+      "tags": ["evidence_core"],
+      "slo_impact": []
+    },
+    {
+      "name": "source_name",
+      "display_name": "Fonte",
+      "type": "string",
+      "required": true,
+      "example": "RSS Minimal",
+      "description": "Origem declarada no feed",
+      "is_primary_identifier": false,
+      "tags": ["evidence_core"],
+      "slo_impact": []
+    }
+  ]
+}

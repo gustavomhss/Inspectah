@@ -1,0 +1,43 @@
+{
+  "profiles": [
+    {
+      "id": "default",
+      "weights": {
+        "source_count": 0.3,
+        "agreement": 0.3,
+        "recency": 0.2,
+        "evidence": 0.2
+      },
+      "limits": {
+        "single_source_cap": 60,
+        "low_quality_cap": 55
+      }
+    },
+    {
+      "id": "price_feed",
+      "weights": {
+        "source_count": 0.35,
+        "agreement": 0.35,
+        "recency": 0.2,
+        "evidence": 0.1
+      },
+      "limits": {
+        "single_source_cap": 60,
+        "low_quality_cap": 50
+      }
+    },
+    {
+      "id": "news_event",
+      "weights": {
+        "source_count": 0.25,
+        "agreement": 0.25,
+        "recency": 0.3,
+        "evidence": 0.2
+      },
+      "limits": {
+        "single_source_cap": 55,
+        "low_quality_cap": 45
+      }
+    }
+  ]
+}

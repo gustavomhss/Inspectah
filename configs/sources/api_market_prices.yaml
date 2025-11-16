@@ -1,0 +1,18 @@
+{
+  "id": "api_market_prices",
+  "name": "API Mercado Preços",
+  "type": "api",
+  "description": "API JSON fictícia com preços de itens de mercado em São Paulo.",
+  "sample_file": "tests/fixtures/field_designer/api_market_prices.json",
+  "dedup_fields": ["payload.sku"],
+  "canonical_path": "payload.sku",
+  "timestamp_path": "payload.last_update",
+  "fields": [
+    {"name": "sku", "type": "string", "path": "payload.sku"},
+    {"name": "product", "type": "string", "path": "payload.product"},
+    {"name": "price", "type": "number", "path": "payload.price"},
+    {"name": "currency", "type": "string", "path": "payload.currency"},
+    {"name": "region", "type": "string", "path": "payload.region"},
+    {"name": "last_update", "type": "datetime", "path": "payload.last_update"}
+  ]
+}

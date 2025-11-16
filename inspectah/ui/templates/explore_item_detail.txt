@@ -1,0 +1,15 @@
+----------------------------------------
+Fonte: {source_id}
+Item: {item_id}
+Estado: {state}
+Equivalence Key: {equivalence_key}
+Headline: {headline}
+Publicado em: {published_at}
+Bundle: {bundle_path}
+----------------------------------------
+[TEXTO]
+{preview_text}
+
+[CLAIMS]
+{claims_block}
+----------------------------------------

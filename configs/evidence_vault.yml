@@ -1,0 +1,11 @@
+{
+  "vault": {
+    "backend": "local_stub",
+    "bucket": "inspectah-evidence-dev",
+    "region": "sa-east-1",
+    "kms_key_alias": "alias/inspectah-evidence-dev",
+    "endpoint_url": null,
+    "default_ttl_seconds": 900,
+    "local_root": "data/vault_objects"
+  }
+}

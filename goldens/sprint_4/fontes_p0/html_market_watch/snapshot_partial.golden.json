@@ -1,0 +1,19 @@
+[
+  {
+    "source_id": "html_market_watch",
+    "collected_at": "2025-11-01T00:00:00Z",
+    "sku": "HMW-0201",
+    "product": "Chocolate 90g",
+    "price": 5.99,
+    "location": "MG",
+    "observed_at": "2025-11-12T10:15:00-03:00"
+  },
+  {
+    "source_id": "html_market_watch",
+    "collected_at": "2025-11-01T00:00:00Z",
+    "sku": "HMW-0202",
+    "product": "Açúcar 1kg",
+    "location": "MG",
+    "observed_at": "2025-11-12T10:20:00-03:00"
+  }
+]

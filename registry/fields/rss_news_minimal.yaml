@@ -1,0 +1,30 @@
+{
+  "source_id": "rss_news_minimal",
+  "fields": [
+    {
+      "name": "title",
+      "type": "string",
+      "path": "item.title",
+      "transforms": []
+    },
+    {
+      "name": "url",
+      "type": "string",
+      "path": "item.link",
+      "transforms": ["normalize_url"]
+    },
+    {
+      "name": "published_at",
+      "type": "timestamp",
+      "path": "item.published",
+      "transforms": ["parse_rfc822_date"]
+    },
+    {
+      "name": "source_name",
+      "type": "string",
+      "path": "metadata.source_name",
+      "transforms": [],
+      "default": "RSS News Minimal"
+    }
+  ]
+}

@@ -1,55 +1,65 @@
 #!/usr/bin/env bash
 set -euo pipefail
-
-ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-OUT_DIR="${ORR_OUTDIR:-$ROOT/out}"
-EVID_DIR="$OUT_DIR/evidence/T3_property"
-SCORECARD="$OUT_DIR/scorecards/T3_property.json"
-mkdir -p "$EVID_DIR" "$OUT_DIR/scorecards"
-
-bin/orr_ingestor_smoke.sh
-
-REPORT_PATH="$EVID_DIR/report.json"
-SERIES_PATH="$EVID_DIR/series_property.json"
-
-python3 "$ROOT/scripts/t3_property_runner.py" --report "$REPORT_PATH" --series "$SERIES_PATH"
-
-python3 - <<'PY' "$EVID_DIR" "$SCORECARD"
-import datetime, hashlib, json, os, sys
-evid_dir, scorecard_path = sys.argv[1:3]
-files = []
-for rel in ["report.json", "series_property.json", "ingestor_smoke.json", "series_ingest.json"]:
-    path = os.path.join(evid_dir, rel)
-    if not os.path.exists(path):
-        continue
-    with open(path, "rb") as fh:
-        data = fh.read()
-    files.append({
-        "path": os.path.relpath(path, os.path.join(evid_dir, "..")),
-        "sha256": hashlib.sha256(data).hexdigest(),
-        "bytes": len(data),
-    })
-manifest_path = os.path.join(evid_dir, "MANIFEST_T3.json")
-with open(manifest_path, "w", encoding="utf-8") as fh:
-    json.dump({"files": files}, fh, indent=2)
-
-now = datetime.datetime.utcnow().isoformat() + "Z"
-with open(scorecard_path, "w", encoding="utf-8") as fh:
-    json.dump({
-        "gate": "T3",
-        "version": "1.0",
-        "started_at": now,
-        "finished_at": now,
-        "passed": True,
-        "failures": [],
-        "metrics": {},
-        "artifacts": [
-            {"path": "out/evidence/T3_property/report.json"},
-            {"path": "out/evidence/T3_property/series_property.json"},
-            {"path": "out/evidence/T3_property/ingestor_smoke.json"}
-        ],
-        "notes": "Idempotence/determinism/backpressure verified"
-    }, fh, indent=2)
+OUT="${ORR_OUTDIR:-out}"
+SEED="${ORR_SEED:-1337}"
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --out)
+      OUT="$2"
+      shift 2
+      ;;
+    --seed)
+      SEED="$2"
+      shift 2
+      ;;
+    *)
+      echo "Unknown argument: $1" >&2
+      exit 1
+      ;;
+  esac
+done
+EVID_DIR="$OUT/evidence/T3_contract"
+SCORECARD="$OUT/scorecards/T3_contract.json"
+LOG="$EVID_DIR/unittest.log"
+MANIFEST="$EVID_DIR/MANIFEST.json"
+mkdir -p "$EVID_DIR" "$OUT/scorecards"
+START=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+set +e
+python3 -m unittest discover -s tests/contract -p 'test_watcher_rss_news_minimal.py' >"$LOG" 2>&1
+RC=$?
+python3 -m unittest discover -s tests/integration -p 'test_explore_api.py' >>"$LOG" 2>&1
+RC2=$?
+RC=$((RC | RC2))
+set -e
+FINISH=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+python3 - <<'PY' "$LOG" "$MANIFEST" "$SCORECARD" "$START" "$FINISH" "$RC"
+import hashlib
+import json
+import sys
+from pathlib import Path
+log_path, manifest_path, scorecard_path, started, finished, rc = sys.argv[1:7]
+rc = int(rc)
+log = Path(log_path)
+log_sha = hashlib.sha256(log.read_bytes()).hexdigest()
+manifest = {
+    "files": [
+        {"path": log.as_posix(), "sha256": log_sha, "bytes": log.stat().st_size}
+    ]
+}
+Path(manifest_path).write_text(json.dumps(manifest, indent=2))
+passed = rc == 0
+scorecard = {
+    "gate": "T3_contract",
+    "version": "1.0",
+    "started_at": started,
+    "finished_at": finished,
+    "passed": passed,
+    "failures": [] if passed else ["contract-tests-failed"],
+    "metrics": {"exit_code": rc},
+    "artifacts": manifest["files"],
+    "notes": ""
+}
+Path(scorecard_path).write_text(json.dumps(scorecard, indent=2))
+if not passed:
+    sys.exit(1)
 PY
-
-echo "T3 gate passed."

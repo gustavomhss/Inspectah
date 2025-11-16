@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
+# Wrapper retained for backward compatibility. For Sprint 3 the official
+# T8 (go/no-go) gate lives in bin/orr_t8_go_no_go.sh.
 set -euo pipefail
-OUT=${ORR_OUTDIR:-out}
-SEED=${ORR_SEED:-1337}
-echo "[stub] orr_${gate}.sh OUT=$OUT SEED=$SEED"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+exec "$SCRIPT_DIR/orr_t8_go_no_go.sh" "$@"

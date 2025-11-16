@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://inspectah.dev/schemas/inspectah_claim_v0_1.json",
+  "title": "Inspectah Claim v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "claim_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Identificador único do claim dentro do item."
+    },
+    "claim_type": {
+      "type": "string",
+      "enum": [
+        "resultado_binario",
+        "resultado_numerico",
+        "estado_evento",
+        "data_evento",
+        "classificacao"
+      ]
+    },
+    "declared_metric": {
+      "type": "string",
+      "minLength": 1,
+      "description": "O que está sendo medido (ex.: indice_X)."
+    },
+    "declared_subject": {
+      "type": ["string", "null"],
+      "description": "Quem/onde se aplica (ex.: pais, orgao)."
+    },
+    "declared_value": {
+      "type": ["string", "number"],
+      "description": "Valor principal declarado pela fonte."
+    },
+    "declared_unit": {
+      "type": ["string", "null"],
+      "description": "Unidade declarada (%, BRL, etc.)."
+    },
+    "polarity": {
+      "type": "string",
+      "enum": [
+        "afirma_que_e_verdade",
+        "afirma_que_e_falso",
+        "informa_sem_julgar",
+        "indeterminado"
+      ]
+    },
+    "local_verdict": {
+      "type": "string",
+      "enum": [
+        "segundo_esta_fonte_este_e_o_valor",
+        "segundo_esta_fonte_isto_ocorreu",
+        "segundo_esta_fonte_isto_nao_ocorreu",
+        "segundo_esta_fonte_ainda_esta_pendente",
+        "nao_ha_veredito_claro"
+      ]
+    },
+    "confidence_claim": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    }
+  },
+  "required": [
+    "claim_id",
+    "claim_type",
+    "declared_metric",
+    "declared_value",
+    "polarity",
+    "local_verdict",
+    "confidence_claim"
+  ]
+}

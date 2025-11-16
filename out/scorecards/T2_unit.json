@@ -1,24 +1,19 @@
 {
-  "gate": "T2",
-  "version": "1.1",
-  "started_at": "2025-11-13T00:07:56.262379Z",
-  "finished_at": "2025-11-13T00:07:56.262379Z",
+  "gate": "T2_unit",
+  "version": "1.0",
+  "started_at": "2025-11-13T18:30:44Z",
+  "finished_at": "2025-11-13T18:30:45Z",
   "passed": true,
   "failures": [],
-  "metrics": {},
+  "metrics": {
+    "exit_code": 0
+  },
   "artifacts": [
     {
-      "path": "out/evidence/T2_unit/field_designer_dryrun.json"
-    },
-    {
-      "path": "out/evidence/T2_unit/evidence_vault/MANIFEST.json"
-    },
-    {
-      "path": "out/evidence/T2_unit/api_smoke.json"
-    },
-    {
-      "path": "out/evidence/T2_unit/MANIFEST.json"
+      "path": "out/evidence/T2_unit/unittest.log",
+      "sha256": "fc23540c8545d4075fe2f0420accd022e74e5566176c3bd4c597964ff02c2e14",
+      "bytes": 106
     }
   ],
-  "notes": "Field Designer + Evidence Vault + API smoke validated"
+  "notes": ""
 }
