@@ -1,0 +1,125 @@
+domain: dominio_piloto
+name: Observatório Municipal da Cesta Básica
+description: >-
+  Modelo canônico para consolidar sinais de preço dos programas RSS Sindicato,
+  API Feira Segura e painel HTML do Mercado Municipal.
+timezone: America/Sao_Paulo
+sources:
+  - id: fonte_a
+    config: config/sources/fonte_a.yaml
+    description: Boletim RSS do sindicato (atualizações horárias)
+  - id: fonte_b
+    config: config/sources/fonte_b.yaml
+    description: API JSON Feira Segura (leituras contínuas)
+  - id: fonte_c
+    config: config/sources/fonte_c.yaml
+    description: Painel HTML semanal do Mercado Municipal
+dedup_fields:
+  - product_name
+  - unit
+  - region
+search_fields:
+  - product_name
+  - notes
+filters:
+  categoria:
+    field: category
+    type: keyword
+    description: Filtra pela categoria declarada nas fontes (`graos`, `proteinas`, `higiene`...)
+  regiao:
+    field: region
+    type: keyword
+    description: Região administrativa monitorada (Zona Norte, Centro, etc.)
+  fonte:
+    field: supporting_sources
+    type: keyword
+    description: Limita resultados para registros suportados por uma fonte específica
+fields:
+  - name: item_id
+    title: Identificador original
+    type: string
+    required: true
+    description: Identificador fornecido pela fonte (GUID, SKU ou código interno).
+    sources:
+      fonte_a: item.guid
+      fonte_b: payload.item_id
+      fonte_c: product.item_id
+  - name: product_name
+    title: Produto
+    type: string
+    required: true
+    description: Nome comercial do item observado.
+    sources:
+      fonte_a: item.title
+      fonte_b: payload.product_name
+      fonte_c: product.name
+  - name: category
+    title: Categoria
+    type: string
+    required: true
+    description: Categoria da cesta básica.
+    transforms: [lowercase]
+    sources:
+      fonte_a: item.category
+      fonte_b: payload.category
+      fonte_c: product.category
+  - name: unit
+    title: Unidade
+    type: string
+    required: true
+    description: Formato informado pelo parceiro (`5kg`, `1L`, etc.).
+    sources:
+      fonte_a: item.unit
+      fonte_b: payload.unit
+      fonte_c: product.unit
+  - name: price_brl
+    title: Preço (BRL)
+    type: number
+    required: true
+    description: Valor nominal informado pela fonte em reais.
+    sources:
+      fonte_a: item.price
+      fonte_b: payload.price_brl
+      fonte_c: product.price
+  - name: region
+    title: Região
+    type: string
+    required: true
+    description: Região administrativa onde o preço foi medido.
+    transforms: [titlecase]
+    sources:
+      fonte_a: item.region
+      fonte_b: payload.region
+      fonte_c: product.region
+  - name: reported_at
+    title: Data de referência
+    type: datetime
+    required: true
+    description: Timestamp informado pelo parceiro.
+    sources:
+      fonte_a: item.published
+      fonte_b: payload.reported_at
+      fonte_c: product.observed_at
+  - name: source_url
+    title: URL pública
+    type: string
+    required: true
+    description: Link público para consulta manual/cross-check.
+    sources:
+      fonte_a: item.link
+      fonte_b: payload.source_url
+      fonte_c: product.source_url
+  - name: notes
+    title: Observações
+    type: text
+    required: false
+    description: Comentários adicionais (promoção, estoque, campanha).
+    sources:
+      fonte_a: item.notes
+      fonte_b: payload.notes
+      fonte_c: product.notes
+supporting_fields:
+  - name: supporting_sources
+    description: Lista de fontes que alimentam o registro canônico.
+  - name: hash_sha256
+    description: Hash do arquivo `raw.json` usado no manifest.

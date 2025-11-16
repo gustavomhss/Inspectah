@@ -1,0 +1,39 @@
+id: fonte_b
+name: API Feira Segura
+domain: dominio_piloto
+type: api_json
+description: >-
+  Endpoint JSON aberto que consolida leituras diárias do programa Feira Segura
+  (postos móveis e feiras municipais).
+transport:
+  url: https://feirasegura.prefeitura.sp.gov.br/api/v1/prices
+  authentication: none
+  format: json
+  pagination: none
+sample_file: fixtures/sprint_6/fonte_b_api.json
+timezone: America/Sao_Paulo
+polling:
+  cadence: hourly
+  interval_minutes: 60
+  window_start: "07:00"
+  window_end: "21:00"
+dedup:
+  strategy: canonical_fields
+  fields:
+    - product_name
+    - unit
+    - region
+canonical:
+  timestamp_field: reported_at
+  url_field: source_url
+  summary_field: notes
+slo:
+  freshness_minutes_p95: 60
+  availability: 0.99
+retention_days: 14
+owner:
+  organization: Secretaria Municipal de Desenvolvimento Econômico
+  contact: mailto:alpha+feirasegura@sigma.local
+notes:
+  - Payload entrega `volatility_index` usado apenas para análises futuras.
+  - Fonte referência para validação cruzada com o feed RSS.
