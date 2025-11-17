@@ -1,0 +1,7 @@
+exports:
+  domain_a_demo:
+    facts:
+      - obra_123_prazo
+  domain_b_demo:
+    facts:
+      - preco_media_sp_julho

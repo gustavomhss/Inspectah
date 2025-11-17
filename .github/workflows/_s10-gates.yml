@@ -1,0 +1,40 @@
+name: Sprint 10 Gates
+
+on:
+  push:
+    branches:
+      - main
+      - q2-s10-truthdb-guardian
+  pull_request:
+    branches:
+      - main
+      - q2-s10-truthdb-guardian
+
+jobs:
+  sprint10-gates:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install project
+        run: pip install -e .
+
+      - name: Run Sprint 10 gates
+        run: |
+          export PYTHONPATH=.
+          bin/s10_all_gates.sh
+
+      - name: Upload scorecards and evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sprint10-gates-artifacts
+          path: |
+            out/scorecards
+            out/evidence
