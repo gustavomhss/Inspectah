@@ -1,0 +1,7 @@
+{
+  "source_id": "src_fato_2",
+  "items": [
+    {"id": "fato2_item_001", "pessoa": "João Mendes", "caso": "Operação Horizonte", "status": "confirmado", "info_type": "fato", "descricao": "Relatório do tribunal confirma condenação.", "coletado_em": "2025-05-01T13:00:00Z"},
+    {"id": "fato2_item_002", "pessoa": "João Mendes", "caso": "Operação Horizonte", "status": "negado", "info_type": "fato", "descricao": "Equipe de imprensa alega recurso pendente.", "coletado_em": "2025-05-02T16:00:00Z"}
+  ]
+}

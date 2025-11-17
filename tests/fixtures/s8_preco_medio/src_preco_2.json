@@ -1,0 +1,8 @@
+{
+  "source_id": "src_preco_2",
+  "items": [
+    {"id": "preco2_item_001", "produto": "arroz", "cidade": "São Paulo", "bairro": "Centro", "valor": 10.8, "moeda": "BRL", "info_type": "preco", "coletado_em": "2025-05-01T12:00:00Z"},
+    {"id": "preco2_item_002", "produto": "arroz", "cidade": "São Paulo", "bairro": "Zona Sul", "valor": 11.0, "moeda": "BRL", "info_type": "preco", "coletado_em": "2025-05-02T14:00:00Z"},
+    {"id": "preco2_item_003", "produto": "arroz", "cidade": "São Paulo", "bairro": "Zona Norte", "valor": 10.7, "moeda": "BRL", "info_type": "preco", "coletado_em": "2025-05-03T08:45:00Z"}
+  ]
+}

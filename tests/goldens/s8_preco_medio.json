@@ -1,0 +1,91 @@
+{
+  "answer_text": "Com 2 fontes, o preço médio de arroz em São Paulo fica em 10.85 BRL. Detalhes: src_preco_1 registrou 10.90 BRL; src_preco_1 registrou 11.20 BRL; src_preco_1 registrou 10.50 BRL; src_preco_2 registrou 10.70 BRL; src_preco_2 registrou 11.00 BRL; src_preco_2 registrou 10.80 BRL.",
+  "summary": {
+    "query_type": "agregacao_simples",
+    "num_sources": 2,
+    "num_items": 6,
+    "main_value": 10.85,
+    "range": {
+      "min": 10.5,
+      "max": 11.2
+    },
+    "unit": "BRL"
+  },
+  "confidence": {
+    "level": "high",
+    "reasons": [
+      "dados consistentes entre as fontes analisadas"
+    ]
+  },
+  "limitations": [
+    "Somente dados do EvidenceBundle foram considerados."
+  ],
+  "evidence": {
+    "sources": [
+      "src_preco_1",
+      "src_preco_2"
+    ],
+    "items_preview": [
+      {
+        "item_id": "preco1_item_003",
+        "source_id": "src_preco_1",
+        "key_fields": {
+          "produto": "arroz",
+          "cidade": "São Paulo",
+          "valor": 10.9,
+          "created_at": "2025-05-03T09:30:00+00:00"
+        }
+      },
+      {
+        "item_id": "preco1_item_002",
+        "source_id": "src_preco_1",
+        "key_fields": {
+          "produto": "arroz",
+          "cidade": "São Paulo",
+          "valor": 11.2,
+          "created_at": "2025-05-02T11:00:00+00:00"
+        }
+      },
+      {
+        "item_id": "preco1_item_001",
+        "source_id": "src_preco_1",
+        "key_fields": {
+          "produto": "arroz",
+          "cidade": "São Paulo",
+          "valor": 10.5,
+          "created_at": "2025-05-01T10:00:00+00:00"
+        }
+      },
+      {
+        "item_id": "preco2_item_003",
+        "source_id": "src_preco_2",
+        "key_fields": {
+          "produto": "arroz",
+          "cidade": "São Paulo",
+          "valor": 10.7,
+          "created_at": "2025-05-03T08:45:00+00:00"
+        }
+      },
+      {
+        "item_id": "preco2_item_002",
+        "source_id": "src_preco_2",
+        "key_fields": {
+          "produto": "arroz",
+          "cidade": "São Paulo",
+          "valor": 11.0,
+          "created_at": "2025-05-02T14:00:00+00:00"
+        }
+      },
+      {
+        "item_id": "preco2_item_001",
+        "source_id": "src_preco_2",
+        "key_fields": {
+          "produto": "arroz",
+          "cidade": "São Paulo",
+          "valor": 10.8,
+          "created_at": "2025-05-01T12:00:00+00:00"
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "source_id": "src_preco_1",
+  "items": [
+    {"id": "cmp_preco1_001", "produto": "arroz", "cidade": "São Paulo", "bairro": "Moema", "valor": 11.5, "moeda": "BRL", "info_type": "preco", "coletado_em": "2025-05-04T10:10:00Z"},
+    {"id": "cmp_preco1_002", "produto": "arroz", "cidade": "São Paulo", "bairro": "Itaquera", "valor": 10.2, "moeda": "BRL", "info_type": "preco", "coletado_em": "2025-05-04T10:20:00Z"}
+  ]
+}
