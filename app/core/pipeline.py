@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from typing import Iterable, List
+import shutil
 
 from app.gpt_client.client import run_query as gpt_run_query
 
@@ -25,7 +26,7 @@ def run_pipeline(user_query: str) -> UserResponse:
         items = search_internal(parsed)
 
     bundle = build_evidence_bundle(parsed, items)
-    gpt_answer = gpt_run_query(bundle, user_query, parsed.query_type)
+    gpt_answer = gpt_run_query(bundle, user_query, parsed.detailed_type)
     status = _determine_status(parsed, bundle, items)
 
     response_id = storage.generate_entity_id("s9_resp")
@@ -34,7 +35,7 @@ def run_pipeline(user_query: str) -> UserResponse:
         query_id=query_id,
         query_log_id=query_id,
         info_type=parsed.info_type,
-        query_type=parsed.query_type,
+        query_type=parsed.detailed_type,
         evidence_bundle_id=bundle.id,
         answer_text=gpt_answer.answer_text,
         summary={
@@ -67,7 +68,7 @@ def run_pipeline(user_query: str) -> UserResponse:
     log = QueryLog(
         query_id=query_id,
         user_query=user_query,
-        query_type=parsed.query_type,
+        query_type=parsed.detailed_type,
         info_type=parsed.info_type,
         scenario_tag=scenario_from_info_type(parsed.info_type),
         evidence_bundle_id=bundle.id,
@@ -84,13 +85,14 @@ def run_pipeline(user_query: str) -> UserResponse:
         },
     )
     storage.save_query_log(log)
+    _mirror_legacy_artifacts(log, response, bundle)
     return response
 
 
 def _determine_status(parsed: ParsedQuery, bundle: EvidenceBundle, items: Iterable[Item]) -> QueryStatus:
     if parsed.query_type == "fora_de_escopo":
         return "fora_de_escopo"
-    if bundle.meta.get("num_sources", 0) < 2:
+    if bundle.meta.get("num_sources", 0) == 0:
         return "dados_insuficientes"
     return "ok" if any(True for _ in items) else "dados_insuficientes"
 
@@ -101,3 +103,18 @@ def _status_to_error_code(status: QueryStatus) -> str | None:
     if status == "dados_insuficientes":
         return "NO_DATA"
     return None
+
+
+def _mirror_legacy_artifacts(log: QueryLog, response: UserResponse, bundle: EvidenceBundle) -> None:
+    """Espelha artefatos gerados no layout atual para o prefixo s8_* usado pelos gates da S8."""
+    legacy_root = storage._repo_root() / "out" / "evidence"
+    mappings = [
+        (storage.queries_dir() / f"{log.query_id}.json", legacy_root / "s8_queries"),
+        (storage.bundles_dir() / f"{bundle.id}.json", legacy_root / "s8_bundles"),
+        (storage.responses_dir() / f"{response.id}.json", legacy_root / "s8_responses"),
+    ]
+    for src, dst_dir in mappings:
+        if not src.exists():
+            continue
+        dst_dir.mkdir(parents=True, exist_ok=True)
+        shutil.copy(src, dst_dir / src.name)

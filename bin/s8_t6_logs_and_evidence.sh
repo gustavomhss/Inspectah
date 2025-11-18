@@ -23,6 +23,19 @@ from pathlib import Path
 import os
 
 root = Path(os.environ["ROOT_DIR"])
+base_evidence = root / "out" / "evidence"
+LEGACY_PREFIXES = ("s8", "s9")
+
+def _dir_candidates(kind: str):
+    return [base_evidence / f"{prefix}_{kind}" for prefix in LEGACY_PREFIXES]
+
+def _find_artifact(kind: str, name: str) -> Path | None:
+    for directory in _dir_candidates(kind):
+        path = directory / name
+        if path.exists():
+            return path
+    return None
+
 admin_service = importlib.import_module("app.admin.service")
 user_routes = importlib.import_module("app.user.routes")
 
@@ -33,10 +46,6 @@ scenarios = [
     ("s8_checagem_factual", "João Mendes foi condenado na Operação Horizonte?"),
 ]
 
-queries_dir = root / "out" / "evidence" / "s8_queries"
-bundles_dir = root / "out" / "evidence" / "s8_bundles"
-responses_dir = root / "out" / "evidence" / "s8_responses"
-
 checks = []
 issues = []
 for scenario, query in scenarios:
@@ -44,31 +53,32 @@ for scenario, query in scenarios:
     dto = payload["dto"]
     query_id = dto["query_id"]
 
-    log_path = queries_dir / f"{query_id}.json"
-    if not log_path.exists():
+    log_path = _find_artifact("queries", f"{query_id}.json")
+    if not log_path:
         issues.append(f"QueryLog ausente para {query_id}")
         continue
     log_data = json.loads(log_path.read_text())
     bundle_id = log_data.get("evidence_bundle_id")
     response_id = log_data.get("gpt_response_ref")
 
-    bundle_path = bundles_dir / f"{bundle_id}.json"
-    response_path = responses_dir / f"{response_id}.json"
-
     if not bundle_id:
         issues.append(f"Log {query_id} não aponta bundle")
         continue
     if not response_id:
         issues.append(f"Log {query_id} não aponta resposta")
+        continue
 
-    if not bundle_path.exists():
+    bundle_path = _find_artifact("bundles", f"{bundle_id}.json")
+    response_path = _find_artifact("responses", f"{response_id}.json")
+
+    if not bundle_path:
         issues.append(f"Bundle ausente {bundle_id}")
         continue
     bundle_data = json.loads(bundle_path.read_text())
     if bundle_data.get("meta", {}).get("num_sources", 0) < 2:
         issues.append(f"Bundle {bundle_id} não possui 2+ fontes para {scenario}")
 
-    if not response_path.exists():
+    if not response_path:
         issues.append(f"Resposta ausente {response_id}")
         continue
     response_data = json.loads(response_path.read_text())

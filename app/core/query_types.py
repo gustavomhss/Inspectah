@@ -16,6 +16,13 @@ QueryType = Literal[
     "fora_de_escopo",
 ]
 
+LegacyQueryType = Literal[
+    "agregacao_simples",
+    "comparacao_simples",
+    "checagem_factual_simples",
+    "fora_de_escopo",
+]
+
 INFO_TYPE_TO_QUERY_TYPE: Dict[InfoType, QueryType] = {
     "C1_preco_medio": "preco_medio",
     "C2_comparacao_simples": "comparacao_simples",
@@ -30,6 +37,13 @@ QUERY_TYPE_TO_INFO_TYPE: Dict[QueryType, InfoType] = {
     "fora_de_escopo": "fora_de_escopo",
 }
 
+DETAILED_TO_LEGACY: Dict[QueryType, LegacyQueryType] = {
+    "preco_medio": "agregacao_simples",
+    "comparacao_simples": "comparacao_simples",
+    "checagem_factual": "checagem_factual_simples",
+    "fora_de_escopo": "fora_de_escopo",
+}
+
 
 def resolve_info_type(query_type: QueryType) -> InfoType:
     return QUERY_TYPE_TO_INFO_TYPE[query_type]
@@ -39,3 +53,7 @@ def scenario_from_info_type(info_type: InfoType) -> str:
     if info_type == "fora_de_escopo":
         return "OUT_OF_SCOPE"
     return info_type.split("_", maxsplit=1)[0]
+
+
+def to_legacy_query_type(query_type: QueryType) -> LegacyQueryType:
+    return DETAILED_TO_LEGACY.get(query_type, "fora_de_escopo")

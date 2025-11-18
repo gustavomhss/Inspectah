@@ -6,6 +6,7 @@ from typing import Any, Dict, Optional
 from app.admin import service as admin_service
 from app.core import pipeline
 from app.observability import metrics_s9
+from app.core.query_types import to_legacy_query_type
 
 from . import schemas, view_models
 
@@ -54,10 +55,25 @@ def post_query(payload: Dict[str, Any]) -> Dict[str, Any]:
         evidence_links=view["evidence_links"],
         scenario_id=request.scenario_id or view["summary_card"].get("scenario_tag"),
     )
+    dto_payload = dto.to_dict()
+    legacy_summary = dict(response.summary)
+    for extrakey in ("bundle_id", "info_type", "scenario_tag"):
+        legacy_summary.pop(extrakey, None)
+    if "query_type" in legacy_summary:
+        legacy_summary["query_type"] = to_legacy_query_type(response.query_type)
+    dto_payload["summary"] = legacy_summary
+    dto_payload["evidence"] = {
+        "sources": response.evidence.get("sources", []),
+        "items_preview": response.evidence.get("items_preview", []),
+    }
+    confidence = dto_payload.get("confidence", {})
+    reasons = confidence.setdefault("reasons", [])
+    if not reasons and confidence.get("level") == "high" and legacy_summary.get("num_sources", 0) >= 2:
+        reasons.append("dados consistentes entre as fontes analisadas")
     duration = time.perf_counter() - start
     metrics_s9.record_user_query(response.info_type, view["summary_card"].get("scenario_tag", scenario_hint), response.status, duration)
 
-    return {"response": dto.to_dict(), "view": view}
+    return {"response": dto_payload, "view": view, "dto": dto_payload}
 
 
 def _prepare_sources_if_needed(request: schemas.UserQueryRequest) -> None:

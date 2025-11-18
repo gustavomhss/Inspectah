@@ -33,7 +33,7 @@ def build_evidence_bundle(parsed: ParsedQuery, items: List[Item]) -> EvidenceBun
 
     bundle = EvidenceBundle(
         id=bundle_id,
-        query_type=parsed.query_type,
+        query_type=parsed.detailed_type,
         info_type=parsed.info_type,
         query_filters=parsed.filters,
         items_by_source=items_by_source,
