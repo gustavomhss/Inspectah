@@ -4,15 +4,10 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Literal, Optional
 
+from .query_types import InfoType, QueryType
 
 SourceType = Literal["precos_api_simples", "noticias_rss_simplificado", "outros"]
 QueryStatus = Literal["ok", "dados_insuficientes", "erro", "fora_de_escopo"]
-QueryType = Literal[
-    "agregacao_simples",
-    "comparacao_simples",
-    "checagem_factual_simples",
-    "fora_de_escopo",
-]
 
 
 @dataclass
@@ -36,7 +31,9 @@ class Source:
     id: str
     name: str
     type: SourceType
-    config: SourceConfig
+    info_type: InfoType = "fora_de_escopo"
+    config: SourceConfig = field(default_factory=lambda: SourceConfig(url_base=""))
+    is_active: bool = True
     status: SourceStatus = field(default_factory=SourceStatus)
 
 
@@ -59,11 +56,13 @@ class EvidenceItemRef:
 class EvidenceBundle:
     id: str
     query_type: QueryType
+    info_type: InfoType
     query_filters: Dict[str, Any]
     items_by_source: Dict[str, List[EvidenceItemRef]]
     manifest_paths: Dict[str, str]
     created_at: datetime
     meta: Dict[str, Any] = field(default_factory=dict)
+    sources_meta: Dict[str, Dict[str, Any]] = field(default_factory=dict)
 
 
 @dataclass
@@ -71,31 +70,40 @@ class QueryLog:
     query_id: str
     user_query: str
     query_type: QueryType
+    info_type: InfoType
+    scenario_tag: str
     evidence_bundle_id: Optional[str]
+    user_response_id: Optional[str]
     sources: List[str]
     items_used: List[str]
     gpt_response_ref: Optional[str]
     timestamp: datetime
     status: QueryStatus
     error_code: Optional[str] = None
+    meta: Dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
 class ParsedQuery:
     raw_query: str
     query_type: QueryType
+    info_type: InfoType
     entities: Dict[str, Any]
     filters: Dict[str, Any]
 
 
 @dataclass
 class UserResponse:
+    id: str
     query_id: str
+    query_log_id: str
+    info_type: InfoType
+    query_type: QueryType
     evidence_bundle_id: Optional[str]
     answer_text: str
     summary: Dict[str, Any]
     evidence: Dict[str, Any]
     status: QueryStatus
-    gpt_response_id: Optional[str]
     confidence: Dict[str, Any] = field(default_factory=dict)
     limitations: List[str] = field(default_factory=list)
+    raw_gpt_payload: Optional[Dict[str, Any]] = None

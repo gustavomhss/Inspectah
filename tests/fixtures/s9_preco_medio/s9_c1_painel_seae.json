@@ -1,0 +1,26 @@
+{
+  "source_id": "s9_c1_painel_seae",
+  "info_type": "C1_preco_medio",
+  "items": [
+    {
+      "id": "c1_seae_semanal_001",
+      "produto": "cesta básica padrão",
+      "cidade": "São Paulo",
+      "valor": 218.4,
+      "moeda": "BRL",
+      "semana": "2024-05-03",
+      "info_type": "preco",
+      "coletado_em": "2024-05-05T10:00:00Z"
+    },
+    {
+      "id": "c1_seae_semanal_002",
+      "produto": "cesta básica padrão",
+      "cidade": "São Paulo",
+      "valor": 221.1,
+      "moeda": "BRL",
+      "semana": "2024-05-10",
+      "info_type": "preco",
+      "coletado_em": "2024-05-12T10:00:00Z"
+    }
+  ]
+}

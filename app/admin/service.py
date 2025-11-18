@@ -16,11 +16,108 @@ from .schemas import (
 )
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-FIXTURE_DIRS = [
+LEGACY_FIXTURE_DIRS = [
     REPO_ROOT / "tests" / "fixtures" / "s8_preco_medio",
     REPO_ROOT / "tests" / "fixtures" / "s8_comparacao",
     REPO_ROOT / "tests" / "fixtures" / "s8_checagem_factual",
 ]
+
+DEFAULT_SELECTED_FIELDS = [
+    "produto",
+    "cidade",
+    "bairro",
+    "valor",
+    "valor_medio",
+    "moeda",
+    "pessoa",
+    "caso",
+    "status",
+    "observado_pct",
+]
+
+SCENARIO_SPECS: Dict[str, Dict[str, object]] = {
+    "C1": {
+        "scenario_id": "C1",
+        "info_type": "C1_preco_medio",
+        "query_type": "preco_medio",
+        "fixture_dir": REPO_ROOT / "tests" / "fixtures" / "s9_preco_medio",
+        "min_active_sources": 2,
+        "sources": [
+            {
+                "id": "s9_c1_painel_seae",
+                "name": "Painel de Preços SEAE",
+                "type": "precos_api_simples",
+                "url_base": "https://fixtures.inspectah/s9/preco_medio/painel_seae",
+            },
+            {
+                "id": "s9_c1_pao_de_acucar",
+                "name": "Encarte Digital Pão de Açúcar",
+                "type": "precos_api_simples",
+                "url_base": "https://fixtures.inspectah/s9/preco_medio/pao_de_acucar",
+            },
+            {
+                "id": "s9_c1_mobile_auditoria",
+                "name": "Coletor Mobile Inspectah",
+                "type": "precos_api_simples",
+                "url_base": "https://fixtures.inspectah/s9/preco_medio/mobile",
+            },
+        ],
+    },
+    "C2": {
+        "scenario_id": "C2",
+        "info_type": "C2_comparacao_simples",
+        "query_type": "comparacao_simples",
+        "fixture_dir": REPO_ROOT / "tests" / "fixtures" / "s9_comparacao",
+        "min_active_sources": 2,
+        "sources": [
+            {
+                "id": "s9_c2_anp_glp",
+                "name": "ANP Preços GLP RJ",
+                "type": "precos_api_simples",
+                "url_base": "https://fixtures.inspectah/s9/comparacao/anp",
+            },
+            {
+                "id": "s9_c2_sindigas",
+                "name": "Sindigás Monitor",
+                "type": "precos_api_simples",
+                "url_base": "https://fixtures.inspectah/s9/comparacao/sindigas",
+            },
+            {
+                "id": "s9_c2_secretaria",
+                "name": "Secretaria RJ Custos Internos",
+                "type": "precos_api_simples",
+                "url_base": "https://fixtures.inspectah/s9/comparacao/secretaria",
+            },
+        ],
+    },
+    "C3": {
+        "scenario_id": "C3",
+        "info_type": "C3_checagem_factual",
+        "query_type": "checagem_factual",
+        "fixture_dir": REPO_ROOT / "tests" / "fixtures" / "s9_checagem_factual",
+        "min_active_sources": 2,
+        "sources": [
+            {
+                "id": "s9_c3_diario_oficial",
+                "name": "Diário Oficial BH Diesel",
+                "type": "noticias_rss_simplificado",
+                "url_base": "https://fixtures.inspectah/s9/factual/diario_oficial",
+            },
+            {
+                "id": "s9_c3_portal_transparencia",
+                "name": "Portal Transparência Minas",
+                "type": "noticias_rss_simplificado",
+                "url_base": "https://fixtures.inspectah/s9/factual/portal_transparencia",
+            },
+            {
+                "id": "s9_c3_anp_diesel",
+                "name": "ANP Diesel BH 30d",
+                "type": "noticias_rss_simplificado",
+                "url_base": "https://fixtures.inspectah/s9/factual/anp",
+            },
+        ],
+    },
+}
 
 DEFAULT_SOURCES = [
     {
@@ -58,16 +155,17 @@ def create_or_update_source(payload: SourceCreateRequest) -> Source:
     existing = storage.get_source(payload.id)
     status = existing.status if existing else SourceStatus()
     params = dict(payload.params)
-    params["info_type"] = payload.info_type
+    params.setdefault("info_type", payload.info_type)
     source = Source(
         id=payload.id,
         name=payload.name,
         type=payload.type,
+        info_type=payload.info_type,
         config=SourceConfig(
             url_base=payload.url_base,
             auth_token=payload.auth_token,
             params=params,
-            selected_fields=payload.selected_fields,
+            selected_fields=payload.selected_fields or DEFAULT_SELECTED_FIELDS,
         ),
         status=status,
     )
@@ -78,7 +176,7 @@ def create_or_update_source(payload: SourceCreateRequest) -> Source:
 def list_sources() -> List[SourceResponse]:
     output: List[SourceResponse] = []
     for src in storage.list_sources():
-        info_type = src.config.params.get("info_type", "")
+        info_type = src.info_type or src.config.params.get("info_type", "")
         output.append(
             SourceResponse(
                 id=src.id,
@@ -177,13 +275,78 @@ def ensure_default_sources() -> None:
         trigger_source_test(definition["id"])
 
 
+def prepare_scenario_sources(scenario_id: str) -> List[Source]:
+    scenario = SCENARIO_SPECS.get(scenario_id)
+    if not scenario:
+        raise ValueError(f"Cenário desconhecido: {scenario_id}")
+
+    prepared: List[Source] = []
+    for definition in scenario["sources"]:
+        request = _build_source_request(definition, scenario)
+        source = create_or_update_source(request)
+        result = trigger_source_test(source.id)
+        if result.status != "ok":
+            raise RuntimeError(f"Fonte {source.id} sem dados para {scenario_id}")
+        prepared.append(storage.get_source(source.id) or source)
+
+    _validate_multi_source(scenario_id, prepared, scenario.get("min_active_sources", 2))
+    return prepared
+
+
+def prepare_sources_for_info_type(info_type: str) -> List[Source]:
+    for scenario_id, spec in SCENARIO_SPECS.items():
+        if spec["info_type"] == info_type:
+            return prepare_scenario_sources(scenario_id)
+    raise ValueError(f"InfoType não suportado: {info_type}")
+
+
+def _build_source_request(source_def: Dict[str, object], scenario: Dict[str, object]) -> SourceCreateRequest:
+    params = {"scenario_id": scenario["scenario_id"]}
+    params.update(source_def.get("params", {}))
+    return SourceCreateRequest(
+        id=source_def["id"],
+        name=source_def["name"],
+        type=source_def["type"],
+        info_type=scenario["info_type"],
+        url_base=source_def["url_base"],
+        selected_fields=source_def.get("selected_fields") or DEFAULT_SELECTED_FIELDS,
+        params=params,
+    )
+
+
+def _validate_multi_source(scenario_id: str, sources: List[Source], minimum: int) -> None:
+    ok_sources = 0
+    for source in sources:
+        status = source.status
+        if status.last_fetch_status == "ok" and status.recent_items_count > 0:
+            ok_sources += 1
+    if ok_sources < minimum:
+        raise RuntimeError(
+            f"Cenário {scenario_id} precisa de {minimum} fontes ativas; apenas {ok_sources} carregadas."
+        )
+
+
 def _load_fixture_records(source_id: str) -> List[Dict[str, object]]:
-    for directory in FIXTURE_DIRS:
+    path = _fixture_path_for_source(source_id)
+    if path and path.exists():
+        data = json.loads(path.read_text(encoding="utf-8"))
+        return data.get("items", [])
+
+    for directory in LEGACY_FIXTURE_DIRS:
         candidate = directory / f"{source_id}.json"
         if candidate.exists():
             data = json.loads(candidate.read_text(encoding="utf-8"))
             return data.get("items", [])
     return []
+
+
+def _fixture_path_for_source(source_id: str) -> Optional[Path]:
+    for spec in SCENARIO_SPECS.values():
+        fixture_dir = spec["fixture_dir"]
+        candidate = fixture_dir / f"{source_id}.json"
+        if candidate.exists():
+            return candidate
+    return None
 
 
 def _parse_created_at(value: Optional[str]) -> Optional[datetime]:

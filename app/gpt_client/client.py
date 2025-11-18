@@ -4,7 +4,8 @@ from dataclasses import dataclass, field
 from statistics import mean
 from typing import Any, Dict, List
 
-from app.core.models import EvidenceBundle, QueryType
+from app.core.models import EvidenceBundle
+from app.core.query_types import QueryType
 
 from . import prompts
 
@@ -21,14 +22,9 @@ class GptAnswer:
 def run_query(bundle: EvidenceBundle, user_query: str, query_type: QueryType) -> GptAnswer:
     if not bundle.id:
         raise ValueError("EvidenceBundle.id não pode ser vazio")
-    supported_types = {
-        "agregacao_simples",
-        "comparacao_simples",
-        "checagem_factual_simples",
-        "fora_de_escopo",
-    }
+    supported_types = {"preco_medio", "comparacao_simples", "checagem_factual", "fora_de_escopo"}
     if query_type not in supported_types:
-        raise ValueError(f"Tipo de query não suportado: {query_type}")
+        raise ValueError(f"Tipo de query não suportado na Sprint 9: {query_type}")
 
     prompt_payload = prompts.build_decision_prompt(bundle, user_query, query_type)
     context = prompt_payload["context"]
@@ -41,17 +37,18 @@ def run_query(bundle: EvidenceBundle, user_query: str, query_type: QueryType) ->
 
     if query_type == "fora_de_escopo":
         summary = _base_summary(query_type, meta, extra={"resolution": "fora_de_escopo"})
-        answer_text = "A pergunta está fora do escopo suportado nesta fase."
+        answer_text = "A pergunta está fora do escopo suportado nesta sprint."
         confidence = {"level": "low", "reasons": ["fora de escopo"]}
         return GptAnswer(answer_text, summary, confidence, limitations, prompt_payload)
 
     if meta["num_items"] == 0:
-        summary = _base_summary(query_type, meta, extra={"main_value": None, "range": None, "resolution": "dados_insuficientes"})
+        extra = {"main_value": None, "range": None, "resolution": "dados_insuficientes"}
+        summary = _base_summary(query_type, meta, extra)
         answer_text = "Dados insuficientes para chegar a uma conclusão."
         confidence = {"level": "low", "reasons": ["sem itens no bundle"]}
         return GptAnswer(answer_text, summary, confidence, limitations, prompt_payload)
 
-    if query_type == "agregacao_simples":
+    if query_type == "preco_medio":
         extra, answer_text = _summarize_agregacao(meta, sources)
     elif query_type == "comparacao_simples":
         extra, answer_text = _summarize_comparacao(meta, sources)
@@ -68,6 +65,8 @@ def _base_summary(query_type: str, meta: Dict[str, Any], extra: Dict[str, Any]) 
         "query_type": query_type,
         "num_sources": meta["num_sources"],
         "num_items": meta["num_items"],
+        "info_type": meta.get("info_type"),
+        "scenario_tag": meta.get("scenario_tag"),
     }
     summary.update(extra)
     return summary
@@ -198,14 +197,10 @@ def _derive_confidence(meta: Dict[str, Any], summary_extra: Dict[str, Any]) -> D
     if summary_extra.get("verdict") == "divergente":
         level = "low"
         reasons.append("fontes se contradizem")
-    if not reasons:
-        reasons.append("dados consistentes entre as fontes analisadas")
     return {"level": level, "reasons": reasons}
 
 
 def _to_float(value: Any) -> float | None:
-    if value is None:
-        return None
     try:
         return float(value)
     except (TypeError, ValueError):

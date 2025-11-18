@@ -1,0 +1,38 @@
+{
+  "scenario_id": "C3",
+  "query": "O preço médio do diesel caiu 12% em Belo Horizonte nos últimos 30 dias?",
+  "info_type": "C3_checagem_factual",
+  "query_type": "checagem_factual",
+  "status": "ok",
+  "answer_text": "As fontes consultadas negam o fato para Carla Fontes.",
+  "summary_card": {
+    "query_type": "checagem_factual",
+    "num_sources": 3,
+    "num_items": 6,
+    "info_type": null,
+    "verdict": "negado",
+    "confirmations": 0,
+    "negatives": 6,
+    "notes": [
+      "s9_c3_portal_transparencia nega.",
+      "s9_c3_portal_transparencia nega.",
+      "s9_c3_anp_diesel nega.",
+      "s9_c3_anp_diesel nega.",
+      "s9_c3_diario_oficial nega.",
+      "s9_c3_diario_oficial nega."
+    ],
+    "status": "ok",
+    "confidence_level": "high",
+    "confidence_reasons": [],
+    "limitations": [
+      "Somente dados do EvidenceBundle foram considerados."
+    ]
+  },
+  "confidence": {
+    "level": "high",
+    "reasons": []
+  },
+  "limitations": [
+    "Somente dados do EvidenceBundle foram considerados."
+  ]
+}

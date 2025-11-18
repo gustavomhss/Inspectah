@@ -1,0 +1,30 @@
+{
+  "scenario_id": "C2",
+  "query": "Onde o botijão de gás 13kg está mais barato nesta semana, capital ou Baixada Fluminense?",
+  "info_type": "C2_comparacao_simples",
+  "query_type": "comparacao_simples",
+  "status": "ok",
+  "answer_text": "botijão de gás 13kg está mais barato em Centro segundo s9_c2_sindigas, custando 95.00 BRL.",
+  "summary_card": {
+    "query_type": "comparacao_simples",
+    "num_sources": 3,
+    "num_items": 6,
+    "info_type": null,
+    "best_location": "Centro",
+    "best_value": 95.0,
+    "unit": "BRL",
+    "status": "ok",
+    "confidence_level": "high",
+    "confidence_reasons": [],
+    "limitations": [
+      "Somente dados do EvidenceBundle foram considerados."
+    ]
+  },
+  "confidence": {
+    "level": "high",
+    "reasons": []
+  },
+  "limitations": [
+    "Somente dados do EvidenceBundle foram considerados."
+  ]
+}

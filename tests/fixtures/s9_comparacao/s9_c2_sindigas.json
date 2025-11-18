@@ -1,0 +1,28 @@
+{
+  "source_id": "s9_c2_sindigas",
+  "info_type": "C2_comparacao_simples",
+  "items": [
+    {
+      "id": "c2_sindigas_capital",
+      "produto": "botijão de gás 13kg",
+      "cidade": "Rio de Janeiro",
+      "bairro": "Tijuca",
+      "valor": 101.5,
+      "moeda": "BRL",
+      "semana": "2024-05-10",
+      "info_type": "preco",
+      "coletado_em": "2024-05-11T15:30:00Z"
+    },
+    {
+      "id": "c2_sindigas_baixada",
+      "produto": "botijão de gás 13kg",
+      "cidade": "Nova Iguaçu",
+      "bairro": "Centro",
+      "valor": 95.0,
+      "moeda": "BRL",
+      "semana": "2024-05-10",
+      "info_type": "preco",
+      "coletado_em": "2024-05-11T15:30:00Z"
+    }
+  ]
+}

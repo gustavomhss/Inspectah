@@ -50,15 +50,15 @@ def _items_dir() -> Path:
 
 
 def bundles_dir() -> Path:
-    return _ensure_dir(_data_dir() / "s8_bundles")
+    return _ensure_dir(_data_dir() / "s9_bundles")
 
 
 def queries_dir() -> Path:
-    return _ensure_dir(_data_dir() / "s8_queries")
+    return _ensure_dir(_data_dir() / "s9_logs")
 
 
 def responses_dir() -> Path:
-    return _ensure_dir(_data_dir() / "s8_responses")
+    return _ensure_dir(_data_dir() / "s9_responses")
 
 
 def _to_serializable(value: Any) -> Any:
@@ -97,12 +97,14 @@ def _source_from_data(data: Dict[str, Any]) -> Source:
         id=data["id"],
         name=data["name"],
         type=data["type"],
+        info_type=data.get("info_type", "fora_de_escopo"),
         config=SourceConfig(
             url_base=config.get("url_base", ""),
             auth_token=config.get("auth_token"),
             params=config.get("params", {}),
             selected_fields=config.get("selected_fields", []),
         ),
+        is_active=data.get("is_active", True),
         status=SourceStatus(
             last_fetch_at=_parse_datetime(status.get("last_fetch_at")),
             last_fetch_status=status.get("last_fetch_status", "ok"),
@@ -243,11 +245,13 @@ def load_evidence_bundle(bundle_id: str) -> Optional[EvidenceBundle]:
     return EvidenceBundle(
         id=data["id"],
         query_type=data["query_type"],
+        info_type=data.get("info_type", data.get("meta", {}).get("info_type", "fora_de_escopo")),
         query_filters=data.get("query_filters", {}),
         items_by_source=items_by_source,
         manifest_paths=data.get("manifest_paths", {}),
         created_at=_parse_datetime(data.get("created_at")) or datetime.utcnow(),
         meta=data.get("meta", {}),
+        sources_meta=data.get("sources_meta", {}),
     )
 
 
@@ -268,27 +272,27 @@ def load_query_log(query_id: str) -> Optional[QueryLog]:
         query_id=data["query_id"],
         user_query=data["user_query"],
         query_type=data.get("query_type"),
+        info_type=data.get("info_type", "fora_de_escopo"),
+        scenario_tag=data.get("scenario_tag", "OUT_OF_SCOPE"),
         evidence_bundle_id=data.get("evidence_bundle_id"),
+        user_response_id=data.get("user_response_id"),
         sources=data.get("sources", []),
         items_used=data.get("items_used", []),
         gpt_response_ref=data.get("gpt_response_ref"),
         timestamp=_parse_datetime(data.get("timestamp")) or datetime.utcnow(),
         status=data.get("status", "ok"),
         error_code=data.get("error_code"),
+        meta=data.get("meta", {}),
     )
 
 
-def save_user_response(response: UserResponse | Dict[str, Any], response_id: Optional[str] = None) -> str:
-    response_id = response_id or generate_entity_id("resp")
-    path = responses_dir() / f"{response_id}.json"
-    if isinstance(response, UserResponse):
-        payload = _to_serializable(response)
-    else:
-        payload = dict(response)
-    payload.setdefault("id", response_id)
+def save_user_response(response: UserResponse) -> Path:
+    path = responses_dir() / f"{response.id}.json"
+    payload = _to_serializable(response)
+    payload.setdefault("storage_path", str(path))
     payload.setdefault("created_at", datetime.utcnow().isoformat())
     _write_json(path, payload)
-    return response_id
+    return path
 
 
 def generate_entity_id(prefix: str) -> str:
