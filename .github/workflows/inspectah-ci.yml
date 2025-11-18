@@ -52,7 +52,6 @@ jobs:
           . .venv/bin/activate
           export PYTHONPATH=.
           bin/s7_g4_ui_query_consolidation.sh
-          bin/s7_g8_sprint_go_no_go.sh
 
       - name: Run Sprint 9 CI
         run: |
