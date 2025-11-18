@@ -1,13 +1,69 @@
-name: Inspectah CI
+name: Inspectah Core Gates
+
 on:
   push:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+
 jobs:
-  noop:
+  core-gates:
     runs-on: ubuntu-latest
+    env:
+      NET: 0
     steps:
-      - uses: actions/checkout@v4
-      - name: Prepare out dir
-        run: mkdir -p out
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install project
+        run: |
+          python -m venv .venv
+          . .venv/bin/activate
+          pip install --upgrade pip
+          pip install -e .
+
+      - name: Run Sprint 3 ORR
+        run: |
+          . .venv/bin/activate
+          export PYTHONPATH=.
+          bin/orr_all.sh
+
+      - name: Run Sprint 5 G3 gate
+        run: |
+          . .venv/bin/activate
+          export PYTHONPATH=.
+          bin/s5_gate_g3_pipeline_fixtures.sh
+
+      - name: Run Sprint 6 gates
+        run: |
+          . .venv/bin/activate
+          export PYTHONPATH=.
+          bin/s6_g4_explore_verify.sh
+          bin/s6_g8_sprint_go_no_go.sh
+
+      - name: Run Sprint 7 gates
+        run: |
+          . .venv/bin/activate
+          export PYTHONPATH=.
+          bin/s7_g4_ui_query_consolidation.sh
+          bin/s7_g8_sprint_go_no_go.sh
+
+      - name: Run Sprint 9 CI
+        run: |
+          . .venv/bin/activate
+          export PYTHONPATH=.
+          bin/s9_ci.sh
+
+      - name: Upload scorecards and evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: core-gates-artifacts
+          path: |
+            out/scorecards
+            out/evidence

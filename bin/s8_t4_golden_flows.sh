@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+export INSPECTAH_PARSER_LEGACY_TYPES=1
 ROOT_DIR="$(git rev-parse --show-toplevel)"
 PYTHON_BIN="$ROOT_DIR/.venv/bin/python"
 if [[ ! -x "$PYTHON_BIN" ]]; then

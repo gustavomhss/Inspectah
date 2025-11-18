@@ -14,7 +14,7 @@ except ModuleNotFoundError:  # pragma: no cover
     Response = None  # type: ignore[misc]
     JSONResponse = None  # type: ignore[misc]
 
-from ..models import get_connection
+from ..models import get_legacy_item, list_legacy_items
 from ..metrics import record_explore_query_latency, record_explore_request, record_explore_query
 from ..registry.loader import load_sources
 from .rate_limit import (
@@ -50,58 +50,29 @@ def _load_items(
     limit: int,
     offset: int,
 ) -> List[Dict[str, Any]]:
-    conditions = []
-    params: List[Any] = []
-    if source_id:
-        conditions.append("source_id = ?")
-        params.append(source_id)
-    if collected_from:
-        conditions.append("collected_at >= ?")
-        params.append(collected_from)
-    if collected_to:
-        conditions.append("collected_at <= ?")
-        params.append(collected_to)
-    where = f"WHERE {' AND '.join(conditions)}" if conditions else ""
-    query = (
-        "SELECT id, source_id, canonical_url, content_hash, collected_at, manifest_path "
-        "FROM items "
-        f"{where} ORDER BY collected_at DESC LIMIT ? OFFSET ?"
+    records = list_legacy_items(
+        source_id=source_id,
+        collected_from=collected_from,
+        collected_to=collected_to,
     )
-    params.extend([limit, offset])
-    with get_connection() as conn:
-        rows = conn.execute(query, params).fetchall()
-        if not rows:
-            return []
-        item_ids = [row["id"] for row in rows]
-        placeholders = ",".join("?" for _ in item_ids)
-        kv_rows = conn.execute(
-            "SELECT item_id, field_name, field_type, value_string, value_numeric, value_timestamp "
-            f"FROM item_kv WHERE item_id IN ({placeholders})",
-            item_ids,
-        ).fetchall()
-    field_map: Dict[int, Dict[str, Any]] = {item_id: {} for item_id in item_ids}
-    for kv in kv_rows:
-        value: Any = kv["value_string"]
-        if kv["value_timestamp"]:
-            value = kv["value_timestamp"]
-        elif kv["value_numeric"] is not None:
-            value = kv["value_numeric"]
-        field_map[kv["item_id"]][kv["field_name"]] = value
+    if not records:
+        return []
+    sliced = records[offset : offset + limit]
     results: List[Dict[str, Any]] = []
-    for row in rows:
-        fields = field_map.get(row["id"], {})
+    for record in sliced:
+        fields = dict(record.fields)
         results.append(
             {
-                "item_id": row["id"],
-                "source_id": row["source_id"],
+                "item_id": record.item_id,
+                "source_id": record.source_id,
                 "title": fields.get("title"),
                 "url": fields.get("url"),
                 "published_at": fields.get("published_at"),
                 "source_name": fields.get("source_name"),
-                "canonical_url": row["canonical_url"],
-                "collected_at": row["collected_at"],
-                "manifest_path": row["manifest_path"],
-                "content_hash": row["content_hash"],
+                "canonical_url": record.canonical_url,
+                "collected_at": record.collected_at.isoformat(),
+                "manifest_path": record.manifest_path,
+                "content_hash": record.content_hash,
                 "fields": fields,
             }
         )
@@ -145,25 +116,10 @@ def query_items(
 
 def get_item_detail(item_id: int) -> Dict[str, Any]:
     start = time.perf_counter()
-    with get_connection() as conn:
-        row = conn.execute(
-            "SELECT id, source_id, canonical_url, content_hash, collected_at, manifest_path FROM items WHERE id = ?",
-            (item_id,),
-        ).fetchone()
-        if row is None:
-            raise KeyError(f"item {item_id} not found")
-        kv_rows = conn.execute(
-            "SELECT field_name, field_type, value_string, value_numeric, value_timestamp FROM item_kv WHERE item_id = ?",
-            (item_id,),
-        ).fetchall()
-    fields: Dict[str, Any] = {}
-    for kv in kv_rows:
-        value: Any = kv["value_string"]
-        if kv["value_timestamp"]:
-            value = kv["value_timestamp"]
-        elif kv["value_numeric"] is not None:
-            value = kv["value_numeric"]
-        fields[kv["field_name"]] = value
+    record = get_legacy_item(item_id)
+    if record is None:
+        raise KeyError(f"item {item_id} not found")
+    fields = dict(record.fields)
     duration_ms = (time.perf_counter() - start) * 1000.0
     record_explore_query_latency(duration_ms)
     record_explore_query()
@@ -171,17 +127,17 @@ def get_item_detail(item_id: int) -> Dict[str, Any]:
         "explore_get_item",
         extra={
             "item_id": item_id,
-            "source_id": row["source_id"],
+            "source_id": record.source_id,
             "duration_ms": duration_ms,
         },
     )
     return {
-        "item_id": row["id"],
-        "source_id": row["source_id"],
-        "canonical_url": row["canonical_url"],
-        "content_hash": row["content_hash"],
-        "collected_at": row["collected_at"],
-        "manifest_path": row["manifest_path"],
+        "item_id": record.item_id,
+        "source_id": record.source_id,
+        "canonical_url": record.canonical_url,
+        "content_hash": record.content_hash,
+        "collected_at": record.collected_at.isoformat(),
+        "manifest_path": record.manifest_path,
         "fields": fields,
     }
 

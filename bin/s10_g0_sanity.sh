@@ -53,7 +53,7 @@ else
 fi
 
 # 3) Branch naming
-if [[ "$effective_branch" == q2-s10-* || "$effective_branch" == "main" ]]; then
+if [[ "$effective_branch" == q2-s10-* || "$effective_branch" == "main" || "$effective_branch" == hotfix/* ]]; then
   add_check "git-branch" "Branch segue padrão da S10" "PASS" "$effective_branch"
 elif [[ "$effective_branch" == "HEAD" && -n "$ci_env" ]]; then
   add_check "git-branch" "Branch segue padrão da S10" "PASS" "CI head: $effective_branch"

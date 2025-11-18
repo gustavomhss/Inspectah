@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import re
+import os
 from typing import Any, Dict
 
 from .models import ParsedQuery
-from .query_types import QUERY_TYPE_TO_INFO_TYPE, QueryType
+from .query_types import QueryType, resolve_info_type, to_legacy_query_type
 
 TIME_WINDOW_HINTS = {
     "ultima semana": "last_7_days",
@@ -30,8 +31,8 @@ def parse_query(user_query: str) -> ParsedQuery:
     raw_query = user_query.strip()
     lowered = raw_query.lower()
 
-    query_type = _detect_type(lowered)
-    info_type = QUERY_TYPE_TO_INFO_TYPE[query_type]
+    canonical_type = _detect_type(lowered)
+    info_type = resolve_info_type(canonical_type)
     entities: Dict[str, Any] = {}
     filters: Dict[str, Any] = {}
 
@@ -39,7 +40,7 @@ def parse_query(user_query: str) -> ParsedQuery:
     if time_window:
         filters["time_window"] = time_window
 
-    if query_type == "preco_medio":
+    if canonical_type == "preco_medio":
         product = _extract_product(raw_query)
         city = _extract_city(raw_query)
         if product:
@@ -51,7 +52,7 @@ def parse_query(user_query: str) -> ParsedQuery:
             filters["cidade"] = city.lower()
         filters["source_types"] = ["precos_api_simples"]
         filters["info_type"] = "preco"
-    elif query_type == "comparacao_simples":
+    elif canonical_type == "comparacao_simples":
         product = _extract_product(raw_query) or _extract_subject(raw_query)
         city = _extract_city(raw_query)
         if product:
@@ -63,7 +64,7 @@ def parse_query(user_query: str) -> ParsedQuery:
             filters["cidade"] = city.lower()
         filters["source_types"] = ["precos_api_simples"]
         filters["info_type"] = "preco"
-    elif query_type == "checagem_factual":
+    elif canonical_type == "checagem_factual":
         person = _extract_person(raw_query)
         case = _extract_case(raw_query)
         if person:
@@ -78,18 +79,24 @@ def parse_query(user_query: str) -> ParsedQuery:
         filters["source_types"] = ["noticias_rss_simplificado"]
         filters["info_type"] = "fato"
 
-    if query_type != "fora_de_escopo" and not entities:
-        query_type = "fora_de_escopo"
+    if canonical_type != "fora_de_escopo" and not entities:
+        canonical_type = "fora_de_escopo"
         info_type = "fora_de_escopo"
 
     filters.setdefault("source_types", [])
+    legacy_type = to_legacy_query_type(canonical_type)
+    result_type = legacy_type if _use_legacy_query_types() else canonical_type
     return ParsedQuery(
         raw_query=raw_query,
-        query_type=query_type,
+        query_type=result_type,
         info_type=info_type,
         entities=entities,
         filters=filters,
     )
+
+
+def _use_legacy_query_types() -> bool:
+    return os.getenv("INSPECTAH_PARSER_LEGACY_TYPES") == "1"
 
 
 def _detect_type(lowered_query: str) -> QueryType:
