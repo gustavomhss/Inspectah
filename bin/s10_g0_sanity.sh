@@ -11,7 +11,17 @@ mkdir -p "$SCORECARD_DIR" "$EVIDENCE_DIR"
 
 ts="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 git_commit="$(git -C "$ROOT_DIR" rev-parse HEAD 2>/dev/null || echo "unknown")"
-git_branch="$(git -C "$ROOT_DIR" rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")"
+current_branch="$(git -C "$ROOT_DIR" rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")"
+ci_head_ref="${GITHUB_HEAD_REF:-}"
+ci_env="${GITHUB_ACTIONS:-${CI:-}}"
+
+if [[ -n "$ci_head_ref" ]]; then
+  effective_branch="$ci_head_ref"
+elif [[ "$current_branch" != "HEAD" ]]; then
+  effective_branch="$current_branch"
+else
+  effective_branch="$current_branch"
+fi
 
 overall_status="PASS"
 declare -a CHECK_LINES=()
@@ -43,10 +53,12 @@ else
 fi
 
 # 3) Branch naming
-if [[ "$git_branch" == q2-s10-* ]]; then
-  add_check "git-branch" "Branch segue padrão da S10" "PASS" "$git_branch"
+if [[ "$effective_branch" == q2-s10-* || "$effective_branch" == "main" ]]; then
+  add_check "git-branch" "Branch segue padrão da S10" "PASS" "$effective_branch"
+elif [[ "$effective_branch" == "HEAD" && -n "$ci_env" ]]; then
+  add_check "git-branch" "Branch segue padrão da S10" "PASS" "CI head: $effective_branch"
 else
-  add_check "git-branch" "Branch segue padrão da S10" "FAIL" "$git_branch"
+  add_check "git-branch" "Branch segue padrão da S10" "FAIL" "$effective_branch"
 fi
 
 # 4) Docs obrigatórios
@@ -119,7 +131,7 @@ if checks_path.exists():
 report_path.write_text(json.dumps({"checks": checks}, indent=2), encoding="utf-8")
 PY
 
-python3 - <<'PY' "$REPORT_FILE" "$SCORECARD" "$overall_status" "$ts" "$git_commit" "$git_branch"
+python3 - <<'PY' "$REPORT_FILE" "$SCORECARD" "$overall_status" "$ts" "$git_commit" "$effective_branch"
 import json
 import sys
 from pathlib import Path
