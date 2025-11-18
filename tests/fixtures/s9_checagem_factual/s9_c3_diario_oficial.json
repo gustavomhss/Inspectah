@@ -1,0 +1,26 @@
+{
+  "source_id": "s9_c3_diario_oficial",
+  "info_type": "C3_checagem_factual",
+  "items": [
+    {
+      "id": "c3_diario_ed82",
+      "pessoa": "Carla Fontes",
+      "caso": "queda diesel bh",
+      "status": "negado",
+      "observado_pct": -4.5,
+      "descricao": "Decreto reajustou tarifa em -4,5%",
+      "info_type": "fato",
+      "coletado_em": "2024-05-10T07:00:00Z"
+    },
+    {
+      "id": "c3_diario_ed83",
+      "pessoa": "Carla Fontes",
+      "caso": "queda diesel bh",
+      "status": "negado",
+      "observado_pct": -3.0,
+      "descricao": "Ata indica estabilidade nos postos municipais",
+      "info_type": "fato",
+      "coletado_em": "2024-05-12T07:00:00Z"
+    }
+  ]
+}

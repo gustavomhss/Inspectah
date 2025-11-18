@@ -9,11 +9,7 @@ DEFAULT_LIMIT_PER_SOURCE = 10
 
 
 def search_internal(parsed: ParsedQuery, limit_per_source: int = DEFAULT_LIMIT_PER_SOURCE) -> List[Item]:
-    if parsed.query_type not in {
-        "agregacao_simples",
-        "comparacao_simples",
-        "checagem_factual_simples",
-    }:
+    if parsed.query_type not in {"preco_medio", "comparacao_simples", "checagem_factual"}:
         return []
     filters = dict(parsed.filters)
     filters.setdefault("source_types", [])

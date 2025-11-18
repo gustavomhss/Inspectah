@@ -1,0 +1,26 @@
+{
+  "source_id": "s9_c3_portal_transparencia",
+  "info_type": "C3_checagem_factual",
+  "items": [
+    {
+      "id": "c3_portal_nf_1",
+      "pessoa": "Carla Fontes",
+      "caso": "queda diesel bh",
+      "status": "negado",
+      "observado_pct": -5.0,
+      "descricao": "Notas fiscais indicam queda máxima de 5%",
+      "info_type": "fato",
+      "coletado_em": "2024-05-14T19:00:00Z"
+    },
+    {
+      "id": "c3_portal_nf_2",
+      "pessoa": "Carla Fontes",
+      "caso": "queda diesel bh",
+      "status": "negado",
+      "observado_pct": -6.2,
+      "descricao": "Redução média inferior prevista para atacado",
+      "info_type": "fato",
+      "coletado_em": "2024-05-14T19:00:00Z"
+    }
+  ]
+}

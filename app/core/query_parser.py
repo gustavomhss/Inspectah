@@ -1,16 +1,10 @@
 from __future__ import annotations
 
 import re
-from typing import Any, Dict, List
+from typing import Any, Dict
 
-from .models import ParsedQuery, QueryType
-
-SUPPORTED_TYPES: List[QueryType] = [
-    "agregacao_simples",
-    "comparacao_simples",
-    "checagem_factual_simples",
-    "fora_de_escopo",
-]
+from .models import ParsedQuery
+from .query_types import QUERY_TYPE_TO_INFO_TYPE, QueryType
 
 TIME_WINDOW_HINTS = {
     "ultima semana": "last_7_days",
@@ -22,10 +16,12 @@ TIME_WINDOW_HINTS = {
 OUT_OF_SCOPE_KEYWORDS = [
     "prever",
     "apostar",
-    "opini",
+    "opin",
     "vai ganhar",
     "ano que vem",
 ]
+
+PRODUCT_PREFIX_STOPWORDS = {"atual", "qual", "quanto", "o", "a", "os", "as", "do", "da"}
 
 
 def parse_query(user_query: str) -> ParsedQuery:
@@ -35,6 +31,7 @@ def parse_query(user_query: str) -> ParsedQuery:
     lowered = raw_query.lower()
 
     query_type = _detect_type(lowered)
+    info_type = QUERY_TYPE_TO_INFO_TYPE[query_type]
     entities: Dict[str, Any] = {}
     filters: Dict[str, Any] = {}
 
@@ -42,12 +39,13 @@ def parse_query(user_query: str) -> ParsedQuery:
     if time_window:
         filters["time_window"] = time_window
 
-    if query_type == "agregacao_simples":
+    if query_type == "preco_medio":
         product = _extract_product(raw_query)
         city = _extract_city(raw_query)
         if product:
-            entities["produto"] = product
-            filters["produto"] = product.lower()
+            clean_product = _clean_entity(product)
+            entities["produto"] = clean_product
+            filters["produto"] = clean_product.lower()
         if city:
             entities["cidade"] = city
             filters["cidade"] = city.lower()
@@ -57,14 +55,15 @@ def parse_query(user_query: str) -> ParsedQuery:
         product = _extract_product(raw_query) or _extract_subject(raw_query)
         city = _extract_city(raw_query)
         if product:
-            entities["produto"] = product
-            filters["produto"] = product.lower()
+            clean_product = _clean_entity(product)
+            entities["produto"] = clean_product
+            filters["produto"] = clean_product.lower()
         if city:
             entities["cidade"] = city
             filters["cidade"] = city.lower()
         filters["source_types"] = ["precos_api_simples"]
         filters["info_type"] = "preco"
-    elif query_type == "checagem_factual_simples":
+    elif query_type == "checagem_factual":
         person = _extract_person(raw_query)
         case = _extract_case(raw_query)
         if person:
@@ -73,16 +72,21 @@ def parse_query(user_query: str) -> ParsedQuery:
         if case:
             entities["caso"] = case
             filters["caso"] = case.lower()
+        if not entities:
+            entities["claim"] = raw_query
+            filters["claim_hash"] = _normalize(raw_query)
         filters["source_types"] = ["noticias_rss_simplificado"]
         filters["info_type"] = "fato"
 
     if query_type != "fora_de_escopo" and not entities:
         query_type = "fora_de_escopo"
+        info_type = "fora_de_escopo"
 
     filters.setdefault("source_types", [])
     return ParsedQuery(
         raw_query=raw_query,
         query_type=query_type,
+        info_type=info_type,
         entities=entities,
         filters=filters,
     )
@@ -91,20 +95,32 @@ def parse_query(user_query: str) -> ParsedQuery:
 def _detect_type(lowered_query: str) -> QueryType:
     if any(keyword in lowered_query for keyword in OUT_OF_SCOPE_KEYWORDS):
         return "fora_de_escopo"
+    if _looks_like_factual(lowered_query):
+        return "checagem_factual"
     if "onde" in lowered_query and (
         "mais barato" in lowered_query or "compar" in lowered_query
     ):
         return "comparacao_simples"
     if "preço" in lowered_query or "preco" in lowered_query:
         if "médio" in lowered_query or "medio" in lowered_query or "qual" in lowered_query:
-            return "agregacao_simples"
+            return "preco_medio"
     if "foi" in lowered_query and (
         "condenado" in lowered_query or "acusado" in lowered_query or "envolvido" in lowered_query
     ):
-        return "checagem_factual_simples"
+        return "checagem_factual"
     if "é verdade" in lowered_query or "e verdade" in lowered_query:
-        return "checagem_factual_simples"
+        return "checagem_factual"
     return "fora_de_escopo"
+
+
+def _looks_like_factual(lowered_query: str) -> bool:
+    if "é verdade" in lowered_query or "e verdade" in lowered_query:
+        return True
+    if "checagem" in lowered_query or "verificar" in lowered_query:
+        return True
+    if "caiu" in lowered_query and "%" in lowered_query:
+        return True
+    return False
 
 
 def _detect_time_window(lowered_query: str) -> str | None:
@@ -116,7 +132,8 @@ def _detect_time_window(lowered_query: str) -> str | None:
 
 def _extract_product(raw_query: str) -> str | None:
     pattern = re.compile(
-        r"pre[cç]o(?: médio)?(?: do| da| de)? ([^?]+?)(?: em | no | na |$)", re.IGNORECASE
+        r"pre[cç]o(?: médio)?(?: [^ ]+)?(?: do| da| de)? ([^?]+?)(?: em | no | na |$)",
+        re.IGNORECASE,
     )
     match = pattern.search(raw_query)
     if match:
@@ -148,9 +165,6 @@ def _extract_person(raw_query: str) -> str | None:
     match = re.search(r"([A-ZÁ-Ú][\wÁ-Úãõéêç\s]+?) foi", raw_query)
     if match:
         return match.group(1).strip()
-    match = re.search(r"o ([A-ZÁ-Ú][\wÁ-Úãõéêç]+)", raw_query)
-    if match:
-        return match.group(1).strip()
     return None
 
 
@@ -159,3 +173,16 @@ def _extract_case(raw_query: str) -> str | None:
     if match:
         return match.group(1).strip(" ?.")
     return None
+
+
+def _clean_entity(value: str) -> str:
+    if not value:
+        return value
+    tokens = value.strip(" ?.").split()
+    while tokens and tokens[0].lower() in PRODUCT_PREFIX_STOPWORDS:
+        tokens.pop(0)
+    return " ".join(tokens)
+
+
+def _normalize(value: str) -> str:
+    return value.strip().lower() if value else ""

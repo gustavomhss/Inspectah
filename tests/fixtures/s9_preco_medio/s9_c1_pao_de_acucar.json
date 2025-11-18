@@ -1,0 +1,26 @@
+{
+  "source_id": "s9_c1_pao_de_acucar",
+  "info_type": "C1_preco_medio",
+  "items": [
+    {
+      "id": "c1_pda_semana_23",
+      "produto": "cesta básica padrão",
+      "cidade": "São Paulo",
+      "valor": 225.0,
+      "moeda": "BRL",
+      "semana": "2024-05-10",
+      "info_type": "preco",
+      "coletado_em": "2024-05-11T14:00:00Z"
+    },
+    {
+      "id": "c1_pda_semana_24",
+      "produto": "cesta básica padrão",
+      "cidade": "São Paulo",
+      "valor": 223.5,
+      "moeda": "BRL",
+      "semana": "2024-05-17",
+      "info_type": "preco",
+      "coletado_em": "2024-05-18T14:00:00Z"
+    }
+  ]
+}

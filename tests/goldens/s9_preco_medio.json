@@ -1,0 +1,33 @@
+{
+  "scenario_id": "C1",
+  "query": "Qual é o preço médio atual da cesta básica padrão em São Paulo?",
+  "info_type": "C1_preco_medio",
+  "query_type": "preco_medio",
+  "status": "ok",
+  "answer_text": "Com 3 fontes, o preço médio de cesta básica padrão em São Paulo fica em 221.58 BRL. Detalhes: s9_c1_pao_de_acucar registrou 223.50 BRL; s9_c1_pao_de_acucar registrou 225.00 BRL; s9_c1_painel_seae registrou 221.10 BRL; s9_c1_painel_seae registrou 218.40 BRL; s9_c1_mobile_auditoria registrou 219.90 BRL.",
+  "summary_card": {
+    "query_type": "preco_medio",
+    "num_sources": 3,
+    "num_items": 5,
+    "info_type": null,
+    "main_value": 221.58,
+    "range": {
+      "min": 218.4,
+      "max": 225.0
+    },
+    "unit": "BRL",
+    "status": "ok",
+    "confidence_level": "high",
+    "confidence_reasons": [],
+    "limitations": [
+      "Somente dados do EvidenceBundle foram considerados."
+    ]
+  },
+  "confidence": {
+    "level": "high",
+    "reasons": []
+  },
+  "limitations": [
+    "Somente dados do EvidenceBundle foram considerados."
+  ]
+}

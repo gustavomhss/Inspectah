@@ -1,0 +1,26 @@
+{
+  "source_id": "s9_c3_anp_diesel",
+  "info_type": "C3_checagem_factual",
+  "items": [
+    {
+      "id": "c3_anp_media_capital",
+      "pessoa": "Carla Fontes",
+      "caso": "queda diesel bh",
+      "status": "negado",
+      "observado_pct": -5.5,
+      "descricao": "ANP registrou queda média de 5,5% no período",
+      "info_type": "fato",
+      "coletado_em": "2024-05-13T06:00:00Z"
+    },
+    {
+      "id": "c3_anp_media_bairros",
+      "pessoa": "Carla Fontes",
+      "caso": "queda diesel bh",
+      "status": "negado",
+      "observado_pct": -4.2,
+      "descricao": "Levantamentos em bairros centrais ficaram abaixo de 6%",
+      "info_type": "fato",
+      "coletado_em": "2024-05-13T06:00:00Z"
+    }
+  ]
+}

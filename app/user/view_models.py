@@ -6,7 +6,7 @@ from app.core.models import UserResponse
 
 
 def build_summary_card(response: UserResponse) -> Dict[str, Any]:
-    summary = dict(response.summary)
+    summary = response.summary.copy()
     summary["status"] = response.status
     summary["confidence_level"] = response.confidence.get("level")
     summary["confidence_reasons"] = response.confidence.get("reasons", [])
@@ -15,20 +15,27 @@ def build_summary_card(response: UserResponse) -> Dict[str, Any]:
 
 
 def build_evidence_links(response: UserResponse) -> Dict[str, Any]:
-    evidence = dict(response.evidence)
+    evidence = response.evidence.copy()
+    sources = evidence.get("sources", [])
+    items_preview = evidence.get("items_preview", [])
     return {
-        "bundle_id": evidence.get("evidence_bundle_id"),
-        "sources": evidence.get("sources", []),
-        "items_preview": evidence.get("items_preview", []),
+        "bundle_id": evidence.get("bundle_id") or response.evidence_bundle_id,
+        "bundle_path": evidence.get("bundle_path"),
+        "sources": sources,
+        "items_preview": items_preview,
     }
 
 
 def build_user_response_view(response: UserResponse) -> Dict[str, Any]:
     return {
         "query_id": response.query_id,
+        "response_id": response.id,
+        "info_type": response.info_type,
+        "query_type": response.query_type,
         "answer_text": response.answer_text,
         "summary_card": build_summary_card(response),
         "evidence_links": build_evidence_links(response),
         "status": response.status,
-        "gpt_response_id": response.gpt_response_id,
+        "confidence": response.confidence,
+        "limitations": response.limitations,
     }

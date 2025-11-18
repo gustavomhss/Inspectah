@@ -5,6 +5,7 @@ from typing import Dict, List
 
 from . import storage
 from .models import EvidenceBundle, EvidenceItemRef, Item, ParsedQuery
+from .query_types import scenario_from_info_type
 
 MAX_ITEMS_PER_SOURCE = 10
 
@@ -13,6 +14,7 @@ def build_evidence_bundle(parsed: ParsedQuery, items: List[Item]) -> EvidenceBun
     bundle_id = storage.generate_entity_id("eb")
     items_by_source: Dict[str, List[EvidenceItemRef]] = {}
     manifest_paths: Dict[str, str] = {}
+    sources_meta: Dict[str, Dict[str, object]] = {}
 
     for item in items:
         refs = items_by_source.setdefault(item.source_id, [])
@@ -25,10 +27,14 @@ def build_evidence_bundle(parsed: ParsedQuery, items: List[Item]) -> EvidenceBun
         )
         refs.append(ref)
         manifest_paths[item.source_id] = str(storage.get_item_path(item.id))
+        meta_entry = sources_meta.setdefault(item.source_id, {"items": 0})
+        meta_entry["items"] = meta_entry.get("items", 0) + 1
+        meta_entry["last_item_at"] = item.created_at.isoformat()
 
     bundle = EvidenceBundle(
         id=bundle_id,
         query_type=parsed.query_type,
+        info_type=parsed.info_type,
         query_filters=parsed.filters,
         items_by_source=items_by_source,
         manifest_paths=manifest_paths,
@@ -36,7 +42,10 @@ def build_evidence_bundle(parsed: ParsedQuery, items: List[Item]) -> EvidenceBun
         meta={
             "num_sources": len(items_by_source),
             "num_items": sum(len(refs) for refs in items_by_source.values()),
+            "scenario_tag": scenario_from_info_type(parsed.info_type),
+            "info_type": parsed.info_type,
         },
+        sources_meta=sources_meta,
     )
     storage.save_evidence_bundle(bundle)
     return bundle
