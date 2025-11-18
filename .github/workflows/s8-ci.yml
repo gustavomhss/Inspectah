@@ -1,0 +1,36 @@
+name: Sprint 8 CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  s8-ci:
+    runs-on: ubuntu-latest
+    env:
+      NET: 0
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m venv .venv
+          . .venv/bin/activate
+          pip install --upgrade pip
+          pip install -e .
+
+      - name: Run Sprint 8 CI gates
+        env:
+          PYTHONPATH: .
+          NET: 0
+        run: |
+          . .venv/bin/activate
+          bin/s8_ci.sh

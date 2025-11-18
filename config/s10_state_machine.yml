@@ -1,0 +1,34 @@
+states:
+  - planejado
+  - confirmado
+  - concluido
+  - nao_confirmado
+  - adiado
+  - cancelado
+  - incerto
+
+transitions:
+  planejado:
+    - confirmado
+    - adiado
+    - cancelado
+    - incerto
+  confirmado:
+    - concluido
+    - adiado
+    - cancelado
+    - nao_confirmado
+  concluido:
+    - incerto
+  nao_confirmado:
+    - confirmado
+    - cancelado
+  adiado:
+    - confirmado
+    - cancelado
+    - incerto
+  cancelado: []
+  incerto:
+    - confirmado
+    - cancelado
+    - nao_confirmado

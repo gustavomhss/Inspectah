@@ -1,0 +1,5 @@
+host: 127.0.0.1
+port: 8077
+debug: true
+version: sprint7-alpha
+title: Inspectah UI Alpha
