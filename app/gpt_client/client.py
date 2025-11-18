@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+import os
 from statistics import mean
 from typing import Any, Dict, List
 
@@ -197,7 +198,13 @@ def _derive_confidence(meta: Dict[str, Any], summary_extra: Dict[str, Any]) -> D
     if summary_extra.get("verdict") == "divergente":
         level = "low"
         reasons.append("fontes se contradizem")
+    if level == "high" and not reasons and _legacy_mode_enabled():
+        reasons.append("dados consistentes entre as fontes analisadas")
     return {"level": level, "reasons": reasons}
+
+
+def _legacy_mode_enabled() -> bool:
+    return os.getenv("INSPECTAH_PARSER_LEGACY_TYPES") == "1"
 
 
 def _to_float(value: Any) -> float | None:

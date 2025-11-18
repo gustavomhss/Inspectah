@@ -3,10 +3,12 @@ from __future__ import annotations
 from typing import Any, Dict
 
 from app.core.models import UserResponse
+from app.core.query_types import normalize_query_type
 
 
 def build_summary_card(response: UserResponse) -> Dict[str, Any]:
     summary = response.summary.copy()
+    summary["query_type"] = normalize_query_type(response.query_type)
     summary["status"] = response.status
     summary["confidence_level"] = response.confidence.get("level")
     summary["confidence_reasons"] = response.confidence.get("reasons", [])

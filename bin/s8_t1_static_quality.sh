@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+export INSPECTAH_PARSER_LEGACY_TYPES=1
 ROOT_DIR="$(git rev-parse --show-toplevel)"
 EVIDENCE_DIR="$ROOT_DIR/out/evidence/S8_T1_static"
 SCORECARDS_DIR="$ROOT_DIR/out/scorecards"

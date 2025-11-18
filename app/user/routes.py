@@ -57,7 +57,8 @@ def post_query(payload: Dict[str, Any]) -> Dict[str, Any]:
     duration = time.perf_counter() - start
     metrics_s9.record_user_query(response.info_type, view["summary_card"].get("scenario_tag", scenario_hint), response.status, duration)
 
-    return {"response": dto.to_dict(), "view": view}
+    dto_payload = dto.to_dict()
+    return {"response": dto_payload, "dto": dto_payload, "view": view}
 
 
 def _prepare_sources_if_needed(request: schemas.UserQueryRequest) -> None:

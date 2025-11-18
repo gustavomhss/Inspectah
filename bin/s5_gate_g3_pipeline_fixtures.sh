@@ -101,7 +101,7 @@ import re
 import sys
 from pathlib import Path
 text = Path(sys.argv[1]).read_text() if Path(sys.argv[1]).exists() else ""
-match = re.search(r"collected (\d+) items", text)
+match = re.search(r"collected (\d+) items?", text)
 if not match:
     match = re.search(r"Ran (\d+) tests?", text)
 print(match.group(1) if match else "0")

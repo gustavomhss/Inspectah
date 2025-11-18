@@ -1,10 +1,40 @@
 name: Inspectah ORR
+
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
 jobs:
-  noop:
+  sprint3-orr:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Prepare out dir
-        run: mkdir -p out
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install project
+        run: |
+          python -m venv .venv
+          . .venv/bin/activate
+          pip install --upgrade pip
+          pip install -e .
+
+      - name: Run ORR
+        run: |
+          . .venv/bin/activate
+          export PYTHONPATH=.
+          bin/orr_all.sh
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: orr-artifacts
+          path: |
+            out/scorecards
+            out/evidence
