@@ -43,6 +43,7 @@ jobs:
         run: |
           . .venv/bin/activate
           export PYTHONPATH=.
+          python -m inspectah.sprint6.cli collect
           bin/s6_g4_explore_verify.sh
           bin/s6_g8_sprint_go_no_go.sh
 
