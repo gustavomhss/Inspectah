@@ -8,7 +8,7 @@ logging/evidence to the gate scripts.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Iterable, List, Sequence
 
 from scripts.s12_sources_registry import DEFAULT_REGISTRY, SourceConfig, SourceRegistry
@@ -62,7 +62,7 @@ def run_scheduler(window_seconds: int = 60) -> None:
     """
 
     duration = timedelta(seconds=window_seconds)
-    window_start = datetime.utcnow()
+    window_start = datetime.now(timezone.utc)
     Scheduler().run_window(window_start, duration)
     raise SystemExit(
         "S12 scheduler skeleton: implement continuous execution in Wave 1 before running gates."
