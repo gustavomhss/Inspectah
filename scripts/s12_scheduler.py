@@ -7,12 +7,7 @@ from pathlib import Path
 from typing import List, Optional
 
 from scripts.s12_run_connector import ConnectorRunResult, run_for_source
-from scripts.s12_sources_registry import (
-    DEFAULT_REGISTRY,
-    SourceConfig,
-    SourceRegistry,
-    list_sources_due,
-)
+from scripts.s12_sources_registry import DEFAULT_REGISTRY, SourceRegistry, list_sources_due
 
 
 @dataclass

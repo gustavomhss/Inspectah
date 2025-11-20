@@ -1,34 +1,84 @@
 """Normalizers for obras públicas domain (Sprint 12)."""
 from __future__ import annotations
 
+import hashlib
+import json
+from datetime import datetime
 from typing import Dict
 
+from scripts.s12_sources_registry import SourceConfig
 
-def normalize(record: Dict[str, object]) -> Dict[str, object]:
-    """Transform a raw obra pública payload into a minimal canonical shape.
 
-    The full normalization with schema validation arrives in Wave 2. For Wave 1
-    we keep the structure predictable so that tests can exercise the entrypoint
-    without failing.
-    """
+def _event_id(source_id: str, payload: Dict[str, object]) -> str:
+    digest = hashlib.sha1(json.dumps(payload, sort_keys=True).encode("utf-8")).hexdigest()
+    return f"{source_id}:{digest[:16]}"
 
-    payload = record.get("raw_payload", {}) if isinstance(record, dict) else {}
+
+def normalize_diario_oficial_event(raw_event: Dict[str, object], source: SourceConfig) -> Dict[str, object]:
+    """Normalize Diário Oficial payloads for obras públicas."""
+
+    payload = raw_event.get("raw_payload", {})
+    contrato = str(payload.get("contrato", "desconhecido"))
+    status = payload.get("status", "atualizacao")
+    edicao = payload.get("edicao") or datetime.utcnow().strftime("%Y-%m-%d")
+    case_key = f"obra_publica:{contrato}"
+    resumo = payload.get("objeto") or "Atualização de contrato"
+    event_id = _event_id(source.id_fonte, payload)
+
     return {
-        "source_id": record.get("source_id"),
-        "domain": record.get("domain"),
-        "fetched_at": record.get("fetched_at"),
-        "contrato": payload.get("contrato"),
-        "descricao": payload.get("objeto") or payload.get("evento"),
-        "valor": payload.get("valor"),
-        "status": payload.get("status") or payload.get("observacao"),
-        "raw_payload": payload,
+        "id_evento": event_id,
+        "source_id": source.id_fonte,
+        "dominio": source.dominio,
+        "case_key": case_key,
+        "tipo_evento": status,
+        "event_timestamp": f"{edicao}T00:00:00Z",
+        "captured_at": raw_event.get("fetched_at"),
+        "titulo": f"Contrato {contrato} — {status}",
+        "resumo": resumo,
+        "payload": payload,
+        "eligible": True,
+        "metadata": {"municipio": payload.get("municipio")},
     }
 
 
-def normalize_raw_event(record: Dict[str, object]) -> Dict[str, object]:
-    """Alias kept for Wave 2 compatibility when the pipeline hooks up."""
+def normalize_portal_transparencia_event(raw_event: Dict[str, object], source: SourceConfig) -> Dict[str, object]:
+    """Normalize portal da transparência payloads for obras públicas."""
 
-    return normalize(record)
+    payload = raw_event.get("raw_payload", {})
+    contrato = str(payload.get("contrato", "desconhecido"))
+    evento = payload.get("evento", "movimentacao")
+    case_key = f"obra_publica:{contrato}"
+    resumo = payload.get("observacao") or "Atualização financeira"
+    event_id = _event_id(source.id_fonte, payload)
+
+    return {
+        "id_evento": event_id,
+        "source_id": source.id_fonte,
+        "dominio": source.dominio,
+        "case_key": case_key,
+        "tipo_evento": evento,
+        "event_timestamp": raw_event.get("fetched_at"),
+        "captured_at": raw_event.get("fetched_at"),
+        "titulo": f"Contrato {contrato} — {evento}",
+        "resumo": resumo,
+        "payload": payload,
+        "eligible": True,
+        "metadata": {"valor": payload.get("valor")},
+    }
 
 
-__all__ = ["normalize", "normalize_raw_event"]
+def normalize_raw_event(raw_event: Dict[str, object], source: SourceConfig) -> Dict[str, object]:
+    """Route to the proper obra pública normalizer based on source metadata."""
+
+    if source.connector == "obra_publica_diario_oficial":
+        return normalize_diario_oficial_event(raw_event, source)
+    if source.connector == "obra_publica_portal_transparencia":
+        return normalize_portal_transparencia_event(raw_event, source)
+    raise ValueError(f"Conector de obras públicas desconhecido: {source.connector}")
+
+
+__all__ = [
+    "normalize_diario_oficial_event",
+    "normalize_portal_transparencia_event",
+    "normalize_raw_event",
+]

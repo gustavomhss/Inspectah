@@ -1,28 +1,84 @@
-"""Adapter skeleton between Sprint 12 pipeline and the Truth-DB/Guardião."""
+"""Adapter between Sprint 12 pipeline and the Truth-DB/Guardião."""
 from __future__ import annotations
 
-from typing import Dict, Iterable
+from pathlib import Path
+from typing import Dict
 
 
-def register_event_for_case(event: Dict[str, object]) -> None:
-    """Placeholder for the Guardião action that persists an event."""
+class _TruthDBState:
+    def __init__(self) -> None:
+        self.events: Dict[str, Dict[str, object]] = {}
+        self.cases: Dict[str, Dict[str, object]] = {}
 
-    _ = event
-    raise NotImplementedError("Wave 2 must implement Truth-DB adapter operations")
+    def reset(self) -> None:
+        self.events.clear()
+        self.cases.clear()
+
+
+_STATE = _TruthDBState()
+
+
+def register_event_for_case(case_id: str, normalized_event: Dict[str, object], decision: Dict[str, object]) -> Dict[str, object]:
+    """Persist an event as if it had gone through o Guardião."""
+
+    event_id = normalized_event.get("id_evento")
+    record = {
+        "event_id": event_id,
+        "case_id": case_id,
+        "dominio": normalized_event.get("dominio"),
+        "decision": decision.get("decision"),
+        "rationale": decision.get("rationale"),
+        "timestamp": normalized_event.get("event_timestamp"),
+        "payload": normalized_event.get("payload"),
+    }
+    _STATE.events[event_id] = record
+    case_entry = _STATE.cases.setdefault(case_id, {"case_id": case_id, "events": []})
+    case_entry["events"].append(record)
+    return record
 
 
 def apply_debunker_decision(event_id: str, decision: Dict[str, object]) -> None:
-    """Placeholder for applying the decision outcome."""
+    """Atualiza a decisão registrada para um evento."""
 
-    _ = (event_id, decision)
-    raise NotImplementedError("Wave 2 must record Debunker decisions in Truth-DB")
+    record = _STATE.events.get(event_id)
+    if not record:
+        return
+    record["decision"] = decision.get("decision", record.get("decision"))
+    record["rationale"] = decision.get("rationale", record.get("rationale"))
 
 
 def get_case_snapshot(case_id: str) -> Dict[str, object]:
     """Return a snapshot of the case/timeline required by Explorer v0."""
 
-    _ = case_id
-    raise NotImplementedError("Wave 2 must expose case snapshots for downstream services")
+    snapshot = _STATE.cases.get(case_id, {"case_id": case_id, "events": []})
+    return {"case_id": snapshot["case_id"], "events": list(snapshot.get("events", []))}
 
 
-__all__ = ["register_event_for_case", "apply_debunker_decision", "get_case_snapshot"]
+def export_state(path: Path) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    snapshot = {"cases": _STATE.cases, "events": _STATE.events}
+    path.write_text(_json_dumps(snapshot), encoding="utf-8")
+
+
+def get_state_snapshot() -> Dict[str, object]:
+    return {"cases": _STATE.cases, "events": _STATE.events}
+
+
+def reset_state() -> None:
+    _STATE.reset()
+
+
+def _json_dumps(payload: object) -> str:
+    import json
+
+    return json.dumps(payload, indent=2, ensure_ascii=False)
+
+
+__all__ = [
+    "register_event_for_case",
+    "apply_debunker_decision",
+    "get_case_snapshot",
+    "export_state",
+    "get_state_snapshot",
+    "reset_state",
+]
