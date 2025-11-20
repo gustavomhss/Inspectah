@@ -1,31 +1,46 @@
 import React from "react";
+import { FeedbackButton } from "./FeedbackButton";
 
 export interface TimelineEventView {
-  id: string;
+  id_evento: string;
   timestamp: string;
-  title: string;
-  status: "aceito" | "incerto" | "suspeito";
-  source: string;
+  titulo: string;
+  status_debunker: "aceito" | "incerto" | "suspeito" | string;
+  resumo: string;
+  tipo_evento: string;
+  fonte: string;
+  rationale?: string;
+}
+
+interface TimelineProps {
+  events: TimelineEventView[];
 }
 
 /**
- * Timeline visualization placeholder. Receives normalized events from the
- * backend and renders a simple list until the final UI lands in Wave 3.
+ * Renderiza timeline em ordem cronológica simples.
  */
-export function Timeline({ events }: { events: TimelineEventView[] }): JSX.Element {
+export function Timeline({ events }: TimelineProps): JSX.Element {
+  if (!events || events.length === 0) {
+    return <p>Nenhum evento registrado para este caso ainda.</p>;
+  }
+
   return (
-    <div className="s12-timeline">
-      {events.length === 0 ? (
-        <p>Nenhum evento carregado ainda.</p>
-      ) : (
-        <ul>
-          {events.map((evt) => (
-            <li key={evt.id}>
-              <strong>{evt.timestamp}</strong> — {evt.title} ({evt.status})
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
+    <ol className="s12-timeline">
+      {events.map((event) => (
+        <li key={event.id_evento} className={`timeline-item status-${event.status_debunker}`}>
+          <header>
+            <span className="timestamp">{new Date(event.timestamp).toLocaleString()}</span>
+            <span className="status">{event.status_debunker.toUpperCase()}</span>
+          </header>
+          <strong>{event.titulo}</strong>
+          <p>{event.resumo}</p>
+          <small>
+            Fonte: {event.fonte} · Tipo: {event.tipo_evento}
+            {event.rationale ? ` · Racional: ${event.rationale}` : ""}
+          </small>
+          <FeedbackButton targetId={event.id_evento} variant="event" />
+        </li>
+      ))}
+    </ol>
   );
 }
