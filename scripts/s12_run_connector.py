@@ -1,47 +1,90 @@
-"""Wrapper responsible for executing a Sprint 12 connector by ``id_fonte``."""
+"""Wrapper responsible for executing Sprint 12 connectors."""
 from __future__ import annotations
 
-from typing import Callable, Dict, Iterable, List
+import json
+from dataclasses import dataclass
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Callable, Dict, List, Optional
 
-from scripts.s12_sources_registry import DEFAULT_REGISTRY, SourceRegistry
+from scripts.s12_connectors import (
+    evento_climatico_feed_nacional,
+    obra_publica_diario_oficial,
+    obra_publica_portal_transparencia,
+)
+from scripts.s12_sources_registry import DEFAULT_REGISTRY, SourceConfig, SourceRegistry
 
-ConnectorFn = Callable[[dict], Iterable[dict]]
+ConnectorFn = Callable[[SourceConfig, str], List[dict]]
+
+ROOT_DIR = Path(__file__).resolve().parents[1]
+DEFAULT_RAW_DIR = ROOT_DIR / "out" / "evidence" / "S12_G1" / "raw_events"
 
 
 class ConnectorNotRegistered(RuntimeError):
-    """Raised when a connector id is missing from the registry."""
+    """Raised when there is no handler for the given source."""
 
 
-CONNECTOR_HANDLERS: Dict[str, ConnectorFn] = {}
-"""Mapping ``id_fonte`` → callable that collects raw events.
+@dataclass
+class ConnectorRunResult:
+    """Captures the result of running a connector."""
 
-Wave 1 will populate this dictionary with the pilot connectors hosted under
-``scripts/s12_connectors``.
-"""
+    source_id: str
+    events: List[dict]
+    output_path: Path
 
 
-def run_connector(source_id: str, registry: SourceRegistry | None = None) -> List[dict]:
-    """Run a connector and return the collected raw events.
+CONNECTOR_HANDLERS: Dict[str, ConnectorFn] = {
+    "obra_publica_diario_oficial": obra_publica_diario_oficial.fetch_events,
+    "obra_publica_portal_transparencia": obra_publica_portal_transparencia.fetch_events,
+    "evento_climatico_feed_nacional": evento_climatico_feed_nacional.fetch_events,
+}
 
-    The returned events will later be handed to ``s12_ingest_pipeline``.
-    """
+
+def run_for_source(
+    source: SourceConfig,
+    mode: str = "test",
+    evidence_dir: Optional[Path] = None,
+) -> ConnectorRunResult:
+    """Run the connector associated with ``source`` and persist raw events."""
+
+    handler = CONNECTOR_HANDLERS.get(source.connector)
+    if handler is None:
+        raise ConnectorNotRegistered(f"Connector '{source.connector}' not registered for S12.")
+
+    events = handler(source, mode=mode)
+    output_path = deliver_to_pipeline(events, source_id=source.id_fonte, evidence_dir=evidence_dir)
+    return ConnectorRunResult(source.id_fonte, events, output_path)
+
+
+def deliver_to_pipeline(
+    raw_events: List[dict],
+    *,
+    source_id: str,
+    evidence_dir: Optional[Path] = None,
+) -> Path:
+    """Persist raw events so the ingestion pipeline can consume them."""
+
+    if evidence_dir is None:
+        evidence_dir = DEFAULT_RAW_DIR
+    evidence_dir.mkdir(parents=True, exist_ok=True)
+    ts_label = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    output_path = evidence_dir / f"raw_events_{source_id}_{ts_label}.json"
+    output_path.write_text(json.dumps(raw_events, indent=2, ensure_ascii=False), encoding="utf-8")
+    return output_path
+
+
+def run_connector(source_id: str, registry: SourceRegistry | None = None, mode: str = "test") -> ConnectorRunResult:
+    """Utility used by tests to run a connector by id."""
 
     registry = registry or DEFAULT_REGISTRY
-    config = registry.get(source_id)
-    handler = CONNECTOR_HANDLERS.get(source_id)
-    if handler is None:
-        raise ConnectorNotRegistered(
-            f"Connector '{source_id}' not wired yet. Register it in CONNECTOR_HANDLERS during Wave 1."
-        )
-    events = list(handler(config.to_payload()))
-    return events
+    source = registry.get(source_id)
+    return run_for_source(source, mode=mode)
 
 
-def deliver_to_pipeline(raw_events: Iterable[dict]) -> None:
-    """Placeholder for the bridge into ``s12_ingest_pipeline``."""
-
-    _ = list(raw_events)
-    raise NotImplementedError("Wave 1 should stream connector output into s12_ingest_pipeline")
-
-
-__all__ = ["run_connector", "deliver_to_pipeline", "CONNECTOR_HANDLERS", "ConnectorNotRegistered"]
+__all__ = [
+    "ConnectorRunResult",
+    "ConnectorNotRegistered",
+    "run_for_source",
+    "run_connector",
+    "deliver_to_pipeline",
+]
