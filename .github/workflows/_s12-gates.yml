@@ -1,0 +1,40 @@
+name: Sprint 12 Gates
+
+on:
+  push:
+    branches:
+      - main
+      - s12_ingestao_continua_comunidade_v0
+  pull_request:
+    branches:
+      - main
+      - s12_ingestao_continua_comunidade_v0
+
+jobs:
+  sprint12-gates:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install project
+        run: pip install -e .
+
+      - name: Run Sprint 12 gates
+        run: |
+          export PYTHONPATH=.
+          bin/s12_gates_all.sh
+
+      - name: Upload scorecards and evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sprint12-gates-artifacts
+          path: |
+            out/scorecards
+            out/evidence
