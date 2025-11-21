@@ -52,6 +52,17 @@ Escopo atual:
 
 Este capítulo é conceitual por desenho: ele define objetos, princípios e contratos. Fórmulas detalhadas, SLOs, thresholds de uso e experimentos de calibração são especificados em capítulos técnicos posteriores.
 
+#### 1.1 Estado operacional pós-Sprint 12
+Desde a Sprint 12 o Inspectah opera, em modo v0 controlado, como um serviço contínuo:
+
+- **Ingestão contínua enxuta:** registry + scheduler executam conectores pilotados (obras públicas, portais de transparência, alertas climáticos) com cadências configuradas e logs determinísticos. Cada rodada gera `raw_events` idempotentes e acionáveis.
+- **Debunker v0 obrigatório antes da Truth-DB:** eventos normalizados só viram candidatos a fatos/versões quando passam pelo Debunker v0, que devolve decisão (`aceito`, `incerto`, `suspeito`) e racional curto — tudo registrado em scorecards/evidências.
+- **Casos/temas com timeline:** eventos são roteados para casos (`domínio:identificador`), timelines são append-only e derivam diretamente da Truth-DB/Guardião consolidada na Sprint 10.
+- **Explorer v0 + feedback interno:** existe uma UI mínima para buscar casos, abrir a timeline, seguir links para fontes e abrir o botão “reportar problema”, que alimenta uma fila interna simples (`novo → em_analise → resolvido`).
+- **Observabilidade e decisão automática:** gates S12_G0…S12_G8, scorecards em `out/scorecards/` e evidências em `out/evidence/` garantem que qualquer pessoa consiga rodar `bin/s12_gates_all.sh` localmente (ou via CI) e decidir GO/NO-GO com base objetiva.
+
+Esse é o “estado base” reconhecido pelo produto: poucas fontes muito bem tratadas, Debunker obrigatório nas informações sensíveis, timeline auditável, Explorer/feedback funcional e governança operacional clara — pronta para a fase seguinte (mais fontes, Sistema de Blocos completo, blockchain, reputação e comunidade avançada).
+
 ---
 
 ### 2. Papéis, Workspaces e Limites Claros
@@ -389,4 +400,3 @@ Para o Codex (ou qualquer agente executor), este Capítulo 1 vFinal estabelece q
 - Fórmulas específicas, SLOs, thresholds e experimentos de calibração do score são especificados em capítulos técnicos (por exemplo, Capítulo 2/3, anexos ou specs dedicadas), mas devem respeitar todas as definições e invariantes deste capítulo.
 
 Este Capítulo 1 vFinal é a âncora conceitual do Inspectah enquanto **Hub de Fontes, Log de Fatos, Consenso entre Fontes, Certeza (%) Transparente e Trilha de Decisão Explicável**. Nenhum capítulo posterior deve contradizer estes princípios; apenas refiná-los e torná-los executáveis em código, pipelines e SLOs concretos.
-
