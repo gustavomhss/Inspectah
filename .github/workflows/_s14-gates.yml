@@ -1,0 +1,40 @@
+name: Sprint 14 Gates
+
+on:
+  push:
+    branches:
+      - main
+      - s14_hardening_truth_kernel_v0
+  pull_request:
+    branches:
+      - main
+      - s14_hardening_truth_kernel_v0
+
+jobs:
+  sprint14-gates:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install project
+        run: pip install -e .
+
+      - name: Run Sprint 14 gates
+        run: |
+          export PYTHONPATH=.
+          bash bin/s14_gates_all.sh
+
+      - name: Upload scorecards and evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sprint14-gates-artifacts
+          path: |
+            out/scorecards
+            out/evidence

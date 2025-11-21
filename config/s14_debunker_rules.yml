@@ -1,0 +1,41 @@
+{
+  "defaults": {
+    "explanation_required": true,
+    "coverage_pass": 0.95,
+    "coverage_warn": 0.9,
+    "stability_runs": 1,
+    "notes": "Parâmetros detalhados para G2: coverage>=0.95 PASS; 0.90–0.95 WARN."
+  },
+  "domains": {
+    "obra_publica": {
+      "sensitivity": "alto",
+      "coverage_target": 0.95,
+      "flags": []
+    },
+    "evento_climatico": {
+      "sensitivity": "alto",
+      "coverage_target": 0.95,
+      "flags": []
+    },
+    "projeto_lei": {
+      "sensitivity": "medio",
+      "coverage_target": 0.9,
+      "flags": ["default_incerto"]
+    },
+    "carreira_politica": {
+      "sensitivity": "medio",
+      "coverage_target": 0.9,
+      "flags": ["default_incerto"]
+    },
+    "influencer": {
+      "sensitivity": "medio",
+      "coverage_target": 0.9,
+      "flags": ["default_incerto"]
+    },
+    "atleta": {
+      "sensitivity": "medio",
+      "coverage_target": 0.9,
+      "flags": ["default_incerto"]
+    }
+  }
+}

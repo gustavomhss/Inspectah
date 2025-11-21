@@ -1,0 +1,40 @@
+{
+  "domains": [
+    "obra_publica",
+    "evento_climatico",
+    "projeto_lei",
+    "carreira_politica",
+    "influencer",
+    "atleta"
+  ],
+  "case_keys": {
+    "obra_publica": ["obra_publica:obra_transcol_niteroi_2022"],
+    "evento_climatico": ["evento_climatico:evento_clima_serrana_2023"],
+    "projeto_lei": ["projeto_lei:pl_transparencia_energia_2024"],
+    "carreira_politica": ["carreira_politica:carreira_prefeitura_niteroi_2020_2024"],
+    "influencer": ["influencer:influencer_obras_alpha_2023"],
+    "atleta": ["atleta:atleta_bolsa_esporte_2024"]
+  },
+  "case_states": {
+    "canonical": ["ACEITO", "INCERTO", "SUSPEITO", "REVISADO", "DESCARTADO"],
+    "legacy_text": [
+      "Execução em andamento com aditivos acompanhados pela comunidade escolar.",
+      "Defesa Civil em prontidão permanente depois da sequência de alertas severos.",
+      "Projeto aguardando votação em plenário após tramitar nas comissões.",
+      "Mandato interino consolidado com foco em convênios educacionais.",
+      "Perfis continuam ativos promovendo obras municipais em conteúdos patrocinados.",
+      "Atleta: aguardando resultado de bolsa ou patrocínio."
+    ]
+  },
+  "timeline_states": {
+    "canonical": ["aceito", "incerto", "suspeito", "revisado"]
+  },
+  "snapshots": {
+    "s12_cases": "out/evidence/S12_G4/",
+    "s12_timelines": "out/evidence/S12_G2/",
+    "s13_timelines": "out/evidence/S13_G2/",
+    "s13_explorer": "out/evidence/S13_G4/",
+    "pilotos_config": "config/s13_pilotos.yml"
+  },
+  "notes": "Esta configuração será detalhada nas Waves 1–2 da Sprint 14 conforme Capítulos 1–3."
+}
