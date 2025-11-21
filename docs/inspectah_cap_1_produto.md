@@ -63,6 +63,14 @@ Desde a Sprint 12 o Inspectah opera, em modo v0 controlado, como um serviço con
 
 Esse é o “estado base” reconhecido pelo produto: poucas fontes muito bem tratadas, Debunker obrigatório nas informações sensíveis, timeline auditável, Explorer/feedback funcional e governança operacional clara — pronta para a fase seguinte (mais fontes, Sistema de Blocos completo, blockchain, reputação e comunidade avançada).
 
+#### 1.2 Estado operacional pós-Sprint 14
+- **Truth kernel v0 endurecido:** casos/timelines e truthdb_adapter consolidados com invariantes checadas no G1.
+- **Debunker v0 como serviço único:** regras por domínio externalizadas, cobertura e explicabilidade aferidas no G2.
+- **Explorer/feedback preservados:** contratos de busca/detalhe/feedback validados contra os pilotos multi-domínio (G3).
+- **Migrações/cleanup leves:** verificação de sanidade e diretórios/evidências preparados para S14 (G4).
+- **Backlog da Fase 2 estruturado:** itens de Sistema de Blocos, blockchain, reputação e contestação avançada mapeados para S15+ (G5).
+- **Observabilidade consolidada:** snapshot único de métricas S14 (G6/G7) e decisão GO formalizada (G8).
+
 ---
 
 ### 2. Papéis, Workspaces e Limites Claros

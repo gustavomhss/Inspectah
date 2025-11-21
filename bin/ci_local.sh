@@ -5,7 +5,7 @@ OUT="$ROOT/out/evidence/T7_ci"
 REPORT="$OUT/ci_full_report.json"
 SCORECARD="$ROOT/out/scorecards/T7_ci_full.json"
 mkdir -p "$OUT" "$ROOT/out/scorecards"
-SCRIPTS=(".ci/lint.sh" ".ci/tests.sh" ".ci/bench.sh" ".ci/release_check.sh" "bin/s12_gates_all.sh")
+SCRIPTS=(".ci/lint.sh" ".ci/tests.sh" ".ci/bench.sh" ".ci/release_check.sh" "bin/s12_gates_all.sh" "bin/s14_gates_all.sh")
 STATUS=()
 FAIL=0
 for script in "${SCRIPTS[@]}"; do

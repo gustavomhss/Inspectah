@@ -7,7 +7,7 @@ if [[ ! -d "$ROOT_DIR/.git" ]]; then
   exit 2
 fi
 
-EXPECTED_BRANCH="s14_hardening_truth_kernel_v0"
+ALLOWED_BRANCHES=("main" "s14_hardening_truth_kernel_v0")
 EXPECTED_ORIGIN="github.com:gustavomhss/Inspectah.git"
 
 SCORECARD_DIR="$ROOT_DIR/out/scorecards"
@@ -29,9 +29,16 @@ REQUIRED_DOCS=(
 status="PASS"
 reasons=()
 
-if [[ "$BRANCH" != "$EXPECTED_BRANCH" ]]; then
+is_allowed=0
+for allowed in "${ALLOWED_BRANCHES[@]}"; do
+  if [[ "$BRANCH" == "$allowed" ]]; then
+    is_allowed=1
+    break
+  fi
+done
+if [[ "$is_allowed" -eq 0 ]]; then
   status="FAIL"
-  reasons+=("Branch atual ($BRANCH) diferente do esperado ($EXPECTED_BRANCH)")
+  reasons+=("Branch atual ($BRANCH) não está entre as branches permitidas (${ALLOWED_BRANCHES[*]})")
 fi
 
 if [[ "$ORIGIN_URL" != *"$EXPECTED_ORIGIN" ]]; then
@@ -87,7 +94,7 @@ PY
   fi
 fi
 
-python3 - <<'PY' "$SNAPSHOT_PATH" "$BRANCH" "$ORIGIN_URL" "${REQUIRED_DOCS[@]}" "$S12_SCORECARD" "$S13_SCORECARD" "$decision_s12" "$decision_s13"
+python3 - <<'PY' "$SNAPSHOT_PATH" "$BRANCH" "$ORIGIN_URL" "${REQUIRED_DOCS[@]}" "$S12_SCORECARD" "$S13_SCORECARD" "$decision_s12" "$decision_s13" "${ALLOWED_BRANCHES[@]}"
 import json, sys
 from pathlib import Path
 
@@ -99,6 +106,7 @@ s12_scorecard = sys.argv[8]
 s13_scorecard = sys.argv[9]
 decision_s12 = sys.argv[10]
 decision_s13 = sys.argv[11]
+allowed = sys.argv[12:]
 
 payload = {
     "branch": branch,
@@ -108,6 +116,7 @@ payload = {
     "s13_scorecard": s13_scorecard,
     "decision_s12": decision_s12,
     "decision_s13": decision_s13,
+    "allowed_branches": allowed,
 }
 env_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
 PY
