@@ -1,0 +1,30 @@
+{
+  "domain": "projetos",
+  "claims": [
+    {
+      "id": "proj-1",
+      "summary": "Entrega da obra foi antecipada em três meses",
+      "impact": 0.6,
+      "novelty": 0.6,
+      "history_risk": 0.3,
+      "evidence": [
+        {"id": "ev-proj-1", "stance": "for", "summary": "Cronograma atualizado fornecido"},
+        {"id": "ev-proj-2", "stance": "against", "summary": "Fiscalização aponta atraso de fornecedores"}
+      ],
+      "expected_risk": "high",
+      "expected_recommendation": "questioned"
+    },
+    {
+      "id": "proj-2",
+      "summary": "Projeto beta concluiu fase de testes internos",
+      "impact": 0.35,
+      "novelty": 0.4,
+      "history_risk": 0.2,
+      "evidence": [
+        {"id": "ev-proj-3", "stance": "for", "summary": "Release do time de engenharia"}
+      ],
+      "expected_risk": "medium",
+      "expected_recommendation": "keep_state"
+    }
+  ]
+}

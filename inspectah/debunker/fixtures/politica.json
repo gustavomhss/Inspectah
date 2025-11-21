@@ -1,0 +1,31 @@
+{
+  "domain": "politica",
+  "claims": [
+    {
+      "id": "pol-1",
+      "summary": "Resultado da eleição foi revertido antes da certificação final",
+      "impact": 0.92,
+      "novelty": 0.7,
+      "history_risk": 0.4,
+      "tags": ["eleicao"],
+      "evidence": [
+        {"id": "ev-pol-1", "stance": "for", "summary": "Tribunal local aceitou recurso"},
+        {"id": "ev-pol-2", "stance": "against", "summary": "Resultado oficial mantido pelo órgão eleitoral"}
+      ],
+      "expected_risk": "high",
+      "expected_recommendation": "open_dispute"
+    },
+    {
+      "id": "pol-2",
+      "summary": "Prefeito renunciou ao cargo",
+      "impact": 0.6,
+      "novelty": 0.3,
+      "history_risk": 0.1,
+      "evidence": [
+        {"id": "ev-pol-3", "stance": "for", "summary": "Coletiva de imprensa do gabinete"}
+      ],
+      "expected_risk": "medium",
+      "expected_recommendation": "keep_state"
+    }
+  ]
+}

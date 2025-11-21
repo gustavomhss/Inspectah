@@ -1,0 +1,30 @@
+{
+  "domain": "esporte",
+  "claims": [
+    {
+      "id": "esp-1",
+      "summary": "Time Alpha venceu a final apesar do protesto",
+      "impact": 0.8,
+      "novelty": 0.6,
+      "history_risk": 0.3,
+      "tags": ["final", "titulo"],
+      "evidence": [
+        {"id": "ev-esp-1", "stance": "for", "summary": "Placar oficial da liga"},
+        {"id": "ev-esp-2", "stance": "against", "summary": "Recurso do time Beta por irregularidade"}
+      ],
+      "expected_risk": "high",
+      "expected_recommendation": "open_dispute"
+    },
+    {
+      "id": "esp-2",
+      "summary": "Jogador X lesionou o joelho e ficará fora duas semanas",
+      "impact": 0.4,
+      "novelty": 0.4,
+      "evidence": [
+        {"id": "ev-esp-3", "stance": "for", "summary": "Laudo médico liberado pelo clube"}
+      ],
+      "expected_risk": "medium",
+      "expected_recommendation": "keep_state"
+    }
+  ]
+}

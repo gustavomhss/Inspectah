@@ -1,0 +1,33 @@
+name: sprint_15_nightly
+
+on:
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+
+jobs:
+  s15-nightly:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+      - name: Run critical gates T2-T6
+        run: |
+          ./bin/s15_t2_debunker_offline.sh
+          ./bin/s15_t3_committees_flow.sh
+          ./bin/s15_t4_golden_scenarios.sh
+          ./bin/s15_t5_performance_and_cost.sh
+          ./bin/s15_t6_observability.sh
+      - name: Upload nightly scorecards
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: s15-nightly-scorecards
+          path: out/scorecards

@@ -1,0 +1,30 @@
+{
+  "domain": "fofoca",
+  "claims": [
+    {
+      "id": "fof-1",
+      "summary": "Celebridade Y terminou o namoro por traição",
+      "impact": 0.55,
+      "novelty": 0.7,
+      "history_risk": 0.6,
+      "evidence": [
+        {"id": "ev-fof-1", "stance": "for", "summary": "Revista especializada publicou nota"},
+        {"id": "ev-fof-2", "stance": "against", "summary": "Assessoria nega em comunicado"}
+      ],
+      "expected_risk": "high",
+      "expected_recommendation": "questioned"
+    },
+    {
+      "id": "fof-2",
+      "summary": "Influencer Z viajou para gravação de reality show",
+      "impact": 0.35,
+      "novelty": 0.6,
+      "history_risk": 0.2,
+      "evidence": [
+        {"id": "ev-fof-3", "stance": "for", "summary": "Stories publicados no aeroporto"}
+      ],
+      "expected_risk": "medium",
+      "expected_recommendation": "keep_state"
+    }
+  ]
+}

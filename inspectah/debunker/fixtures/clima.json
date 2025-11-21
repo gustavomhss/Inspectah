@@ -1,0 +1,31 @@
+{
+  "domain": "clima",
+  "claims": [
+    {
+      "id": "cli-1",
+      "summary": "Alerta de inundação severa na região costeira",
+      "impact": 0.7,
+      "novelty": 0.5,
+      "history_risk": 0.2,
+      "tags": ["alerta"],
+      "evidence": [
+        {"id": "ev-cli-1", "stance": "for", "summary": "Boletim do serviço meteorológico"},
+        {"id": "ev-cli-2", "stance": "against", "summary": "Estação local mostra níveis normais"}
+      ],
+      "expected_risk": "high",
+      "expected_recommendation": "questioned"
+    },
+    {
+      "id": "cli-2",
+      "summary": "Temperatura média subiu 0,2C nesta semana",
+      "impact": 0.3,
+      "novelty": 0.2,
+      "history_risk": 0.1,
+      "evidence": [
+        {"id": "ev-cli-3", "stance": "for", "summary": "Dados da estação central"}
+      ],
+      "expected_risk": "low",
+      "expected_recommendation": "keep_state"
+    }
+  ]
+}

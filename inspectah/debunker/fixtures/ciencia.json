@@ -1,0 +1,31 @@
+{
+  "domain": "ciencia",
+  "claims": [
+    {
+      "id": "sci-1",
+      "summary": "Estudo chave foi retratado após auditoria",
+      "impact": 0.85,
+      "novelty": 0.7,
+      "history_risk": 0.5,
+      "tags": ["publicacao_retratada", "saude"],
+      "evidence": [
+        {"id": "ev-sci-1", "stance": "for", "summary": "Revista publicou retratação"},
+        {"id": "ev-sci-2", "stance": "against", "summary": "Autores contestam decisão"}
+      ],
+      "expected_risk": "high",
+      "expected_recommendation": "open_dispute"
+    },
+    {
+      "id": "sci-2",
+      "summary": "Protótipo obteve 5% de ganho de eficiência",
+      "impact": 0.3,
+      "novelty": 0.5,
+      "history_risk": 0.2,
+      "evidence": [
+        {"id": "ev-sci-3", "stance": "for", "summary": "Resultados de laboratório"}
+      ],
+      "expected_risk": "medium",
+      "expected_recommendation": "keep_state"
+    }
+  ]
+}

@@ -5,3 +5,4 @@ out/
 __pycache__/
 
 Sprint 6/
+*.py[cod]

@@ -1,0 +1,31 @@
+{
+  "domain": "mandatos",
+  "claims": [
+    {
+      "id": "man-1",
+      "summary": "Deputado teve mandato cassado por compra de votos",
+      "impact": 0.9,
+      "novelty": 0.8,
+      "history_risk": 0.5,
+      "tags": ["cassacao"],
+      "evidence": [
+        {"id": "ev-man-1", "stance": "for", "summary": "Decisão de tribunal regional"},
+        {"id": "ev-man-2", "stance": "against", "summary": "Recurso com efeito suspensivo"}
+      ],
+      "expected_risk": "high",
+      "expected_recommendation": "open_dispute"
+    },
+    {
+      "id": "man-2",
+      "summary": "Vereador reassumiu o cargo após licença médica",
+      "impact": 0.4,
+      "novelty": 0.3,
+      "history_risk": 0.2,
+      "evidence": [
+        {"id": "ev-man-3", "stance": "for", "summary": "Diário oficial publicou a posse"}
+      ],
+      "expected_risk": "medium",
+      "expected_recommendation": "keep_state"
+    }
+  ]
+}
