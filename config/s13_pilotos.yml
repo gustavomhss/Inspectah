@@ -1,0 +1,92 @@
+{
+  "obra_publica": [
+    {
+      "id": "obra_transcol_niteroi_2022",
+      "dominio": "obra_publica",
+      "nome": "Ampliação do Terminal Transcol em Niterói",
+      "descricao_curta": "Obra de mobilidade com aditivos sucessivos e interfaces com escolas do entorno.",
+      "periodo": "2022-01 a 2024-06",
+      "local": "Niterói/RJ",
+      "orgao_responsavel": "Secretaria Municipal de Obras",
+      "fonte_principal": "Diário Oficial de Niterói",
+      "case_key": "obra_publica:obra_transcol_niteroi_2022",
+      "estado_atual": "Execução em andamento com aditivos acompanhados pela comunidade escolar.",
+      "narrativa_resumo": "A ampliação do terminal Transcol reorganiza o fluxo escolar em Niterói. Depois de sucessivos aditivos e ajustes de cronograma, a obra segue em execução e exige transparência sobre impactos em ruas e escolas vizinhas."
+    }
+  ],
+  "evento_climatico": [
+    {
+      "id": "evento_clima_serrana_2023",
+      "dominio": "evento_climatico",
+      "nome": "Chuvas extremas na Serra do Rio em mar/2023",
+      "descricao_curta": "Sequência de alertas INMET e Defesa Civil para municípios serranos.",
+      "periodo": "2023-03",
+      "local": "Petrópolis/Teresópolis/RJ",
+      "orgao_responsavel": "Defesa Civil RJ",
+      "fonte_principal": "Alertas INMET",
+      "case_key": "evento_climatico:evento_clima_serrana_2023",
+      "estado_atual": "Defesa Civil em prontidão permanente depois da sequência de alertas severos.",
+      "narrativa_resumo": "Os municípios serranos enfrentaram alertas laranja contínuos do INMET em março/2023. O piloto acompanha como comunicados oficiais e boletins locais chegam à população e acionam planos de evacuação preventiva."
+    }
+  ],
+  "projeto_lei": [
+    {
+      "id": "pl_transparencia_energia_2024",
+      "dominio": "projeto_lei",
+      "nome": "PL da Transparência em Contratos de Energia",
+      "descricao_curta": "Projeto de lei estadual exigindo publicação mensal de contratos de energia.",
+      "periodo": "2024-04",
+      "local": "Assembleia Legislativa do RJ",
+      "autor": "Dep. Marina Costa",
+      "fonte_principal": "Portal da Alerj",
+      "case_key": "projeto_lei:pl_transparencia_energia_2024",
+      "estado_atual": "Projeto aguardando votação em plenário após tramitar nas comissões.",
+      "narrativa_resumo": "O PL da Transparência em Contratos de Energia obriga a publicação mensal dos principais contratos estaduais de fornecimento. A narrativa acompanha protocolização, pareceres e pressões de concessionárias até a votação final."
+    }
+  ],
+  "carreira_politica": [
+    {
+      "id": "carreira_prefeitura_niteroi_2020_2024",
+      "dominio": "carreira_politica",
+      "nome": "Trajetória do prefeito interino de Niterói (2020-2024)",
+      "descricao_curta": "Linha do tempo de cargos, alianças e licitações relacionadas ao gabinete.",
+      "periodo": "2020-01 a 2024-09",
+      "local": "Niterói/RJ",
+      "pessoa_chave": "Prefeito interino",
+      "fonte_principal": "Portal da Transparência + Diário Oficial",
+      "case_key": "carreira_politica:carreira_prefeitura_niteroi_2020_2024",
+      "estado_atual": "Mandato interino consolidado com foco em convênios educacionais.",
+      "narrativa_resumo": "O caso monitora a trajetória do prefeito interino de Niterói entre 2020 e 2024, cruzando cargos, convênios e licitações que envolvem o gabinete. O objetivo é entender como arranjos políticos impactam contratações sensíveis."
+    }
+  ],
+  "influencer": [
+    {
+      "id": "influencer_obras_alpha_2023",
+      "dominio": "influencer",
+      "nome": "Influencer Alpha falando sobre obras públicas em 2023",
+      "descricao_curta": "Conteúdo recorrente envolvendo contratos de manutenção escolar e lives patrocinadas.",
+      "periodo": "2023-02 a 2023-12",
+      "local": "Rio de Janeiro/RJ",
+      "plataforma_principal": "YouTube",
+      "fonte_principal": "Capturas internas",
+      "case_key": "influencer:influencer_obras_alpha_2023",
+      "estado_atual": "Perfis continuam ativos promovendo obras municipais em conteúdos patrocinados.",
+      "narrativa_resumo": "A influencer Alpha produz lives e posts pagos sobre contratos de manutenção escolar. O piloto acompanha quando o conteúdo mistura publicidade e informação pública, apontando riscos de desinformação sobre andamento das obras."
+    }
+  ],
+  "atleta": [
+    {
+      "id": "atleta_bolsa_esporte_2024",
+      "dominio": "atleta",
+      "nome": "Programa Bolsa Esporte de Atleta Beta",
+      "descricao_curta": "Acompanhamento do uso de verba municipal por atleta patrocinado em 2024.",
+      "periodo": "2024-01 a 2024-09",
+      "local": "São Gonçalo/RJ",
+      "modalidade": "Atletismo",
+      "fonte_principal": "Portal de Convênios",
+      "case_key": "atleta:atleta_bolsa_esporte_2024",
+      "estado_atual": "Prestação de contas parcial aprovada; próxima parcela condicionada a relatórios.",
+      "narrativa_resumo": "O programa Bolsa Esporte financia a temporada do Atleta Beta. A narrativa acompanha liberações de verba, viagens e entrega de relatórios para garantir que o recurso municipal esteja alinhado ao desempenho esportivo."
+    }
+  ]
+}
