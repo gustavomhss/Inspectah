@@ -1,0 +1,33 @@
+name: sprint_17_nightly
+
+on:
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+
+jobs:
+  s17-nightly:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      - name: Install frontend deps
+        run: |
+          cd frontend/inspectah-ui
+          npm ci
+      - name: Run nightly subset (T1-T4, T6)
+        run: |
+          ./bin/s17_t1_contracts_and_states.sh
+          ./bin/s17_t2_ux_and_accessibility.sh
+          ./bin/s17_t3_api_integration.sh
+          ./bin/s17_t4_golden_flows.sh
+          ./bin/s17_t6_frontend_observability.sh
+      - name: Upload nightly scorecards
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: s17-nightly-scorecards
+          path: out/scorecards
