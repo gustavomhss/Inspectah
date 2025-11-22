@@ -34,6 +34,8 @@ class Batcher:
         self._pending_since: datetime | None = None
         self._counter = 0
         self._history: List[BatchResult] = []
+        self._failure_log: List[Dict[str, object]] = []
+        self._last_failure: Dict[str, object] | None = None
 
     def add_entry(self, entry: str) -> BatchResult | None:
         now = datetime.now(timezone.utc)
@@ -47,7 +49,13 @@ class Batcher:
         if not self._pending:
             raise RuntimeError("nenhum item para ancorar")
         merkle_root = build_merkle_root(self._pending)
-        receipt = self.chain.submit_anchor(merkle_root)
+        try:
+            receipt = self.chain.submit_anchor(merkle_root)
+        except Exception as exc:  # noqa: BLE001
+            failure = {"error": str(exc), "pending": list(self._pending)}
+            self._last_failure = failure
+            self._failure_log.append(failure)
+            raise
         self._counter += 1
         anchor_id = f"anchor-{self._counter}"
         result = BatchResult(anchor_id=anchor_id, merkle_root=merkle_root, receipt=receipt, items=tuple(self._pending))
@@ -59,6 +67,18 @@ class Batcher:
     @property
     def history(self) -> Sequence[BatchResult]:
         return tuple(self._history)
+
+    @property
+    def pending_items(self) -> Sequence[str]:
+        return tuple(self._pending)
+
+    @property
+    def failures(self) -> Sequence[Dict[str, object]]:
+        return tuple(self._failure_log)
+
+    @property
+    def last_failure(self) -> Dict[str, object] | None:
+        return self._last_failure
 
 
 __all__ = ["Batcher", "BatchResult"]

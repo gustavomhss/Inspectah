@@ -1,0 +1,33 @@
+name: sprint_16_nightly
+
+on:
+  schedule:
+    - cron: '0 4 * * *'
+  workflow_dispatch:
+
+jobs:
+  s16-nightly:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+      - name: Run heavy gates T2-T6
+        run: |
+          ./bin/s16_t2_attack_scenarios.sh
+          ./bin/s16_t3_debunker_and_committees_under_attack.sh
+          ./bin/s16_t4_anchors_and_anti_canetada.sh
+          ./bin/s16_t5_stress_and_degradation.sh
+          ./bin/s16_t6_security_observability.sh
+      - name: Upload nightly scorecards
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: s16-nightly-scorecards
+          path: out/scorecards

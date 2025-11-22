@@ -45,6 +45,26 @@ def _contradiction_score(supportive: Sequence[EvidenceItem], opposing: Sequence[
     return conflict / total if total else 0.0
 
 
+def _risk_flags(
+    *,
+    impact: float,
+    contradiction: float,
+    history: float,
+    supportive: Sequence[EvidenceItem],
+    opposing: Sequence[EvidenceItem],
+) -> list[str]:
+    flags: list[str] = []
+    if impact >= 0.8 and not supportive:
+        flags.append("high_impact_no_support")
+    if contradiction >= 0.4 and opposing and supportive:
+        flags.append("contradiction_detected")
+    if history >= 0.6:
+        flags.append("historico_risco_alto")
+    if len(opposing) > len(supportive) * 2:
+        flags.append("evidencia_desbalanceada_contra")
+    return flags
+
+
 def select_risky_claims(
     claims: Sequence[Mapping[str, object]],
     config: Mapping[str, DebunkerRuleSet] | None = None,
@@ -108,6 +128,16 @@ def analyze_claim(
             ):
                 risk_level = expected_level
 
+    flags = _risk_flags(
+        impact=impact,
+        contradiction=contradiction_ratio,
+        history=history,
+        supportive=supportive,
+        opposing=opposing,
+    )
+    if risk_level is RiskLevel.LOW and flags:
+        risk_level = RiskLevel.MEDIUM
+
     contradictions: List[Contradiction] = []
     if supportive and opposing:
         contradictions.append(
@@ -138,6 +168,7 @@ def analyze_claim(
             "contradiction_ratio": contradiction_ratio,
             "history": history,
             "tags": tuple(claim.get("tags", ())),
+            "risk_flags": flags,
         },
     )
     report.recommendation = recommend_action(report)
@@ -148,6 +179,7 @@ def recommend_action(report: DebunkerReport) -> Recommendation:
     """Aplica política de recomendação baseada em risco e contradições."""
     contradictions = len(report.contradictions)
     severe = any(c.severity == "high" for c in report.contradictions)
+    flags = tuple(report.meta.get("risk_flags", ()))
     if report.risk is RiskLevel.HIGH:
         if severe or contradictions > 1:
             return Recommendation.OPEN_DISPUTE
@@ -155,8 +187,10 @@ def recommend_action(report: DebunkerReport) -> Recommendation:
             return Recommendation.QUESTIONED
         return Recommendation.ESCALATE
     if report.risk is RiskLevel.MEDIUM:
-        return Recommendation.QUESTIONED if contradictions else Recommendation.KEEP_STATE
-    return Recommendation.KEEP_STATE
+        if contradictions or flags:
+            return Recommendation.QUESTIONED
+        return Recommendation.KEEP_STATE
+    return Recommendation.QUESTIONED if flags else Recommendation.KEEP_STATE
 
 
 __all__ = [

@@ -47,7 +47,12 @@ def run_v2_panel(
     approve_ratio = sum(v.weight for v in votes if v.outcome is VoteOutcome.AGREE) / (sum(v.weight for v in votes) or 1.0)
     status = DecisionStatus.APPROVED
     rationale = "consenso mínimo atingido"
-    if approve_ratio < 0.5:
+    evidence_count = int(submission.get("evidence_count", 0) or 0)
+    high_risk = report.risk is RiskLevel.HIGH or "high_impact_no_support" in report.meta.get("risk_flags", [])
+    if evidence_count <= 0 and high_risk:
+        status = DecisionStatus.REJECTED
+        rationale = "risco alto sem evidência mínima"
+    elif approve_ratio < 0.5:
         status = DecisionStatus.REJECTED
         rationale = "maioria discordou da proposta"
     elif approve_ratio < 0.65:
@@ -56,7 +61,12 @@ def run_v2_panel(
     elif report.recommendation in {Recommendation.OPEN_DISPUTE, Recommendation.ESCALATE}:
         status = DecisionStatus.ESCALATE
         rationale = "Debunker sugeriu escalada"
-    return CommitteeDecision(layer="V2", status=status, rationale=rationale, votes=votes, metadata={"approve_ratio": approve_ratio})
+    metadata = {
+        "approve_ratio": approve_ratio,
+        "evidence_count": evidence_count,
+        "risk_flags": tuple(report.meta.get("risk_flags", ())),
+    }
+    return CommitteeDecision(layer="V2", status=status, rationale=rationale, votes=votes, metadata=metadata)
 
 
 __all__ = ["run_v2_panel", "DEFAULT_BRAINS"]
