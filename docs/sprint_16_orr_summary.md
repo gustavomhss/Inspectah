@@ -28,3 +28,9 @@ Consolidar o estado de hardening do pacote S13–S16 (Truth-DB + Debunker v1 + C
 
 ## Decisão final
 - **GO_WITH_RESTRICTIONS** — consolidado no `out/scorecards/S16_T8_go_no_go.json`, condicionado à mitigação de riscos de chain/âncoras em ambientes reais e à continuidade da cobertura de CI (`.ci/sprint_16_gates.yml`, `.ci/sprint_16_nightly.yml`).
+
+## Adendo de execução final da Sprint 16
+- Commit final da S16 no branch `main`: `25f1d335258934707eaf3b2766e3463a4bcf2e3d`.
+- Após esse commit foi executado localmente `PYTHONPATH=. bin/s16_all_gates.sh`.
+- Todos os gates S16_T0…S16_T8 rodaram com sucesso; scorecard consolidado `out/scorecards/S16_T8_go_no_go.json` mantém decisão **GO_WITH_RESTRICTIONS**.
+- Restrição principal: uso de cliente de chain simulado em T4, conforme descrito neste ORR e no Threat Model da Sprint 16.
