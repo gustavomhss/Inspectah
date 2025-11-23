@@ -1,4 +1,4 @@
-import { Component, type ErrorInfo, type ReactNode } from 'react';
+import React, { Component, type ErrorInfo, type ReactNode } from 'react';
 import ErrorMessage from '../../shared/components/ErrorMessage';
 import { LoggerContext } from '../providers/LoggerProvider';
 

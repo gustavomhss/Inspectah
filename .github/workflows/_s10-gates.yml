@@ -12,6 +12,11 @@ on:
 
 jobs:
   sprint10-gates:
+    if: >
+      github.ref_name == 'main' ||
+      github.head_ref == 'main' ||
+      github.ref_name == 'q2-s10-truthdb-guardian' ||
+      github.head_ref == 'q2-s10-truthdb-guardian'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
