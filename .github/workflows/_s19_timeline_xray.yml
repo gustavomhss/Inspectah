@@ -1,0 +1,65 @@
+name: Sprint 19 Timeline e Raio-X
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  s19-timeline-xray:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python deps
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e .[dev]
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install frontend deps
+        working-directory: frontend/inspectah-ui
+        run: npm ci --prefer-offline
+
+      - name: Gate S19_G3 (frontend qualidade)
+        run: |
+          export PYTHONPATH=.
+          bash bin/s19_g3_front_quality.sh
+
+      - name: Gate S19_G4 (timeline correctness)
+        run: |
+          export PYTHONPATH=.
+          bash bin/s19_g4_timeline_correctness.sh
+
+      - name: Gate S19_G5 (xray consistency)
+        run: |
+          export PYTHONPATH=.
+          bash bin/s19_g5_xray_consistency_and_depth.sh
+
+      - name: Gate S19_G6 (métricas)
+        run: |
+          export PYTHONPATH=.
+          bash bin/s19_g6_metrics_and_demo.sh
+
+      - name: Upload S19 artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: s19-timeline-xray-artifacts
+          path: |
+            out/scorecards
+            out/evidence/S19_G3_front_quality
+            out/evidence/S19_G4_timeline_correctness
+            out/evidence/S19_G5_xray_consistency_and_depth
+            out/evidence/S19_G6_metrics_and_demo

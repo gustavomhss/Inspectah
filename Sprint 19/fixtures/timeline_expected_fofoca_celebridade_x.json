@@ -1,0 +1,23 @@
+{
+  "case_id": "fofoca:celebridade-x",
+  "events": [
+    {
+      "id": "fofoca:celebridade-x:rumor-inicial",
+      "case_id": "fofoca:celebridade-x",
+      "timestamp": "2025-08-01T10:00:00Z",
+      "event_type": "rumor_inicial",
+      "severity": "info",
+      "source": "s12_monitor_social",
+      "summary": "Blog local publica rumor sobre separação de Celebridade X."
+    },
+    {
+      "id": "fofoca:celebridade-x:debunker-checagem",
+      "case_id": "fofoca:celebridade-x",
+      "timestamp": "2025-08-01T12:30:00Z",
+      "event_type": "debunker_check",
+      "severity": "warning",
+      "source": "debunker:v1",
+      "summary": "Debunker marca como boato sem confirmação de fontes confiáveis."
+    }
+  ]
+}

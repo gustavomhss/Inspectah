@@ -75,6 +75,20 @@ if APIRouter is not None:  # pragma: no cover
             raise HTTPException(status_code=404, detail="Caso não encontrado")
         return {"case": to_dict(case)}
 
+    @router.get("/cases/{case_id}/timeline")
+    def _get_admin_case_timeline(case_id: str) -> Dict[str, Any]:
+        timeline = service.list_case_timeline(case_id)
+        if not timeline:
+            raise HTTPException(status_code=404, detail="Timeline não encontrada")
+        return {"timeline": to_dict(timeline)}
+
+    @router.get("/cases/{case_id}/xray")
+    def _get_admin_case_xray(case_id: str) -> Dict[str, Any]:
+        xray = service.get_case_xray(case_id)
+        if not xray:
+            raise HTTPException(status_code=404, detail="Raio-X não encontrado")
+        return {"xray": to_dict(xray)}
+
     @router.get("/health")
     def _get_admin_health() -> Dict[str, Any]:
         health = service.get_admin_health()

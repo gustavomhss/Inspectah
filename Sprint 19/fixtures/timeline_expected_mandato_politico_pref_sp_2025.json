@@ -1,0 +1,32 @@
+{
+  "case_id": "mandato_politico:pref_sp_2025",
+  "events": [
+    {
+      "id": "mandato_politico:pref_sp_2025:promessa-campanha",
+      "case_id": "mandato_politico:pref_sp_2025",
+      "timestamp": "2025-07-10T09:00:00Z",
+      "event_type": "promessa_campanha",
+      "severity": "info",
+      "source": "s12_monitor_promessas",
+      "summary": "Prefeito promete zerar fila de creches até dezembro."
+    },
+    {
+      "id": "mandato_politico:pref_sp_2025:auditoria-creche",
+      "case_id": "mandato_politico:pref_sp_2025",
+      "timestamp": "2025-10-02T14:15:00Z",
+      "event_type": "auditoria",
+      "severity": "warning",
+      "source": "tribunal_contas_municipal",
+      "summary": "Auditoria aponta atraso de 40% na expansão de vagas."
+    },
+    {
+      "id": "mandato_politico:pref_sp_2025:ancora-falha",
+      "case_id": "mandato_politico:pref_sp_2025",
+      "timestamp": "2025-10-05T08:00:00Z",
+      "event_type": "anchor_failed",
+      "severity": "critical",
+      "source": "anchor:cadastro_unico",
+      "summary": "Âncora de dados cadastrais reportou inconsistências em 12% dos registros."
+    }
+  ]
+}

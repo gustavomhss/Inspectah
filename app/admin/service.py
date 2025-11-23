@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 from app.core import storage
 from app.core.models import Item, Source, SourceConfig, SourceStatus
@@ -12,10 +12,20 @@ from .schemas import (
     AdminCaseDetail,
     AdminCaseSummary,
     AdminHealth,
+    AdminAnchorSummary,
+    AdminAnchorsSection,
+    AdminCaseXRay,
+    AdminCommitteeDecision,
+    AdminCommitteesSection,
+    AdminDebunkerSection,
+    AdminEvidenceSection,
+    AdminEvidenceSummary,
     AdminSourceDetail,
     AdminSourceHistoryEntry,
     AdminSourceStatus,
     AdminSourceSummary,
+    AdminTimelineEvent,
+    AdminTimelineResponse,
     SourceCreateRequest,
     SourceResponse,
     SourceStatusResponse,
@@ -28,6 +38,7 @@ LEGACY_FIXTURE_DIRS = [
     REPO_ROOT / "tests" / "fixtures" / "s8_comparacao",
     REPO_ROOT / "tests" / "fixtures" / "s8_checagem_factual",
 ]
+S19_FIXTURE_DIR = REPO_ROOT / "Sprint 19" / "fixtures"
 
 DEFAULT_SELECTED_FIELDS = [
     "produto",
@@ -170,6 +181,39 @@ def _parse_datetime(value: Union[str, datetime, None]) -> Optional[datetime]:
         return None
 
 
+def _map_severity(raw_status: Optional[str]) -> Optional[str]:
+    if not raw_status:
+        return None
+    status = str(raw_status).lower()
+    if status in {"critical", "critico", "falha", "failed", "ancora_falhou"}:
+        return "critical"
+    if status in {"incerto", "contestacao", "warning", "atencao", "degraded"}:
+        return "warning"
+    return "info"
+
+
+def _build_timeline_event(entry: Dict[str, Any], case_id: str) -> AdminTimelineEvent:
+    ts = _parse_datetime(entry.get("timestamp") or entry.get("event_timestamp"))
+    event_type = entry.get("event_type") or entry.get("tipo_evento") or entry.get("titulo") or "evento"
+    severity = entry.get("severity") or _map_severity(entry.get("status_debunker"))
+    summary = entry.get("summary") or entry.get("resumo") or entry.get("titulo") or ""
+    source = entry.get("source") or entry.get("fonte") or entry.get("source_id")
+    base_id = (
+        entry.get("id")
+        or entry.get("id_evento")
+        or f"{case_id}:{event_type}:{ts.isoformat() if ts else 'sem_timestamp'}"
+    )
+    return AdminTimelineEvent(
+        id=str(base_id),
+        case_id=entry.get("case_id") or entry.get("id_caso") or case_id,
+        timestamp=ts or datetime.utcnow(),
+        event_type=str(event_type),
+        severity=severity,
+        source=source,
+        summary=str(summary),
+    )
+
+
 def create_or_update_source(payload: SourceCreateRequest) -> Source:
     existing = storage.get_source(payload.id)
     status = existing.status if existing else SourceStatus()
@@ -300,6 +344,29 @@ def _load_timelines_snapshot() -> Dict[str, List[Dict[str, Any]]]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def _sanitize_case_id(case_id: str) -> str:
+    return case_id.replace(":", "_").replace("/", "_").replace("-", "_")
+
+
+def _load_json_if_exists(path: Path) -> Optional[Dict[str, Any]]:
+    if not path.exists():
+        return None
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return None
+
+
+def _load_timeline_fixture(case_id: str) -> Optional[Dict[str, Any]]:
+    filename = f"timeline_expected_{_sanitize_case_id(case_id)}.json"
+    return _load_json_if_exists(S19_FIXTURE_DIR / filename)
+
+
+def _load_xray_fixture(case_id: str) -> Optional[Dict[str, Any]]:
+    filename = f"xray_expected_{_sanitize_case_id(case_id)}.json"
+    return _load_json_if_exists(S19_FIXTURE_DIR / filename)
+
+
 def list_admin_cases() -> List[AdminCaseSummary]:
     cases = _load_cases_snapshot()
     timelines = _load_timelines_snapshot()
@@ -347,6 +414,21 @@ def get_admin_case(case_id: str) -> Optional[AdminCaseDetail]:
     )
 
 
+def list_case_timeline(case_id: str) -> Optional[AdminTimelineResponse]:
+    fixture = _load_timeline_fixture(case_id)
+    raw_events: List[Dict[str, Any]]
+    if fixture:
+        raw_events = fixture.get("events", [])
+    else:
+        raw_events = _load_timelines_snapshot().get(case_id, [])
+    if not raw_events:
+        return None
+
+    events = [_build_timeline_event(entry, case_id) for entry in raw_events]
+    events.sort(key=lambda ev: ev.timestamp)
+    return AdminTimelineResponse(case_id=case_id, events=events)
+
+
 def get_admin_health() -> AdminHealth:
     sources = list_admin_sources()
     cases = list_admin_cases()
@@ -367,6 +449,159 @@ def get_admin_health() -> AdminHealth:
         cases_stable=cases_stable,
         integrations=integrations,
     )
+
+
+def _build_debunker_section(data: Dict[str, Any], fallback_risk: Optional[str]) -> AdminDebunkerSection:
+    explanation = data.get("explanation") or data.get("resumo") or "Avaliação indisponível no momento."
+    flags = data.get("flags") or []
+    return AdminDebunkerSection(
+        risk_level=data.get("risk_level") or fallback_risk,
+        explanation=str(explanation),
+        flags=flags if isinstance(flags, list) else [str(flags)],
+        last_evaluated_at=_parse_datetime(data.get("last_evaluated_at")),
+    )
+
+
+def _build_committees_section(data: Dict[str, Any]) -> AdminCommitteesSection:
+    decisions_payload = data.get("decisions") or []
+    decisions: List[AdminCommitteeDecision] = []
+    for decision in decisions_payload:
+        decisions.append(
+            AdminCommitteeDecision(
+                name=str(decision.get("name", "comite")),
+                verdict=str(decision.get("verdict", "indefinido")),
+                confidence=None if decision.get("confidence") is None else str(decision.get("confidence")),
+                rationale=decision.get("rationale"),
+                decided_at=_parse_datetime(decision.get("decided_at")),
+            )
+        )
+    summary = data.get("summary") or "Sem deliberações registradas."
+    return AdminCommitteesSection(summary=str(summary), decisions=decisions)
+
+
+def _build_anchors_section(data: Dict[str, Any]) -> AdminAnchorsSection:
+    anchors_data = data.get("anchors") or []
+    anchors: List[AdminAnchorSummary] = []
+    for anchor in anchors_data:
+        issues = anchor.get("issues") or []
+        anchors.append(
+            AdminAnchorSummary(
+                name=str(anchor.get("name", "ancora")),
+                status=str(anchor.get("status", "desconhecido")),
+                last_check=_parse_datetime(anchor.get("last_check")),
+                reliability=anchor.get("reliability"),
+                issues=issues if isinstance(issues, list) else [str(issues)],
+            )
+        )
+    summary = data.get("summary") or "Sem dados de âncoras disponíveis."
+    return AdminAnchorsSection(summary=str(summary), anchors=anchors)
+
+
+def _build_evidence_section(data: Dict[str, Any], timeline_events: List[AdminTimelineEvent]) -> AdminEvidenceSection:
+    evidences_data = data.get("evidences") or []
+    evidences: List[AdminEvidenceSummary] = []
+    for entry in evidences_data:
+        evidences.append(
+            AdminEvidenceSummary(
+                id=str(entry.get("id", "")),
+                type=str(entry.get("type", "desconhecido")),
+                source=entry.get("source"),
+                title=entry.get("title"),
+                snippet=entry.get("snippet"),
+                url=entry.get("url"),
+                captured_at=_parse_datetime(entry.get("captured_at")),
+            )
+        )
+    if not evidences and timeline_events:
+        for ev in timeline_events[:3]:
+            evidences.append(
+                AdminEvidenceSummary(
+                    id=ev.id,
+                    type=ev.event_type,
+                    source=ev.source,
+                    title=ev.summary or ev.event_type,
+                    snippet=ev.summary,
+                    captured_at=ev.timestamp,
+                )
+            )
+    summary = data.get("summary") or "Evidências principais consolidadas da timeline."
+    return AdminEvidenceSection(summary=str(summary), evidences=evidences)
+
+
+def _build_xray_from_dict(
+    payload: Dict[str, Any], case_entry: Optional[Dict[str, Any]], timeline: Optional[AdminTimelineResponse]
+) -> AdminCaseXRay:
+    case_id = payload.get("case_id") or (case_entry or {}).get("id_caso") or "desconhecido"
+    title = payload.get("title") or (case_entry or {}).get("titulo") or case_id
+    category = payload.get("category") or (case_entry or {}).get("dominio")
+    status = payload.get("status") or (case_entry or {}).get("status") or "incerto"
+    risk = payload.get("risk") or (case_entry or {}).get("metadata", {}).get("risk")
+    summary = payload.get("summary") or (case_entry or {}).get("descricao") or ""
+
+    debunker = _build_debunker_section(payload.get("debunker", {}), risk)
+    committees = _build_committees_section(payload.get("committees", {}))
+    anchors = _build_anchors_section(payload.get("anchors", {}))
+    evidences = _build_evidence_section(payload.get("evidences", {}), timeline.events if timeline else [])
+
+    return AdminCaseXRay(
+        case_id=case_id,
+        title=title,
+        category=category,
+        status=status,
+        risk=risk,
+        summary=summary,
+        debunker=debunker,
+        committees=committees,
+        anchors=anchors,
+        evidences=evidences,
+    )
+
+
+def _build_default_xray(case_entry: Dict[str, Any], timeline: Optional[AdminTimelineResponse]) -> AdminCaseXRay:
+    case_id = case_entry.get("id_caso", "")
+    risk = case_entry.get("metadata", {}).get("risk")
+    debunker = AdminDebunkerSection(
+        risk_level=risk,
+        explanation="Avaliação consolidada a partir de snapshots do Sistema de Blocos.",
+        flags=[],
+        last_evaluated_at=_parse_datetime(case_entry.get("updated_at")),
+    )
+    committees = AdminCommitteesSection(
+        summary="Decisões consolidadas não detalhadas no snapshot da S12.",
+        decisions=[],
+    )
+    anchors = AdminAnchorsSection(
+        summary="Sem âncoras detalhadas disponíveis; exibindo estado padrão.",
+        anchors=[],
+    )
+    evidences = _build_evidence_section({"summary": "Evidências derivadas da timeline."}, timeline.events if timeline else [])
+    return AdminCaseXRay(
+        case_id=case_id,
+        title=case_entry.get("titulo", case_id),
+        category=case_entry.get("dominio"),
+        status=case_entry.get("status", "incerto"),
+        risk=risk,
+        summary=case_entry.get("descricao", ""),
+        debunker=debunker,
+        committees=committees,
+        anchors=anchors,
+        evidences=evidences,
+    )
+
+
+def get_case_xray(case_id: str) -> Optional[AdminCaseXRay]:
+    cases = {entry.get("id_caso"): entry for entry in _load_cases_snapshot()}
+    case_entry = cases.get(case_id)
+    timeline = list_case_timeline(case_id)
+
+    fixture = _load_xray_fixture(case_id)
+    if fixture:
+        return _build_xray_from_dict(fixture, case_entry, timeline)
+
+    if not case_entry:
+        return None
+
+    return _build_default_xray(case_entry, timeline)
 
 
 def trigger_source_test(source_id: str) -> SourceTestResult:

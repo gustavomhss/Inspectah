@@ -1,5 +1,14 @@
 import { httpClient } from '../httpClient';
-import type { AdminCase, AdminCaseDetail, AdminHealth, AdminSource, AdminSourceDetail, AdminSourceStatus } from '../../types/admin';
+import type {
+  AdminCase,
+  AdminCaseDetail,
+  AdminCaseXRay,
+  AdminHealth,
+  AdminSource,
+  AdminSourceDetail,
+  AdminSourceStatus,
+  AdminTimelineResponse,
+} from '../../types/admin';
 
 interface ApiSource {
   id: string;
@@ -65,6 +74,20 @@ export async function fetchCases(): Promise<AdminCase[]> {
 export async function fetchCaseDetail(caseId: string): Promise<AdminCaseDetail> {
   const response = await httpClient<{ case: AdminCaseDetail }>(`${ADMIN_BASE}/cases/${encodeURIComponent(caseId)}`);
   return response.case;
+}
+
+export async function getAdminCaseTimeline(caseId: string): Promise<AdminTimelineResponse> {
+  const response = await httpClient<{ timeline: AdminTimelineResponse }>(
+    `${ADMIN_BASE}/cases/${encodeURIComponent(caseId)}/timeline`,
+  );
+  return response.timeline;
+}
+
+export async function getAdminCaseXRay(caseId: string): Promise<AdminCaseXRay> {
+  const response = await httpClient<{ xray: AdminCaseXRay }>(
+    `${ADMIN_BASE}/cases/${encodeURIComponent(caseId)}/xray`,
+  );
+  return response.xray;
 }
 
 export async function fetchHealth(): Promise<AdminHealth> {

@@ -54,6 +54,18 @@ function AdminCaseDetailPage() {
           <div className="flex flex-wrap items-center gap-2">
             <CaseStatusBadge status={entry.status} />
             <RiskBadge risk={entry.risk} />
+            <Link
+              to={`/admin/cases/${entry.id}/timeline`}
+              className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-sky-200 hover:border-white/20"
+            >
+              Ver timeline
+            </Link>
+            <Link
+              to={`/admin/cases/${entry.id}/xray`}
+              className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-sky-200 hover:border-white/20"
+            >
+              Ver raio-X
+            </Link>
           </div>
         </div>
         <p className="mt-3 text-sm text-slate-200">{entry.description || 'Sem descrição disponível.'}</p>

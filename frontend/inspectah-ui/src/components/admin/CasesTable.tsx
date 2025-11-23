@@ -22,6 +22,7 @@ function CasesTable({ cases }: Props) {
             <th className="px-4 py-3">Status</th>
             <th className="px-4 py-3">Risco</th>
             <th className="px-4 py-3">Atualizado em</th>
+            <th className="px-4 py-3">Diagnóstico</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-white/5">
@@ -40,6 +41,22 @@ function CasesTable({ cases }: Props) {
                 <RiskBadge risk={item.risk} />
               </td>
               <td className="px-4 py-3 text-slate-200">{item.updated_at || '—'}</td>
+              <td className="px-4 py-3">
+                <div className="flex flex-wrap gap-2">
+                  <Link
+                    to={`/admin/cases/${item.id}/timeline`}
+                    className="rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-xs font-semibold text-sky-200 hover:border-white/20"
+                  >
+                    Timeline
+                  </Link>
+                  <Link
+                    to={`/admin/cases/${item.id}/xray`}
+                    className="rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-xs font-semibold text-sky-200 hover:border-white/20"
+                  >
+                    Raio-X
+                  </Link>
+                </div>
+              </td>
             </tr>
           ))}
         </tbody>

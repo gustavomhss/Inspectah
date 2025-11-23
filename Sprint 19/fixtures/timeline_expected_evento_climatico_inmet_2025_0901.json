@@ -1,0 +1,32 @@
+{
+  "case_id": "evento_climatico:inmet-2025-0901",
+  "events": [
+    {
+      "id": "evento_climatico:inmet-2025-0901:alerta-laranja",
+      "case_id": "evento_climatico:inmet-2025-0901",
+      "timestamp": "2025-11-21T17:24:20.607073Z",
+      "event_type": "alerta_meteorologico",
+      "severity": "warning",
+      "source": "s12_eventos_climaticos_inmet",
+      "summary": "Alerta laranja do INMET para Costa Verde / RJ."
+    },
+    {
+      "id": "evento_climatico:inmet-2025-0901:debunker-review",
+      "case_id": "evento_climatico:inmet-2025-0901",
+      "timestamp": "2025-11-21T17:30:00Z",
+      "event_type": "debunker_review",
+      "severity": "critical",
+      "source": "debunker:v1",
+      "summary": "Debunker elevou risco devido a chuvas persistentes e saturação do solo."
+    },
+    {
+      "id": "evento_climatico:inmet-2025-0901:comite-voto",
+      "case_id": "evento_climatico:inmet-2025-0901",
+      "timestamp": "2025-11-21T17:33:00Z",
+      "event_type": "committee_vote",
+      "severity": "warning",
+      "source": "committee:v2",
+      "summary": "Comitê V2 votou por manter estado de atenção e monitoramento ativo."
+    }
+  ]
+}

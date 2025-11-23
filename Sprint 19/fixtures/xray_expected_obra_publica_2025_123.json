@@ -1,0 +1,80 @@
+{
+  "case_id": "obra_publica:2025-123",
+  "title": "Contrato 2025-123 — Escola Municipal Vila Verde",
+  "category": "obra_publica",
+  "status": "em_atraso",
+  "risk": "alto",
+  "summary": "Obra da escola Vila Verde atrasada após falha de âncora por imagem e alerta de divergência estrutural.",
+  "debunker": {
+    "risk_level": "alto",
+    "explanation": "Modelo detectou atraso de 15% e instabilidade de âncora visual; recomenda revisão presencial.",
+    "flags": ["atraso_fisico", "ancora_visual_inconsistente"],
+    "last_evaluated_at": "2025-09-20T06:35:00Z"
+  },
+  "committees": {
+    "summary": "Comitês V1 e V2 divergiram; V3 pediu reabertura de contestação com inspeção in loco.",
+    "decisions": [
+      {
+        "name": "comite_v1",
+        "verdict": "manter",
+        "confidence": "0.58",
+        "rationale": "Atraso ainda dentro do limite contratual.",
+        "decided_at": "2025-09-19T08:00:00Z"
+      },
+      {
+        "name": "comite_v2",
+        "verdict": "risco_alto",
+        "confidence": "0.71",
+        "rationale": "Falha de âncora visual pode indicar rachaduras novas.",
+        "decided_at": "2025-09-20T07:00:00Z"
+      },
+      {
+        "name": "comite_v3",
+        "verdict": "reabrir_contestacao",
+        "confidence": "0.66",
+        "rationale": "Solicita inspeção presencial antes de liberar próxima medição.",
+        "decided_at": "2025-09-20T07:10:00Z"
+      }
+    ]
+  },
+  "anchors": {
+    "summary": "Âncora de foto por drone falhou; sensores de material seguem saudáveis.",
+    "anchors": [
+      {
+        "name": "foto_drone_semana_38",
+        "status": "failed",
+        "last_check": "2025-09-20T06:30:00Z",
+        "reliability": "baixa",
+        "issues": ["detecção de rachadura na viga central", "imagem desalinhada em 12%"]
+      },
+      {
+        "name": "sensor_umidade_civil",
+        "status": "healthy",
+        "last_check": "2025-09-19T23:59:00Z",
+        "reliability": "media",
+        "issues": []
+      }
+    ]
+  },
+  "evidences": {
+    "summary": "Relatórios de progresso e imagens de drone sustentam aumento de risco.",
+    "evidences": [
+      {
+        "id": "obra_publica:2025-123:relatorio-progresso",
+        "type": "relatorio",
+        "source": "s12_obras_diario_niteroi",
+        "title": "Relatório semanal 38",
+        "snippet": "Execução 15% atrasada versus baseline contratual.",
+        "captured_at": "2025-09-19T00:00:00Z"
+      },
+      {
+        "id": "anchor:foto-drone",
+        "type": "imagem",
+        "source": "anchor:foto-drone",
+        "title": "Foto de drone semana 38",
+        "snippet": "Segmentação detectou sombra de fissura na viga central.",
+        "captured_at": "2025-09-20T06:30:00Z"
+      }
+    ]
+  }
+}

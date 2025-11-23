@@ -1,0 +1,32 @@
+{
+  "case_id": "obra_publica:2025-123",
+  "events": [
+    {
+      "id": "obra_publica:2025-123:ordem_inicio",
+      "case_id": "obra_publica:2025-123",
+      "timestamp": "2025-09-18T00:00:00Z",
+      "event_type": "ordem_de_inicio",
+      "severity": "info",
+      "source": "s12_obras_diario_niteroi",
+      "summary": "Contrato 2025-123 — ordem de início publicada."
+    },
+    {
+      "id": "obra_publica:2025-123:relatorio-progresso",
+      "case_id": "obra_publica:2025-123",
+      "timestamp": "2025-09-19T00:00:00Z",
+      "event_type": "relatorio_progresso",
+      "severity": "warning",
+      "source": "s12_obras_diario_niteroi",
+      "summary": "Relatório semanal aponta atraso de 15% na execução física."
+    },
+    {
+      "id": "obra_publica:2025-123:ancora-falha",
+      "case_id": "obra_publica:2025-123",
+      "timestamp": "2025-09-20T06:30:00Z",
+      "event_type": "anchor_failed",
+      "severity": "critical",
+      "source": "anchor:foto-drone",
+      "summary": "Âncora de validação por imagem detectou divergência estrutural."
+    }
+  ]
+}

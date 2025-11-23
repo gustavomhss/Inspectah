@@ -1,0 +1,73 @@
+{
+  "case_id": "evento_climatico:inmet-2025-0901",
+  "title": "Alerta LARANJA - Costa Verde / RJ",
+  "category": "evento_climatico",
+  "status": "em_monitoramento",
+  "risk": "alto",
+  "summary": "Chuvas intensas na Costa Verde com solo saturado; mantido estado de atenção elevada.",
+  "debunker": {
+    "risk_level": "alto",
+    "explanation": "Debunker elevou o risco ao combinar alerta oficial do INMET com leituras locais de pluviômetros e histórico de deslizamentos.",
+    "flags": ["chuva_intensa", "deslizamento", "alerta_inmet_laranja"],
+    "last_evaluated_at": "2025-11-21T17:30:00Z"
+  },
+  "committees": {
+    "summary": "Comitês convergiram em manter monitoramento com mitigação e acionamento de sirenes locais.",
+    "decisions": [
+      {
+        "name": "comite_v1",
+        "verdict": "monitorar",
+        "confidence": "0.62",
+        "rationale": "Alerta laranja mas sem danos reportados.",
+        "decided_at": "2025-11-21T17:32:00Z"
+      },
+      {
+        "name": "comite_v2",
+        "verdict": "risco_alto",
+        "confidence": "0.74",
+        "rationale": "Saturação do solo e histórico de escorregamento em 2024.",
+        "decided_at": "2025-11-21T17:33:10Z"
+      }
+    ]
+  },
+  "anchors": {
+    "summary": "Âncora pluviométrica instável; radar segue saudável.",
+    "anchors": [
+      {
+        "name": "pluviometro_angra",
+        "status": "degraded",
+        "last_check": "2025-11-21T17:25:00Z",
+        "reliability": "baixa",
+        "issues": ["sensor reiniciou durante pico de chuva", "perda de 2 pacotes de telemetria"]
+      },
+      {
+        "name": "radar_simepar",
+        "status": "healthy",
+        "last_check": "2025-11-21T17:24:00Z",
+        "reliability": "alta",
+        "issues": []
+      }
+    ]
+  },
+  "evidences": {
+    "summary": "Alertas INMET e leituras locais sustentam o estado de atenção com risco alto.",
+    "evidences": [
+      {
+        "id": "s12_eventos_climaticos_inmet:7fae87ab93298510",
+        "type": "alerta",
+        "source": "s12_eventos_climaticos_inmet",
+        "title": "INMET emite alerta laranja",
+        "snippet": "Acumulado acima de 60mm em 24h; monitorar encostas.",
+        "captured_at": "2025-11-21T17:24:20Z"
+      },
+      {
+        "id": "sensor:pluviometro_angra",
+        "type": "sensor",
+        "source": "rede_pluviometros",
+        "title": "Pluviômetro Angra",
+        "snippet": "Queda de 32mm em 1h com tendência de alta.",
+        "captured_at": "2025-11-21T17:28:00Z"
+      }
+    ]
+  }
+}

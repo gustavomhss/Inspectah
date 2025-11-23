@@ -111,6 +111,95 @@ class AdminHealth:
     integrations: Dict[str, str] = field(default_factory=dict)
 
 
+# --- S19 timeline e raio-x ---
+
+
+@dataclass
+class AdminTimelineEvent:
+    id: str
+    case_id: str
+    timestamp: datetime
+    event_type: str
+    severity: Optional[str] = None
+    source: Optional[str] = None
+    summary: str = ""
+
+
+@dataclass
+class AdminTimelineResponse:
+    case_id: str
+    events: List[AdminTimelineEvent] = field(default_factory=list)
+
+
+@dataclass
+class AdminDebunkerSection:
+    risk_level: Optional[str]
+    explanation: str
+    flags: List[str] = field(default_factory=list)
+    last_evaluated_at: Optional[datetime] = None
+
+
+@dataclass
+class AdminCommitteeDecision:
+    name: str
+    verdict: str
+    confidence: Optional[str] = None
+    rationale: Optional[str] = None
+    decided_at: Optional[datetime] = None
+
+
+@dataclass
+class AdminCommitteesSection:
+    summary: str
+    decisions: List[AdminCommitteeDecision] = field(default_factory=list)
+
+
+@dataclass
+class AdminAnchorSummary:
+    name: str
+    status: str
+    last_check: Optional[datetime] = None
+    reliability: Optional[str] = None
+    issues: List[str] = field(default_factory=list)
+
+
+@dataclass
+class AdminAnchorsSection:
+    summary: str
+    anchors: List[AdminAnchorSummary] = field(default_factory=list)
+
+
+@dataclass
+class AdminEvidenceSummary:
+    id: str
+    type: str
+    source: Optional[str] = None
+    title: Optional[str] = None
+    snippet: Optional[str] = None
+    url: Optional[str] = None
+    captured_at: Optional[datetime] = None
+
+
+@dataclass
+class AdminEvidenceSection:
+    summary: str
+    evidences: List[AdminEvidenceSummary] = field(default_factory=list)
+
+
+@dataclass
+class AdminCaseXRay:
+    case_id: str
+    title: str
+    category: Optional[str]
+    status: str
+    risk: Optional[str]
+    summary: str
+    debunker: AdminDebunkerSection
+    committees: AdminCommitteesSection
+    anchors: AdminAnchorsSection
+    evidences: AdminEvidenceSection
+
+
 def to_dict(model: Any) -> Dict[str, Any]:
     """Helper to convert dataclasses (including nested) to plain dicts."""
     return asdict(model)
