@@ -1,13 +1,14 @@
 import { readFileSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { rest } from 'msw';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import AdminCaseTimelinePage from '../../pages/admin/AdminCaseTimelinePage';
-import AdminCaseXRayPage from '../../pages/admin/AdminCaseXRayPage';
-import AdminCasesPage from '../../pages/admin/AdminCasesPage';
-import AdminCaseDetailPage from '../../pages/admin/AdminCaseDetailPage';
+import { Route, Routes } from 'react-router-dom';
+import AdminCaseDetailPage from '../../modules/admin/pages/AdminCaseDetailPage';
+import AdminCasesPage from '../../modules/admin/pages/AdminCasesPage';
+import CaseTimelinePage from '../../modules/cases/pages/CaseTimelinePage';
+import CaseXrayPage from '../../modules/cases/pages/CaseXrayPage';
+import { renderWithProviders } from '../test-utils';
 import { server } from '../mocks/server';
 
 const BASE_URL = 'http://localhost:8000';
@@ -28,12 +29,11 @@ describe('Admin timeline e raio-X', () => {
       ),
     );
 
-    render(
-      <MemoryRouter initialEntries={['/admin/cases/obra_publica:2025-123/timeline']}>
-        <Routes>
-          <Route path="/admin/cases/:caseId/timeline" element={<AdminCaseTimelinePage />} />
-        </Routes>
-      </MemoryRouter>,
+    renderWithProviders(
+      <Routes>
+        <Route path="/admin/cases/:caseId/timeline" element={<CaseTimelinePage />} />
+      </Routes>,
+      { route: '/admin/cases/obra_publica:2025-123/timeline' },
     );
 
     expect(screen.getByText(/Carregando timeline/i)).toBeInTheDocument();
@@ -59,12 +59,11 @@ describe('Admin timeline e raio-X', () => {
       ),
     );
 
-    render(
-      <MemoryRouter initialEntries={['/admin/cases/desconhecido/timeline']}>
-        <Routes>
-          <Route path="/admin/cases/:caseId/timeline" element={<AdminCaseTimelinePage />} />
-        </Routes>
-      </MemoryRouter>,
+    renderWithProviders(
+      <Routes>
+        <Route path="/admin/cases/:caseId/timeline" element={<CaseTimelinePage />} />
+      </Routes>,
+      { route: '/admin/cases/desconhecido/timeline' },
     );
 
     await waitFor(() => {
@@ -80,12 +79,11 @@ describe('Admin timeline e raio-X', () => {
       ),
     );
 
-    render(
-      <MemoryRouter initialEntries={['/admin/cases/evento_climatico:inmet-2025-0901/xray']}>
-        <Routes>
-          <Route path="/admin/cases/:caseId/xray" element={<AdminCaseXRayPage />} />
-        </Routes>
-      </MemoryRouter>,
+    renderWithProviders(
+      <Routes>
+        <Route path="/admin/cases/:caseId/xray" element={<CaseXrayPage />} />
+      </Routes>,
+      { route: '/admin/cases/evento_climatico:inmet-2025-0901/xray' },
     );
 
     await waitFor(() => {
@@ -124,15 +122,14 @@ describe('Admin timeline e raio-X', () => {
       ),
     );
 
-    render(
-      <MemoryRouter initialEntries={['/admin/cases']}>
-        <Routes>
-          <Route path="/admin/cases" element={<AdminCasesPage />} />
-          <Route path="/admin/cases/:caseId" element={<AdminCaseDetailPage />} />
-          <Route path="/admin/cases/:caseId/timeline" element={<AdminCaseTimelinePage />} />
-          <Route path="/admin/cases/:caseId/xray" element={<AdminCaseXRayPage />} />
-        </Routes>
-      </MemoryRouter>,
+    renderWithProviders(
+      <Routes>
+        <Route path="/admin/cases" element={<AdminCasesPage />} />
+        <Route path="/admin/cases/:caseId" element={<AdminCaseDetailPage />} />
+        <Route path="/admin/cases/:caseId/timeline" element={<CaseTimelinePage />} />
+        <Route path="/admin/cases/:caseId/xray" element={<CaseXrayPage />} />
+      </Routes>,
+      { route: '/admin/cases' },
     );
 
     await waitFor(() => {

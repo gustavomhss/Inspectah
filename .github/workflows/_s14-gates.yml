@@ -12,6 +12,11 @@ on:
 
 jobs:
   sprint14-gates:
+    if: >
+      github.ref_name == 'main' ||
+      github.head_ref == 'main' ||
+      github.ref_name == 's14_hardening_truth_kernel_v0' ||
+      github.head_ref == 's14_hardening_truth_kernel_v0'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

@@ -1,8 +1,9 @@
 import { rest } from 'msw';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { render, screen, waitFor } from '@testing-library/react';
-import AdminOverviewPage from '../../pages/admin/AdminOverviewPage';
-import AdminSourcesPage from '../../pages/admin/AdminSourcesPage';
+import { Route, Routes } from 'react-router-dom';
+import { screen, waitFor } from '@testing-library/react';
+import AdminOverviewPage from '../../modules/admin/pages/AdminOverviewPage';
+import AdminSourcesPage from '../../modules/admin/pages/AdminSourcesPage';
+import { renderWithProviders } from '../test-utils';
 import { server } from '../mocks/server';
 
 const BASE_URL = 'http://localhost:8000';
@@ -28,12 +29,11 @@ describe('AdminOverviewPage', () => {
       ),
     );
 
-    render(
-      <MemoryRouter initialEntries={['/admin']}>
-        <Routes>
-          <Route path="/admin" element={<AdminOverviewPage />} />
-        </Routes>
-      </MemoryRouter>,
+    renderWithProviders(
+      <Routes>
+        <Route path="/admin" element={<AdminOverviewPage />} />
+      </Routes>,
+      { route: '/admin' },
     );
 
     await waitFor(() => {
@@ -65,12 +65,11 @@ describe('AdminSourcesPage', () => {
       ),
     );
 
-    render(
-      <MemoryRouter initialEntries={['/admin/sources']}>
-        <Routes>
-          <Route path="/admin/sources" element={<AdminSourcesPage />} />
-        </Routes>
-      </MemoryRouter>,
+    renderWithProviders(
+      <Routes>
+        <Route path="/admin/sources" element={<AdminSourcesPage />} />
+      </Routes>,
+      { route: '/admin/sources' },
     );
 
     await waitFor(() => {

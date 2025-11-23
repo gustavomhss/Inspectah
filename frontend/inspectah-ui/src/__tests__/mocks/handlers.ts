@@ -1,5 +1,5 @@
 import { rest } from 'msw';
-import type { ConsultationResponseRaw } from '../../types/inspectah';
+import type { ConsultationResponseRaw } from '../../core/api/api-types';
 
 const BASE_URL = 'http://localhost:8000';
 
@@ -42,3 +42,19 @@ export const errorHandler = (status: number, message?: string) =>
   });
 
 export const handlers = [successHandler];
+
+export const authHandler = rest.post(`${BASE_URL}/auth/login`, async (req, res, ctx) => {
+  const body = await req.json();
+  return res(
+    ctx.status(200),
+    ctx.json({
+      token: 'test-token',
+      user: {
+        id: body.username ?? 'tester',
+        email: `${body.username ?? 'tester'}@inspectah.local`,
+      },
+    }),
+  );
+});
+
+handlers.push(authHandler);

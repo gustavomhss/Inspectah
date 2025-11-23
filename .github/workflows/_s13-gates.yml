@@ -12,6 +12,11 @@ on:
 
 jobs:
   sprint13-gates:
+    if: >
+      github.ref_name == 'main' ||
+      github.head_ref == 'main' ||
+      github.ref_name == 's13_piloto_multi_dominio_v0' ||
+      github.head_ref == 's13_piloto_multi_dominio_v0'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
