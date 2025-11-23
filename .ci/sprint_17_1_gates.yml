@@ -1,0 +1,37 @@
+name: sprint_17_1_gates
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  s17-1-gates:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+      - name: Run Sprint 17.1 gates T0-T7
+        run: |
+          ./bin/s17_1_t0_sanity.sh
+          ./bin/s17_1_t1_contracts_and_states.sh
+          ./bin/s17_1_t2_integration_core_flows.sh
+          ./bin/s17_1_t3_error_paths_and_resilience.sh
+          ./bin/s17_1_t4_ui_wire_and_e2e_smoke.sh
+          ./bin/s17_1_t5_performance_and_limits.sh
+          ./bin/s17_1_t6_observability_and_logs.sh
+          ./bin/s17_1_t7_ci_and_repro.sh
+      - name: Upload scorecards
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: s17-1-scorecards
+          path: out/scorecards

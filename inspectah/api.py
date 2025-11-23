@@ -1,18 +1,41 @@
 from __future__ import annotations
 
+from typing import Iterable
+
 try:  # pragma: no cover
     from fastapi import FastAPI
+    from fastapi.middleware.cors import CORSMiddleware
 except ModuleNotFoundError:  # pragma: no cover
     FastAPI = None  # type: ignore[misc]
+    CORSMiddleware = None  # type: ignore[misc]
 
 from .explore.api import build_router
+from .ui.consultation_api import router as consultation_router
+
+
+def _add_cors(app: FastAPI, origins: Iterable[str]) -> None:
+    if CORSMiddleware is None:  # pragma: no cover
+        return
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=list(origins),
+        allow_credentials=False,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
 
 def build_app():  # pragma: no cover
     if FastAPI is None:
         return None
-    app = FastAPI(title="Inspectah D8")
-    router = build_router()
-    if router is not None:
-        app.include_router(router)
+    app = FastAPI(title="Inspectah API")
+    _add_cors(app, origins=("http://localhost:5173", "http://127.0.0.1:5173"))
+
+    explore_router = build_router()
+    if explore_router is not None:
+        app.include_router(explore_router)
+
+    if consultation_router is not None:
+        app.include_router(consultation_router, prefix="/api", tags=["consultation"])
+
     return app

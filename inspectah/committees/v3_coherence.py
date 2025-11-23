@@ -12,7 +12,14 @@ def check_coherence(
     submission: Mapping[str, object],
     related_facts: Iterable[Mapping[str, object]],
 ) -> CommitteeDecision:
-    desired_state = FactState(str(submission.get("proposed_state", FactState.INCERTO)))
+    raw_state = submission.get("proposed_state", FactState.INCERTO)
+    if isinstance(raw_state, FactState):
+        desired_state = raw_state
+    else:
+        try:
+            desired_state = FactState(str(raw_state))
+        except ValueError:
+            desired_state = FactState.INCERTO
     conflicts: list[str] = []
     scope = submission.get("scope") or submission.get("domain") or "generic"
     for fact in related_facts:
