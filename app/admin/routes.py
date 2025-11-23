@@ -3,8 +3,14 @@ from __future__ import annotations
 from dataclasses import asdict
 from typing import Any, Dict
 
+try:  # pragma: no cover
+    from fastapi import APIRouter, HTTPException
+except ModuleNotFoundError:  # pragma: no cover
+    APIRouter = None  # type: ignore[misc]
+    HTTPException = None  # type: ignore[misc]
+
 from . import service
-from .schemas import SourceCreateRequest
+from .schemas import SourceCreateRequest, to_dict
 
 
 def list_sources() -> Dict[str, Any]:
@@ -37,3 +43,42 @@ def test_source(source_id: str) -> Dict[str, Any]:
 def get_source_status(source_id: str) -> Dict[str, Any]:
     status = service.get_source_status(source_id)
     return asdict(status) if status else {"source_id": source_id, "error": "Fonte não encontrada"}
+
+
+# --- FastAPI routes for S18 admin console ---
+
+
+if APIRouter is not None:  # pragma: no cover
+    router = APIRouter(prefix="/admin", tags=["admin"])
+
+    @router.get("/sources")
+    def _list_admin_sources() -> Dict[str, Any]:
+        sources = service.list_admin_sources()
+        return {"sources": [to_dict(src) for src in sources]}
+
+    @router.get("/sources/{source_id}")
+    def _get_admin_source(source_id: str) -> Dict[str, Any]:
+        src = service.get_admin_source(source_id)
+        if not src:
+            raise HTTPException(status_code=404, detail="Fonte não encontrada")
+        return {"source": to_dict(src)}
+
+    @router.get("/cases")
+    def _list_admin_cases() -> Dict[str, Any]:
+        cases = service.list_admin_cases()
+        return {"cases": [to_dict(c) for c in cases]}
+
+    @router.get("/cases/{case_id}")
+    def _get_admin_case(case_id: str) -> Dict[str, Any]:
+        case = service.get_admin_case(case_id)
+        if not case:
+            raise HTTPException(status_code=404, detail="Caso não encontrado")
+        return {"case": to_dict(case)}
+
+    @router.get("/health")
+    def _get_admin_health() -> Dict[str, Any]:
+        health = service.get_admin_health()
+        return {"health": to_dict(health)}
+
+else:  # pragma: no cover
+    router = None

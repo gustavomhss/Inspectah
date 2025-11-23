@@ -3,12 +3,19 @@ from __future__ import annotations
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union
 
 from app.core import storage
 from app.core.models import Item, Source, SourceConfig, SourceStatus
 
 from .schemas import (
+    AdminCaseDetail,
+    AdminCaseSummary,
+    AdminHealth,
+    AdminSourceDetail,
+    AdminSourceHistoryEntry,
+    AdminSourceStatus,
+    AdminSourceSummary,
     SourceCreateRequest,
     SourceResponse,
     SourceStatusResponse,
@@ -151,6 +158,18 @@ DEFAULT_SOURCES = [
 ]
 
 
+def _parse_datetime(value: Union[str, datetime, None]) -> Optional[datetime]:
+    """Parse ISO-like datetime strings, returning None on failure."""
+    if value is None:
+        return None
+    if isinstance(value, datetime):
+        return value
+    try:
+        return datetime.fromisoformat(value)
+    except Exception:
+        return None
+
+
 def create_or_update_source(payload: SourceCreateRequest) -> Source:
     existing = storage.get_source(payload.id)
     status = existing.status if existing else SourceStatus()
@@ -202,6 +221,151 @@ def get_source_status(source_id: str) -> Optional[SourceStatusResponse]:
         last_fetch_status=status.last_fetch_status,
         last_fetch_error=status.last_fetch_error,
         recent_items_count=status.recent_items_count,
+    )
+
+
+# --- S18 admin console helpers ---
+
+
+def _map_source_status(status: SourceStatus) -> AdminSourceStatus:
+    health = "healthy"
+    if status.last_fetch_status and status.last_fetch_status not in {"ok", "success"}:
+        health = "degraded"
+    return AdminSourceStatus(
+        status=health,
+        last_checked_at=status.last_fetch_at,
+        recent_items_count=status.recent_items_count,
+        last_error=status.last_fetch_error,
+    )
+
+
+def list_admin_sources() -> List[AdminSourceSummary]:
+    entries: List[AdminSourceSummary] = []
+    for src in storage.list_sources():
+        entries.append(
+            AdminSourceSummary(
+                id=src.id,
+                name=src.name,
+                type=src.type,
+                info_type=src.info_type or src.config.params.get("info_type", ""),
+                is_active=getattr(src, "is_active", True),
+                status=_map_source_status(src.status),
+            )
+        )
+    return entries
+
+
+def get_admin_source(source_id: str) -> Optional[AdminSourceDetail]:
+    src = storage.get_source(source_id)
+    if not src:
+        return None
+    history = [
+        AdminSourceHistoryEntry(
+            checked_at=src.status.last_fetch_at,
+            status=_map_source_status(src.status).status,
+            error=src.status.last_fetch_error,
+        )
+    ]
+    return AdminSourceDetail(
+        id=src.id,
+        name=src.name,
+        type=src.type,
+        info_type=src.info_type or src.config.params.get("info_type", ""),
+        is_active=getattr(src, "is_active", True),
+        status=_map_source_status(src.status),
+        url_base=src.config.url_base,
+        history=history,
+    )
+
+
+def _cases_snapshot_path() -> Path:
+    return REPO_ROOT / "out" / "evidence" / "S12_G2" / "cases_snapshot.json"
+
+
+def _timelines_snapshot_path() -> Path:
+    return REPO_ROOT / "out" / "evidence" / "S12_G2" / "timelines_snapshot.json"
+
+
+def _load_cases_snapshot() -> List[Dict[str, Any]]:
+    path = _cases_snapshot_path()
+    if not path.exists():
+        return []
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _load_timelines_snapshot() -> Dict[str, List[Dict[str, Any]]]:
+    path = _timelines_snapshot_path()
+    if not path.exists():
+        return {}
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def list_admin_cases() -> List[AdminCaseSummary]:
+    cases = _load_cases_snapshot()
+    timelines = _load_timelines_snapshot()
+    summaries: List[AdminCaseSummary] = []
+    for entry in cases:
+        case_id = entry.get("id_caso", "")
+        timeline = timelines.get(case_id, [])
+        key_sources = sorted({ev.get("fonte", "") for ev in timeline if ev.get("fonte")})
+        summaries.append(
+            AdminCaseSummary(
+                id=case_id,
+                title=entry.get("titulo", ""),
+                category=entry.get("dominio", ""),
+                status=entry.get("status", "incerto"),
+                risk=entry.get("metadata", {}).get("risk"),
+                updated_at=_parse_datetime(entry.get("updated_at")),
+                key_sources=key_sources,
+            )
+        )
+    return summaries
+
+
+def get_admin_case(case_id: str) -> Optional[AdminCaseDetail]:
+    cases = {entry.get("id_caso"): entry for entry in _load_cases_snapshot()}
+    entry = cases.get(case_id)
+    if not entry:
+        return None
+    timelines = _load_timelines_snapshot()
+    timeline = timelines.get(case_id, [])
+    top_evidence = timeline[:5]
+    summary = AdminCaseSummary(
+        id=case_id,
+        title=entry.get("titulo", ""),
+        category=entry.get("dominio", ""),
+        status=entry.get("status", "incerto"),
+        risk=entry.get("metadata", {}).get("risk"),
+        updated_at=_parse_datetime(entry.get("updated_at")),
+        key_sources=sorted({ev.get("fonte", "") for ev in timeline if ev.get("fonte")}),
+    )
+    summary_dict = dict(summary.__dict__)
+    return AdminCaseDetail(
+        **summary_dict,
+        description=entry.get("descricao", ""),
+        top_evidence=top_evidence,
+    )
+
+
+def get_admin_health() -> AdminHealth:
+    sources = list_admin_sources()
+    cases = list_admin_cases()
+    healthy = sum(1 for src in sources if src.status.status == "healthy")
+    degraded = len(sources) - healthy
+    cases_attention = sum(1 for c in cases if c.status not in {"estavel", "ok"})
+    cases_stable = len(cases) - cases_attention
+    integrations = {
+        "truth_db": "ok",
+        "watchers": "ok" if degraded == 0 else "warn",
+    }
+    return AdminHealth(
+        sources_total=len(sources),
+        sources_healthy=healthy,
+        sources_degraded=degraded,
+        cases_total=len(cases),
+        cases_attention=cases_attention,
+        cases_stable=cases_stable,
+        integrations=integrations,
     )
 
 

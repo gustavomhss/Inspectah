@@ -11,6 +11,10 @@ except ModuleNotFoundError:  # pragma: no cover
 
 from .explore.api import build_router
 from .ui.consultation_api import router as consultation_router
+try:  # pragma: no cover
+    from app.admin.routes import router as admin_router
+except ModuleNotFoundError:  # pragma: no cover
+    admin_router = None
 
 
 def _add_cors(app: FastAPI, origins: Iterable[str]) -> None:
@@ -38,4 +42,11 @@ def build_app():  # pragma: no cover
     if consultation_router is not None:
         app.include_router(consultation_router, prefix="/api", tags=["consultation"])
 
+    if admin_router is not None:
+        app.include_router(admin_router)
+
     return app
+
+
+# ASGI entrypoint expected by uvicorn
+app = build_app()

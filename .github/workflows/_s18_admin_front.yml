@@ -1,0 +1,33 @@
+name: Sprint 18 Admin Front
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  s18-admin-front:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Frontend quality (lint/test/build)
+        run: |
+          export PYTHONPATH=.
+          bash bin/s18_g3_front_quality.sh
+
+      - name: Upload S18 artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: s18-admin-front-artifacts
+          path: |
+            out/scorecards
+            out/evidence/S18_G3_front_quality
