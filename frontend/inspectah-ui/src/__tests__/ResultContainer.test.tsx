@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
-import ResultContainer from '../components/consultation/ResultContainer';
-import type { ConsultationStatus } from '../types/inspectah';
+import ResultContainer from '../modules/consult/components/ResultContainer';
+import type { ConsultationStatus } from '../core/api/api-types';
 
 const successStatus: ConsultationStatus = {
   kind: 'success',

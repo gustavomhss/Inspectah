@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
-import RiskBadge from '../components/consultation/RiskBadge';
-import type { RiskLevel } from '../types/inspectah';
+import RiskBadge from '../modules/consult/components/RiskBadge';
+import type { RiskLevel } from '../core/api/api-types';
 
 describe('RiskBadge', () => {
   it('renders labels and styles for each risk level', () => {

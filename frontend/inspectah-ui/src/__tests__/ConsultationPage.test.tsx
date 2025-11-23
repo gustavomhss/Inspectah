@@ -1,21 +1,22 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { rest } from 'msw';
 import { act } from 'react';
-import ConsultationPage from '../pages/ConsultationPage';
+import ConsultPage from '../modules/consult/pages/ConsultPage';
 import { server } from './mocks/server';
+import { renderWithProviders } from './test-utils';
 import { buildResponse, errorHandler, highRiskHandler, unknownRiskHandler } from './mocks/handlers';
 
 const API_URL = 'http://localhost:8000/api/consultation';
 
 describe('ConsultationPage', () => {
   it('shows empty state on load', () => {
-    render(<ConsultationPage />);
+    renderWithProviders(<ConsultPage />, { withRouter: false });
     expect(screen.getByText(/Pronto para consultar/i)).toBeInTheDocument();
   });
 
   it('submits a question and renders the response', async () => {
-    render(<ConsultationPage />);
+    renderWithProviders(<ConsultPage />, { withRouter: false });
     await act(async () => {
       await userEvent.type(screen.getByLabelText(/Pergunta em linguagem natural/i), 'O fato procede?');
       await userEvent.click(screen.getByRole('button', { name: /Consultar/i }));
@@ -27,7 +28,7 @@ describe('ConsultationPage', () => {
 
   it('handles high risk responses', async () => {
     server.use(highRiskHandler);
-    render(<ConsultationPage />);
+    renderWithProviders(<ConsultPage />, { withRouter: false });
     await act(async () => {
       await userEvent.type(screen.getByLabelText(/Pergunta em linguagem natural/i), 'Caso de alto risco?');
       await userEvent.click(screen.getByRole('button', { name: /Consultar/i }));
@@ -38,7 +39,7 @@ describe('ConsultationPage', () => {
 
   it('handles unknown risk responses', async () => {
     server.use(unknownRiskHandler);
-    render(<ConsultationPage />);
+    renderWithProviders(<ConsultPage />, { withRouter: false });
     await act(async () => {
       await userEvent.type(screen.getByLabelText(/Pergunta em linguagem natural/i), 'Caso incerto?');
       await userEvent.click(screen.getByRole('button', { name: /Consultar/i }));
@@ -50,7 +51,7 @@ describe('ConsultationPage', () => {
 
   it('renders error state for backend failures', async () => {
     server.use(errorHandler(500));
-    render(<ConsultationPage />);
+    renderWithProviders(<ConsultPage />, { withRouter: false });
     await act(async () => {
       await userEvent.type(screen.getByLabelText(/Pergunta em linguagem natural/i), 'Vai falhar?');
       await userEvent.click(screen.getByRole('button', { name: /Consultar/i }));
@@ -66,7 +67,7 @@ describe('ConsultationPage', () => {
       }),
     );
 
-    render(<ConsultationPage />);
+    renderWithProviders(<ConsultPage />, { withRouter: false });
     await act(async () => {
       await userEvent.type(screen.getByLabelText(/Pergunta em linguagem natural/i), 'Sem rede?');
       await userEvent.click(screen.getByRole('button', { name: /Consultar/i }));
@@ -82,7 +83,7 @@ describe('ConsultationPage', () => {
       }),
     );
 
-    render(<ConsultationPage />);
+    renderWithProviders(<ConsultPage />, { withRouter: false });
     await act(async () => {
       await userEvent.type(screen.getByLabelText(/Pergunta em linguagem natural/i), 'Dados insuficientes?');
       await userEvent.click(screen.getByRole('button', { name: /Consultar/i }));
