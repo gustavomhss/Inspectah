@@ -25,8 +25,18 @@ A Sprint 17.1 formaliza a Consultation API v1, conectando UI (S17) ao motor real
 - **Proposta**: GO_WITH_RESTRICTIONS — sujeita à execução completa dos gates e captura do SHA final.
 
 ## Adendo de execução final da Sprint 17.1
-- `commit_sha`: a registrar após a rodada final dos gates.
-- Comandos de verificação previstos: `PYTHONPATH=. bin/s17_1_all_gates.sh`.
-- Scorecard T8 esperado: `out/scorecards/S17_1_T8_go_no_go.json`.
-- Decisão final: preencher após execução (GO/GO_WITH_RESTRICTIONS/NO_GO).
 
+- Commit final da Sprint 17.1: `9b6f54cc4d2a19832ecb26abc8c12c8540dd6d2b`
+- Pipeline executado no commit final:
+  - `PYTHONPATH=. bin/s17_1_all_gates.sh`
+- Resultado dos gates S17.1 (T0–T8):
+  - Todos os gates reportaram **OK** com scorecards em `out/scorecards/S17_1_T*_*.json`.
+- Scorecard agregado de GO/NO_GO:
+  - `out/scorecards/S17_1_T8_go_no_go.json` com decisão `"decision": "GO"` para a Sprint 17.1.
+- Escopo validado:
+  - API `/api/consultation` integrada ao Debunker + Comitês + camada de anchors.
+  - Contratos API↔UI alinhados com o OpenAPI gerado.
+  - Fluxos principais (domínio conhecido / domínio desconhecido / erro) cobertos por testes + gates.
+  - Evidências de domínio desconhecido não expõem mais a pergunta como snippet.
+
+**Decisão ORR final da Sprint 17.1:** **GO** (uso interno controlado, apto para demos locais e evolução nas próximas sprints).
