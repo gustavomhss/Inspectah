@@ -2,8 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useAuth } from '../../../app/providers/AuthProvider';
 import { useLogger } from '../../../app/providers/LoggerProvider';
-import type { AdminSourceDetail } from '../../../core/api/api-types';
-import { fetchSourceDetail } from '../api';
+import type { AdminSourceDetail, AdminSourceHealthStatus } from '../../../core/api/api-types';
+import { fetchHealthchecks, fetchSourceDetail, triggerSourceHealthcheck } from '../api';
 import ErrorState from '../components/ErrorState';
 import LoadingState from '../components/LoadingState';
 import SourceStatusBadge from '../components/SourceStatusBadge';
@@ -13,8 +13,10 @@ function AdminSourceDetailPage() {
   const { token } = useAuth();
   const { logEvent } = useLogger();
   const [source, setSource] = useState<AdminSourceDetail | null>(null);
+  const [healthchecks, setHealthchecks] = useState<AdminSourceDetail['healthchecks']>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [hcRunning, setHcRunning] = useState(false);
 
   const load = useCallback(async () => {
     if (!sourceId) return;
@@ -23,12 +25,27 @@ function AdminSourceDetailPage() {
     try {
       const result = await fetchSourceDetail(sourceId, token || undefined);
       setSource(result);
+      const hc = await fetchHealthchecks(sourceId, token || undefined);
+      setHealthchecks(hc);
     } catch (err) {
       setError((err as Error).message);
     } finally {
       setLoading(false);
     }
   }, [sourceId, token]);
+
+  const handleHealthcheck = async () => {
+    if (!sourceId) return;
+    setHcRunning(true);
+    try {
+      await triggerSourceHealthcheck(sourceId, token || undefined);
+      await load();
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setHcRunning(false);
+    }
+  };
 
   useEffect(() => {
     void load();
@@ -48,11 +65,22 @@ function AdminSourceDetailPage() {
     return <ErrorState message={error || 'Fonte não encontrada'} onRetry={load} />;
   }
 
+  const healthStatus: AdminSourceHealthStatus = source.last_health_status ?? 'unknown';
+
   return (
     <div className="space-y-4">
-      <Link to="/admin/sources" className="text-sm font-semibold text-sky-200 hover:underline">
-        ← Voltar para Fontes
-      </Link>
+      <div className="flex items-center justify-between">
+        <Link to="/admin/sources" className="text-sm font-semibold text-sky-200 hover:underline">
+          ← Voltar para Fontes
+        </Link>
+        <button
+          className="rounded-lg bg-white/10 px-3 py-2 text-sm font-semibold text-white hover:bg-white/20"
+          onClick={handleHealthcheck}
+          disabled={hcRunning}
+        >
+          {hcRunning ? 'Rodando health-check...' : 'Rodar health-check'}
+        </button>
+      </div>
       <div className="rounded-2xl border border-white/5 bg-white/5 p-6 shadow-card">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -61,28 +89,55 @@ function AdminSourceDetailPage() {
             <p className="text-sm text-slate-200">{source.info_type || source.type}</p>
             <p className="text-xs text-slate-400">{source.url_base}</p>
           </div>
-          <SourceStatusBadge status={source.status} />
+          <div className="flex flex-col items-end gap-2">
+            <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white">{source.state}</span>
+            <SourceStatusBadge status={healthStatus} />
+          </div>
         </div>
         <div className="mt-4 grid gap-4 md:grid-cols-3">
-          <Stat label="Itens recentes" value={source.recent_items_count} />
-          <Stat label="Última coleta" value={source.last_checked_at || '—'} />
-          <Stat label="Último erro" value={source.last_error || 'Nenhum erro recente'} />
+          <Stat label="Último health-check" value={source.last_health_at || '—'} />
+          <Stat label="Erro recente" value={source.last_health_error || 'Nenhum erro recente'} />
+          <Stat label="Temas" value={(source.themes || []).join(', ') || '—'} />
         </div>
       </div>
 
       <div className="rounded-2xl border border-white/5 bg-white/5 p-6 shadow-card">
-        <h4 className="text-lg font-semibold text-white">Histórico curto</h4>
+        <h4 className="text-lg font-semibold text-white">Histórico de estados</h4>
         <div className="mt-3 space-y-2">
-          {source.history.length === 0 && <p className="text-sm text-slate-200">Sem histórico registrado.</p>}
-          {source.history.map((entry, index) => (
-            <div key={`${entry.checked_at}-${index}`} className="flex items-center justify-between rounded-lg border border-white/5 bg-white/5 px-3 py-2">
+          {(!source.state_history || source.state_history.length === 0) && (
+            <p className="text-sm text-slate-200">Sem histórico registrado.</p>
+          )}
+          {(source.state_history || []).map((entry, index) => (
+            <div key={`${entry.created_at}-${index}`} className="flex items-center justify-between rounded-lg border border-white/5 bg-white/5 px-3 py-2">
               <div>
-                <p className="text-sm text-white">{entry.checked_at || 'Sem timestamp'}</p>
-                {entry.error && <p className="text-xs text-rose-200">{entry.error}</p>}
+                <p className="text-sm text-white">
+                  {entry.to_state} · {entry.reason || 'sem motivo'}
+                </p>
+                <p className="text-xs text-slate-300">{entry.created_at || 'Sem timestamp'}</p>
               </div>
-              <SourceStatusBadge status={entry.status} />
             </div>
           ))}
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-white/5 bg-white/5 p-6 shadow-card">
+        <h4 className="text-lg font-semibold text-white">Health-checks</h4>
+        <div className="mt-3 space-y-2">
+          {(healthchecks || []).length === 0 && <p className="text-sm text-slate-200">Nenhum health-check registrado.</p>}
+          {(healthchecks || []).map((entry, index) => {
+            const entryStatus: AdminSourceHealthStatus = entry.status ?? 'unknown';
+            return (
+              <div key={`${entry.checked_at}-${index}`} className="flex items-center justify-between rounded-lg border border-white/5 bg-white/5 px-3 py-2">
+                <div>
+                  <p className="text-sm text-white">
+                    {entry.status} · {entry.error || 'OK'}
+                  </p>
+                  <p className="text-xs text-slate-300">{entry.checked_at || 'Sem timestamp'}</p>
+                </div>
+                <SourceStatusBadge status={entryStatus} />
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>

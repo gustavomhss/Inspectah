@@ -1,0 +1,57 @@
+[S21_G2] Rodando testes de domínio/serviço...
+....                                                                     [100%]
+=============================== warnings summary ===============================
+inspectah/ui/consultation_models.py:29
+  /Users/gustavoschneiter/Documents/Inspectah/inspectah/ui/consultation_models.py:29: PydanticDeprecatedSince20: Pydantic V1 style `@validator` validators are deprecated. You should migrate to Pydantic V2 style `@field_validator` validators, see the migration guide for more details. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    @validator("question")  # type: ignore[misc]
+
+inspectah/ui/consultation_models.py:23
+  /Users/gustavoschneiter/Documents/Inspectah/inspectah/ui/consultation_models.py:23: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    class ConsultationRequest(BaseModel):  # type: ignore[misc]
+
+.venv/lib/python3.14/site-packages/pydantic/_internal/_config.py:383
+  /Users/gustavoschneiter/Documents/Inspectah/.venv/lib/python3.14/site-packages/pydantic/_internal/_config.py:383: UserWarning: Valid config keys have changed in V2:
+  * 'anystr_strip_whitespace' has been renamed to 'str_strip_whitespace'
+    warnings.warn(message, UserWarning)
+
+inspectah/ui/consultation_models.py:69
+  /Users/gustavoschneiter/Documents/Inspectah/inspectah/ui/consultation_models.py:69: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    class ConsultationResponse(BaseModel):  # type: ignore[misc]
+
+tests/sources/test_domain_model.py::test_source_creation_defaults
+tests/sources/test_domain_model.py::test_state_transition_rules
+tests/sources/test_service.py::test_create_and_change_state
+tests/sources/test_service.py::test_update_and_healthcheck_flow
+  /Users/gustavoschneiter/Documents/Inspectah/migrations/versions/0003_s21_sources_seed_examples.py:103: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    now = datetime.utcnow().isoformat()
+
+tests/sources/test_domain_model.py::test_source_creation_defaults
+  /Users/gustavoschneiter/Documents/Inspectah/app/sources/models.py:134: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    now = datetime.utcnow()
+
+tests/sources/test_domain_model.py::test_state_transition_rules
+tests/sources/test_domain_model.py::test_state_transition_rules
+tests/sources/test_service.py::test_create_and_change_state
+tests/sources/test_service.py::test_create_and_change_state
+tests/sources/test_service.py::test_create_and_change_state
+tests/sources/test_service.py::test_create_and_change_state
+tests/sources/test_service.py::test_update_and_healthcheck_flow
+tests/sources/test_service.py::test_update_and_healthcheck_flow
+tests/sources/test_service.py::test_update_and_healthcheck_flow
+  /Users/gustavoschneiter/Documents/Inspectah/app/sources/service.py:41: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    return datetime.utcnow().isoformat()
+
+tests/sources/test_service.py::test_create_and_change_state
+  /Users/gustavoschneiter/Documents/Inspectah/app/sources/service.py:331: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    source.state_updated_at = datetime.utcnow()
+
+tests/sources/test_service.py::test_create_and_change_state
+  /Users/gustavoschneiter/Documents/Inspectah/app/sources/service.py:332: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    source.updated_at = datetime.utcnow()
+
+tests/sources/test_service.py::test_update_and_healthcheck_flow
+  /Users/gustavoschneiter/Documents/Inspectah/app/sources/service.py:362: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    checked_at=datetime.utcnow(),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+4 passed, 2 deselected, 21 warnings in 1.29s

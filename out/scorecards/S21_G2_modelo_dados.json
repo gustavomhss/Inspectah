@@ -1,0 +1,13 @@
+{
+  "gate_id": "S21_G2",
+  "status": "PASS",
+  "automated_checks": {
+    "status": "PASS",
+    "details": "Modelo e ciclo de vida ok."
+  },
+  "reviewers_internal": [],
+  "reviewers_external": [],
+  "risk_level": "low",
+  "notes": "Modelo e ciclo de vida ok.",
+  "ts_last_update": "2025-11-24T03:43:20.029947Z"
+}

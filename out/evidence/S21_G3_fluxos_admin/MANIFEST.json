@@ -1,0 +1,7 @@
+{
+  "files": [
+    "MANIFEST.json",
+    "tests.log"
+  ],
+  "notes": "Fluxos admin: testes de rotas/API."
+}

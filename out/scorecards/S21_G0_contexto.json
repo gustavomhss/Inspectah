@@ -1,0 +1,13 @@
+{
+  "gate_id": "S21_G0",
+  "status": "PASS",
+  "automated_checks": {
+    "status": "PASS",
+    "details": "Contexto materializado."
+  },
+  "reviewers_internal": [],
+  "reviewers_external": [],
+  "risk_level": "low",
+  "notes": "Contexto materializado.",
+  "ts_last_update": "2025-11-24T03:43:16.508517Z"
+}

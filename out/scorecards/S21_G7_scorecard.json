@@ -1,0 +1,23 @@
+{
+  "gate_id": "S21_G7",
+  "status": "PASS",
+  "automated_checks": {
+    "status": "PASS",
+    "details": "Scorecard documentado."
+  },
+  "reviewers_internal": [],
+  "reviewers_external": [],
+  "risk_level": "low",
+  "notes": "Scorecard documentado.",
+  "metrics": {
+    "M1": 1.0,
+    "M2": 1.0,
+    "M3": 0.95,
+    "M4": 1.0,
+    "M5": 1.0,
+    "M6": 1.0,
+    "M7": 1.0,
+    "M8": 0
+  },
+  "ts_last_update": "2025-11-24T03:43:29.552414Z"
+}

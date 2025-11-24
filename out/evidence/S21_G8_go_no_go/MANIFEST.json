@@ -1,0 +1,15 @@
+{
+  "files": [
+    "MANIFEST.json"
+  ],
+  "inputs": [
+    "S21_G0_contexto.json",
+    "S21_G1_ontologia.json",
+    "S21_G2_modelo_dados.json",
+    "S21_G3_fluxos_admin.json",
+    "S21_G4_ganchos_debunker.json",
+    "S21_G5_contratos.json",
+    "S21_G6_cenarios_uso.json",
+    "S21_G7_scorecard.json"
+  ]
+}

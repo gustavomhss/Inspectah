@@ -7,62 +7,52 @@ import type {
   AdminHealth,
   AdminSource,
   AdminSourceDetail,
-  AdminSourceStatus,
+  AdminSourceHealthStatus,
   AdminTimelineResponse,
 } from '../../../core/api/api-types';
 
-interface ApiSource {
-  id: string;
-  name: string;
-  type: string;
-  info_type?: string;
-  is_active?: boolean;
-  url_base?: string;
-  status: {
-    status: AdminSourceStatus;
-    last_checked_at?: string | null;
-    last_error?: string | null;
-    recent_items_count: number;
-  };
-  history?: Array<{
-    checked_at?: string | null;
-    status: AdminSourceStatus;
-    error?: string | null;
-  }>;
-}
-
 export async function fetchSources(authToken?: string): Promise<AdminSource[]> {
-  const response = await httpClient<{ sources: ApiSource[] }>(endpoints.admin.sources, { authToken });
-  return (response.sources || []).map((src) => ({
-    id: src.id,
-    name: src.name,
-    type: src.type,
-    info_type: src.info_type,
-    is_active: src.is_active ?? true,
-    status: src.status?.status || 'unknown',
-    last_checked_at: src.status?.last_checked_at,
-    last_error: src.status?.last_error,
-    recent_items_count: src.status?.recent_items_count ?? 0,
-    url_base: src.url_base,
-  }));
+  const response = await httpClient<{ sources: AdminSource[] }>(endpoints.admin.sources, { authToken });
+  return response.sources || [];
 }
 
 export async function fetchSourceDetail(sourceId: string, authToken?: string): Promise<AdminSourceDetail> {
-  const response = await httpClient<{ source: ApiSource }>(endpoints.admin.sourceDetail(sourceId), { authToken });
-  const src = response.source;
-  return {
-    id: src.id,
-    name: src.name,
-    type: src.type,
-    info_type: src.info_type,
-    is_active: src.is_active ?? true,
-    status: src.status?.status || 'unknown',
-    last_checked_at: src.status?.last_checked_at,
-    last_error: src.status?.last_error,
-    recent_items_count: src.status?.recent_items_count ?? 0,
-    url_base: src.url_base,
-    history: src.history || [],
-  };
+  const response = await httpClient<{ source: AdminSourceDetail }>(endpoints.admin.sourceDetail(sourceId), { authToken });
+  return response.source;
+}
+
+export async function createSource(payload: Partial<AdminSource>, authToken?: string): Promise<AdminSourceDetail> {
+  const response = await httpClient<{ source: AdminSourceDetail }>(endpoints.admin.sources, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+    authToken,
+  });
+  return response.source;
+}
+
+export async function updateSource(sourceId: string, payload: Partial<AdminSource>, authToken?: string): Promise<AdminSourceDetail> {
+  const response = await httpClient<{ source: AdminSourceDetail }>(endpoints.admin.sourceDetail(sourceId), {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+    authToken,
+  });
+  return response.source;
+}
+
+export async function triggerSourceHealthcheck(sourceId: string, authToken?: string): Promise<{ status: AdminSourceHealthStatus }> {
+  const response = await httpClient<{ status: AdminSourceHealthStatus }>(`${endpoints.admin.sourceDetail(sourceId)}/healthcheck`, {
+    method: 'POST',
+    authToken,
+  });
+  return response;
+}
+
+export async function fetchHealthchecks(sourceId: string, authToken?: string) {
+  const response = await httpClient<{ healthchecks: Array<{ status: AdminSourceHealthStatus; checked_at?: string; error?: string; latency_ms?: number }> }>(
+    `${endpoints.admin.sourceDetail(sourceId)}/healthchecks`,
+    { authToken }
+  );
+  return response.healthchecks || [];
 }
 
 export async function fetchCases(authToken?: string): Promise<AdminCase[]> {

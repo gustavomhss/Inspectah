@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../../../app/providers/AuthProvider';
 import { useLogger } from '../../../app/providers/LoggerProvider';
 import type { AdminHealth } from '../../../core/api/api-types';
@@ -16,7 +16,7 @@ function AdminOverviewPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -29,11 +29,11 @@ function AdminOverviewPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token, logEvent]);
 
   useEffect(() => {
     void load();
-  }, [token]);
+  }, [load]);
 
   useEffect(() => {
     logEvent('admin.page_open', { page: 'dashboard' });

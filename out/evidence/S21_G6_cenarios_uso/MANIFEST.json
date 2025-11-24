@@ -1,0 +1,8 @@
+{
+  "files": [
+    "MANIFEST.json",
+    "migration_seeds.log",
+    "tests.log"
+  ],
+  "notes": "Cen\u00e1rios e seeds verificados; teste de healthcheck executado."
+}
