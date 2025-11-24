@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../../../app/providers/AuthProvider';
 import { useLogger } from '../../../app/providers/LoggerProvider';
 import type { AdminSource } from '../../../core/api/api-types';
@@ -21,7 +21,7 @@ function AdminSourcesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -34,11 +34,11 @@ function AdminSourcesPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token, logEvent]);
 
   useEffect(() => {
     void load();
-  }, [token]);
+  }, [load]);
 
   useEffect(() => {
     logEvent('admin.page_open', { page: 'sources' });

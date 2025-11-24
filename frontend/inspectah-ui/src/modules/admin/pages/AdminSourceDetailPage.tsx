@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useAuth } from '../../../app/providers/AuthProvider';
 import { useLogger } from '../../../app/providers/LoggerProvider';
-import type { AdminSourceDetail } from '../../../core/api/api-types';
+import type { AdminSourceDetail, AdminSourceHealthStatus } from '../../../core/api/api-types';
 import { fetchHealthchecks, fetchSourceDetail, triggerSourceHealthcheck } from '../api';
 import ErrorState from '../components/ErrorState';
 import LoadingState from '../components/LoadingState';
@@ -65,6 +65,8 @@ function AdminSourceDetailPage() {
     return <ErrorState message={error || 'Fonte não encontrada'} onRetry={load} />;
   }
 
+  const healthStatus: AdminSourceHealthStatus = source.last_health_status ?? 'unknown';
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -89,7 +91,7 @@ function AdminSourceDetailPage() {
           </div>
           <div className="flex flex-col items-end gap-2">
             <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white">{source.state}</span>
-            <SourceStatusBadge status={(source.last_health_status || 'unknown') as any} />
+            <SourceStatusBadge status={healthStatus} />
           </div>
         </div>
         <div className="mt-4 grid gap-4 md:grid-cols-3">
@@ -122,17 +124,20 @@ function AdminSourceDetailPage() {
         <h4 className="text-lg font-semibold text-white">Health-checks</h4>
         <div className="mt-3 space-y-2">
           {(healthchecks || []).length === 0 && <p className="text-sm text-slate-200">Nenhum health-check registrado.</p>}
-          {(healthchecks || []).map((entry, index) => (
-            <div key={`${entry.checked_at}-${index}`} className="flex items-center justify-between rounded-lg border border-white/5 bg-white/5 px-3 py-2">
-              <div>
-                <p className="text-sm text-white">
-                  {entry.status} · {entry.error || 'OK'}
-                </p>
-                <p className="text-xs text-slate-300">{entry.checked_at || 'Sem timestamp'}</p>
+          {(healthchecks || []).map((entry, index) => {
+            const entryStatus: AdminSourceHealthStatus = entry.status ?? 'unknown';
+            return (
+              <div key={`${entry.checked_at}-${index}`} className="flex items-center justify-between rounded-lg border border-white/5 bg-white/5 px-3 py-2">
+                <div>
+                  <p className="text-sm text-white">
+                    {entry.status} · {entry.error || 'OK'}
+                  </p>
+                  <p className="text-xs text-slate-300">{entry.checked_at || 'Sem timestamp'}</p>
+                </div>
+                <SourceStatusBadge status={entryStatus} />
               </div>
-              <SourceStatusBadge status={(entry.status || 'unknown') as any} />
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>
