@@ -32,4 +32,4 @@ tests/sources/test_routes_admin.py::test_sources_crud_api
     checked_at=datetime.utcnow(),
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-1 passed, 5 deselected, 8 warnings in 7.95s
+1 passed, 5 deselected, 8 warnings in 2.12s

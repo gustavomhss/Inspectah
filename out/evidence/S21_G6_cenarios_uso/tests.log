@@ -27,4 +27,4 @@ tests/sources/test_healthcheck_integration.py::test_healthcheck_creates_record_u
     checked_at=datetime.utcnow(),
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-1 passed, 5 deselected, 6 warnings in 7.12s
+1 passed, 5 deselected, 6 warnings in 1.57s

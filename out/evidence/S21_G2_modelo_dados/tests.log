@@ -54,4 +54,4 @@ tests/sources/test_service.py::test_update_and_healthcheck_flow
     checked_at=datetime.utcnow(),
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-4 passed, 2 deselected, 21 warnings in 8.10s
+4 passed, 2 deselected, 21 warnings in 1.29s

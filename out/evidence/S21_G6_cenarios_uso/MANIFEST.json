@@ -1,5 +1,6 @@
 {
   "files": [
+    "MANIFEST.json",
     "migration_seeds.log",
     "tests.log"
   ],
