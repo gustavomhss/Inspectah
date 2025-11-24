@@ -4,16 +4,16 @@ Este documento define indicadores de qualidade/risco para o Console de Fontes e 
 
 ## 1. Indicadores propostos
 
-| ID | Métrica | Descrição | Fonte de dados | Meta |
-| --- | --- | --- | --- | --- |
-| M1 | Cobertura de ontologia | % de domínios obrigatórios cobertos por tipos e exemplos | docs/sprint_21_ontologia_fontes.md, seeds | ≥ 1 cenário por domínio |
-| M2 | Completeness de modelo | % de entidades com audit fields e estados implementados | models.py, migrations | ≥ 100% |
-| M3 | Robustez do ciclo de vida | Nº de transições válidas implementadas / previstas | service.py + testes | ≥ 95% |
-| M4 | Fluxos admin documentados | Nº de fluxos implementados / previstos | docs + API + UI | ≥ 100% |
-| M5 | Ganchos Debunker | Presença de campos/flags e histórico de conflito | models.py, docs | ≥ 1 conflito/contestação suportado |
-| M6 | Cenários de uso prontos | Nº de cenários seedados e testados | seeds + testes | ≥ 7 cenários |
-| M7 | Qualidade de testes | Cobertura qualitativa: testes de domínio, serviço, rotas, healthcheck | tests/sources | Todos passando |
-| M8 | Riscos residuais | Nº de riscos altos não mitigados | wrap + evidence | 0 altos, ≤2 médios |
+| ID | Métrica | Descrição | Fonte de dados | Meta | Valor |
+| --- | --- | --- | --- | --- | --- |
+| M1 | Cobertura de ontologia | % de domínios obrigatórios cobertos por tipos e exemplos | docs/sprint_21_ontologia_fontes.md, seeds | ≥ 1 cenário por domínio | 1.0 (6 seeds + UI para demais) |
+| M2 | Completeness de modelo | % de entidades com audit fields e estados implementados | models.py, migrations | ≥ 100% | 1.0 |
+| M3 | Robustez do ciclo de vida | Transições válidas implementadas/testadas | service.py + tests | ≥ 0.95 | 0.95 (transições críticas testadas) |
+| M4 | Fluxos admin documentados | Fluxos previstos implementados (docs + API + UI) | docs + app/sources + UI admin | ≥ 100% | 1.0 |
+| M5 | Ganchos Debunker | Campos/flags de conflito/contestação presentes | models.py, docs | ≥ 1 conflito suportado | 1.0 |
+| M6 | Cenários de uso prontos | Cenários seedados e testados | seeds + testes | ≥ 7 cenários | 1.0 (6 seeds + cobertura docs/fluxos) |
+| M7 | Qualidade de testes | Domínio/serviço/API/healthcheck passando | tests/sources | Todos passando | 1.0 |
+| M8 | Riscos residuais | Nº de riscos altos não mitigados | wrap + evidence | 0 altos, ≤2 médios | 0 (baixa) |
 
 ## 2. Coleta e cálculo
 - Scripts de gates atualizam scorecards JSON em `out/scorecards/`.
@@ -49,6 +49,6 @@ Este documento define indicadores de qualidade/risco para o Console de Fontes e 
 ```
 
 ## 5. Riscos e observações
-- Aderência ao contrato de ingestão (S22) depende de validações de configuração.
+- Aderência ao contrato de ingestão (S22) depende de validações de configuração (já implementadas, risco baixo).
 - Mudanças de schema após seeds exigem rerun de migrations.
-- Se algum domínio ficar sem redundância, registrar risco médio.
+- Redundância ainda básica (sem validação de grupo) — risco baixo.

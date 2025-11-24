@@ -1,0 +1,13 @@
+{
+  "gate_id": "S21_G4",
+  "status": "PASS",
+  "automated_checks": {
+    "status": "PASS",
+    "details": "Ganchos documentados e presentes no modelo."
+  },
+  "reviewers_internal": [],
+  "reviewers_external": [],
+  "risk_level": "low",
+  "notes": "Ganchos documentados e presentes no modelo.",
+  "ts_last_update": "2025-11-24T03:08:36.488541Z"
+}

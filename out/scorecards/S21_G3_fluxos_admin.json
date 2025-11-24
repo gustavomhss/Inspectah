@@ -1,0 +1,13 @@
+{
+  "gate_id": "S21_G3",
+  "status": "PASS",
+  "automated_checks": {
+    "status": "PASS",
+    "details": "Fluxos admin verificados."
+  },
+  "reviewers_internal": [],
+  "reviewers_external": [],
+  "risk_level": "low",
+  "notes": "Fluxos admin verificados.",
+  "ts_last_update": "2025-11-24T03:08:35.037067Z"
+}

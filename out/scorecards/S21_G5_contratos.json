@@ -1,0 +1,13 @@
+{
+  "gate_id": "S21_G5",
+  "status": "PASS",
+  "automated_checks": {
+    "status": "PASS",
+    "details": "Contratos S22\u2013S25 documentados."
+  },
+  "reviewers_internal": [],
+  "reviewers_external": [],
+  "risk_level": "low",
+  "notes": "Contratos S22\u2013S25 documentados.",
+  "ts_last_update": "2025-11-24T03:08:37.590339Z"
+}

@@ -1,0 +1,5 @@
+[S21_G6] Aplicando migrations de seeds...
+Sprint 21 sources migration applied to /Users/gustavoschneiter/Documents/Inspectah/out/databases/s21_sources.sqlite (6 tables).
+/Users/gustavoschneiter/Documents/Inspectah/migrations/versions/0003_s21_sources_seed_examples.py:103: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  now = datetime.utcnow().isoformat()
+Sprint 21 seed migration applied to /Users/gustavoschneiter/Documents/Inspectah/out/databases/s21_sources.sqlite

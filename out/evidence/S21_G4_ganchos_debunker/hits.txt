@@ -1,0 +1,4 @@
+    conflict_with_sources: List[str] = field(default_factory=list)
+    conflict_flags: List[str] = field(default_factory=list)
+    conflict_with_sources: List[str] = field(default_factory=list)
+    has_open_contestation: bool = False

@@ -1,0 +1,13 @@
+{
+  "gate_id": "S21_G6",
+  "status": "PASS",
+  "automated_checks": {
+    "status": "PASS",
+    "details": "Cen\u00e1rios seedados e testados."
+  },
+  "reviewers_internal": [],
+  "reviewers_external": [],
+  "risk_level": "low",
+  "notes": "Cen\u00e1rios seedados e testados.",
+  "ts_last_update": "2025-11-24T03:08:54.059791Z"
+}

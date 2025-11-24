@@ -46,10 +46,10 @@ def build_app():  # pragma: no cover
     if consultation_router is not None:
         app.include_router(consultation_router, prefix="/api", tags=["consultation"])
 
-    if sources_router is not None:
-        app.include_router(sources_router)
     if admin_router is not None:
         app.include_router(admin_router)
+    if sources_router is not None:
+        app.include_router(sources_router)
     if auth_router is not None:
         app.include_router(auth_router)
 

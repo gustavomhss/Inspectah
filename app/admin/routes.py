@@ -51,18 +51,6 @@ def get_source_status(source_id: str) -> Dict[str, Any]:
 if APIRouter is not None:  # pragma: no cover
     router = APIRouter(prefix="/admin", tags=["admin"])
 
-    @router.get("/sources")
-    def _list_admin_sources() -> Dict[str, Any]:
-        sources = service.list_admin_sources()
-        return {"sources": [to_dict(src) for src in sources]}
-
-    @router.get("/sources/{source_id}")
-    def _get_admin_source(source_id: str) -> Dict[str, Any]:
-        src = service.get_admin_source(source_id)
-        if not src:
-            raise HTTPException(status_code=404, detail="Fonte não encontrada")
-        return {"source": to_dict(src)}
-
     @router.get("/cases")
     def _list_admin_cases() -> Dict[str, Any]:
         cases = service.list_admin_cases()

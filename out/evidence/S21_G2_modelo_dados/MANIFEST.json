@@ -1,0 +1,7 @@
+{
+  "files": [
+    "migration.log",
+    "tests.log"
+  ],
+  "notes": "Migration 0002 + testes de dom\u00ednio/servi\u00e7o."
+}

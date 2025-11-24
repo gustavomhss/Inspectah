@@ -1,0 +1,13 @@
+{
+  "gate_id": "S21_G1",
+  "status": "PASS",
+  "automated_checks": {
+    "status": "PASS",
+    "details": "Ontologia presente e sem TODO."
+  },
+  "reviewers_internal": [],
+  "reviewers_external": [],
+  "risk_level": "low",
+  "notes": "Ontologia presente e sem TODO.",
+  "ts_last_update": "2025-11-24T03:07:51.234890Z"
+}
