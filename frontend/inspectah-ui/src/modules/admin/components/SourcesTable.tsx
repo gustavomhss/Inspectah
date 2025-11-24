@@ -18,9 +18,9 @@ function SourcesTable({ sources }: Props) {
           <tr className="text-left text-xs uppercase tracking-[0.2em] text-slate-300">
             <th className="px-4 py-3">Fonte</th>
             <th className="px-4 py-3">Tipo</th>
-            <th className="px-4 py-3">Status</th>
-            <th className="px-4 py-3">Última coleta</th>
-            <th className="px-4 py-3">Itens recentes</th>
+            <th className="px-4 py-3">Estado</th>
+            <th className="px-4 py-3">Saúde</th>
+            <th className="px-4 py-3">Último health-check</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-white/5">
@@ -34,10 +34,12 @@ function SourcesTable({ sources }: Props) {
               </td>
               <td className="px-4 py-3">{source.type}</td>
               <td className="px-4 py-3">
-                <SourceStatusBadge status={source.status} />
+                <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white">{source.state}</span>
               </td>
-              <td className="px-4 py-3 text-slate-200">{source.last_checked_at || '—'}</td>
-              <td className="px-4 py-3">{source.recent_items_count ?? 0}</td>
+              <td className="px-4 py-3">
+                <SourceStatusBadge status={(source.last_health_status || 'unknown') as any} />
+              </td>
+              <td className="px-4 py-3 text-slate-200">{source.last_health_at || '—'}</td>
             </tr>
           ))}
         </tbody>

@@ -15,7 +15,7 @@ from .schemas import SourceCreate, SourceFilter, SourceRead, SourceUpdate
 if APIRouter is not None:  # pragma: no cover
     router = APIRouter(prefix="/admin/sources", tags=["sources"])
 
-    @router.get("", response_model=list[SourceRead])
+    @router.get("")
     def list_admin_sources(
         type: str | None = None,
         category: str | None = None,
@@ -24,26 +24,29 @@ if APIRouter is not None:  # pragma: no cover
         redundancy_group: str | None = None,
     ):
         filters = SourceFilter(type=type, category=category, state=state, theme=theme, redundancy_group=redundancy_group)
-        return service.list_sources(filters)
+        sources = [service.enrich_source_read(src) for src in service.list_sources(filters)]
+        return {"sources": [src.model_dump() for src in sources]}
 
-    @router.get("/{source_id}", response_model=SourceRead)
+    @router.get("/{source_id}")
     def get_admin_source(source_id: str):
         src = service.get_source_detail(source_id)
         if not src:
             raise HTTPException(status_code=404, detail="Fonte não encontrada")
-        return src
+        history = service.list_state_history(source_id)
+        enriched = service.enrich_source_read(src)
+        return {"source": {**enriched.model_dump(), "state_history": history}}
 
-    @router.post("", response_model=SourceRead, status_code=201)
+    @router.post("", status_code=201)
     def create_admin_source(payload: SourceCreate):
         src = service.create_source(payload)
-        return src
+        return {"source": service.enrich_source_read(src).model_dump()}
 
-    @router.put("/{source_id}", response_model=SourceRead)
+    @router.put("/{source_id}")
     def update_admin_source(source_id: str, payload: SourceUpdate):
         src = service.update_source(source_id, payload)
         if not src:
             raise HTTPException(status_code=404, detail="Fonte não encontrada")
-        return src
+        return {"source": service.enrich_source_read(src).model_dump()}
 
     @router.post("/{source_id}/healthcheck")
     def trigger_healthcheck(source_id: str):
@@ -54,8 +57,7 @@ if APIRouter is not None:  # pragma: no cover
 
     @router.get("/{source_id}/healthchecks")
     def list_healthchecks(source_id: str):
-        return [hc.__dict__ for hc in service.list_healthchecks(source_id)]
+        return {"healthchecks": [hc.__dict__ for hc in service.list_healthchecks(source_id)]}
 
 else:  # pragma: no cover
     router = None
-

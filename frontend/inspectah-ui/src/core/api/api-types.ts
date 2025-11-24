@@ -71,26 +71,43 @@ export type ConsultationStatus =
   | { kind: 'error'; question?: string; message: string };
 
 // Admin API types
-export type AdminSourceStatus = 'healthy' | 'degraded' | 'unknown';
+export type AdminSourceHealthStatus = 'OK' | 'DEGRADED' | 'FAIL' | 'unknown';
+export type AdminSourceState =
+  | 'PROPOSED'
+  | 'TESTING'
+  | 'ACTIVE'
+  | 'UNDER_REVIEW'
+  | 'SUSPECT'
+  | 'DISABLED_TEMP'
+  | 'DISABLED_PERM';
 
 export interface AdminSource {
   id: string;
   name: string;
   type: string;
   info_type?: string;
-  is_active: boolean;
-  status: AdminSourceStatus;
-  last_checked_at?: string | null;
-  last_error?: string | null;
-  recent_items_count: number;
+  category?: string;
+  state: AdminSourceState;
+  last_health_status?: AdminSourceHealthStatus | null;
+  last_health_at?: string | null;
+  last_health_error?: string | null;
   url_base?: string;
+  themes?: string[];
+  info_types?: string[];
 }
 
 export interface AdminSourceDetail extends AdminSource {
-  history: Array<{
+  state_history?: Array<{
+    created_at?: string | null;
+    from_state?: string | null;
+    to_state: string;
+    reason?: string | null;
+  }>;
+  healthchecks?: Array<{
     checked_at?: string | null;
-    status: AdminSourceStatus;
+    status: AdminSourceHealthStatus;
     error?: string | null;
+    latency_ms?: number | null;
   }>;
 }
 

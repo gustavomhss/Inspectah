@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 from .models import SourceHealthStatus, SourceState
 
@@ -42,6 +42,7 @@ class SourceConfigStaticDataset(SourceConfigBase):
 
 
 class SourceBase(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     slug: str
     name: str
     description: str = ""
@@ -91,6 +92,10 @@ class SourceRead(SourceBase):
     last_conflict_at: Optional[datetime] = None
     evidence_refs: List[str] = Field(default_factory=list)
     trust_severity: Optional[str] = None
+    last_health_status: Optional[str] = None
+    last_health_error: Optional[str] = None
+    last_health_at: Optional[datetime] = None
+    recent_items_count: int = 0
 
 
 class SourceFilter(BaseModel):
@@ -122,4 +127,3 @@ class SourceHealthCheckRead(BaseModel):
     checked_at: datetime
     error: Optional[str] = None
     meta: Dict[str, Any] = Field(default_factory=dict)
-

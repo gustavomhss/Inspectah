@@ -8,6 +8,7 @@ import AdminCaseDetailPage from '../modules/admin/pages/AdminCaseDetailPage';
 import AdminOverviewPage from '../modules/admin/pages/AdminOverviewPage';
 import AdminSourceDetailPage from '../modules/admin/pages/AdminSourceDetailPage';
 import AdminSourcesPage from '../modules/admin/pages/AdminSourcesPage';
+import AdminSourceFormPage from '../modules/admin/pages/AdminSourceFormPage';
 import CaseTimelinePage from '../modules/cases/pages/CaseTimelinePage';
 import CaseXrayPage from '../modules/cases/pages/CaseXrayPage';
 import ConsultPage from '../modules/consult/pages/ConsultPage';
@@ -30,6 +31,7 @@ export function AppRoutes() {
       >
         <Route path="/admin" element={<AdminOverviewPage />} />
         <Route path="/admin/sources" element={<AdminSourcesPage />} />
+        <Route path="/admin/sources/new" element={<AdminSourceFormPage />} />
         <Route path="/admin/sources/:sourceId" element={<AdminSourceDetailPage />} />
         <Route path="/admin/cases" element={<AdminCasesPage />} />
         <Route path="/admin/cases/:caseId" element={<AdminCaseDetailPage />} />

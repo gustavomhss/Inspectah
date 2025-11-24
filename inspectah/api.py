@@ -14,9 +14,11 @@ from .ui.consultation_api import router as consultation_router
 try:  # pragma: no cover
     from app.admin.routes import router as admin_router
     from app.auth.routes import router as auth_router
+    from app.sources.routes_admin import router as sources_router
 except ModuleNotFoundError:  # pragma: no cover
     admin_router = None
     auth_router = None
+    sources_router = None
 
 
 def _add_cors(app: FastAPI, origins: Iterable[str]) -> None:
@@ -44,6 +46,8 @@ def build_app():  # pragma: no cover
     if consultation_router is not None:
         app.include_router(consultation_router, prefix="/api", tags=["consultation"])
 
+    if sources_router is not None:
+        app.include_router(sources_router)
     if admin_router is not None:
         app.include_router(admin_router)
     if auth_router is not None:

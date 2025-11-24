@@ -9,12 +9,15 @@ import EmptyState from '../components/EmptyState';
 import ErrorState from '../components/ErrorState';
 import LoadingState from '../components/LoadingState';
 import SourcesTable from '../components/SourcesTable';
+import Button from '../../../shared/components/Button';
+import { Link } from 'react-router-dom';
 
 function AdminSourcesPage() {
   const { token } = useAuth();
   const { logEvent } = useLogger();
   const [sources, setSources] = useState<AdminSource[]>([]);
-  const [statusFilter, setStatusFilter] = useState<'all' | 'healthy' | 'degraded'>('all');
+  const [healthFilter, setHealthFilter] = useState<'all' | 'OK' | 'DEGRADED' | 'FAIL'>('all');
+  const [stateFilter, setStateFilter] = useState<'all' | AdminSource['state']>('all');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -42,9 +45,12 @@ function AdminSourcesPage() {
   }, [logEvent]);
 
   const filtered = useMemo(() => {
-    if (statusFilter === 'all') return sources;
-    return sources.filter((src) => src.status === statusFilter);
-  }, [sources, statusFilter]);
+    return sources.filter((src) => {
+      if (healthFilter !== 'all' && src.last_health_status !== healthFilter) return false;
+      if (stateFilter !== 'all' && src.state !== stateFilter) return false;
+      return true;
+    });
+  }, [sources, healthFilter, stateFilter]);
 
   if (loading) {
     return <LoadingState label="Carregando fontes..." />;
@@ -63,18 +69,38 @@ function AdminSourcesPage() {
       <PageContainer>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="text-sm text-slate-200">
-            <p className="font-semibold text-white">Filtrar por saúde</p>
-            <p className="text-xs text-slate-300">Destaque fontes saudáveis ou em atenção.</p>
+            <p className="font-semibold text-white">Filtros</p>
+            <p className="text-xs text-slate-300">Saúde e estado das fontes.</p>
           </div>
-          <select
-            className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white"
-            value={statusFilter}
-            onChange={(event) => setStatusFilter(event.target.value as typeof statusFilter)}
-          >
-            <option value="all">Todas</option>
-            <option value="healthy">Saudáveis</option>
-            <option value="degraded">Em atenção</option>
-          </select>
+          <div className="flex flex-wrap items-center gap-2">
+            <select
+              className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white"
+              value={healthFilter}
+              onChange={(event) => setHealthFilter(event.target.value as typeof healthFilter)}
+            >
+              <option value="all">Saúde: Todas</option>
+              <option value="OK">Saudáveis</option>
+              <option value="DEGRADED">Em atenção</option>
+              <option value="FAIL">Falhando</option>
+            </select>
+            <select
+              className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white"
+              value={stateFilter}
+              onChange={(event) => setStateFilter(event.target.value as typeof stateFilter)}
+              >
+              <option value="all">Estado: Todos</option>
+              <option value="PROPOSED">Proposta</option>
+              <option value="TESTING">Em teste</option>
+              <option value="ACTIVE">Ativa</option>
+              <option value="UNDER_REVIEW">Em revisão</option>
+              <option value="SUSPECT">Suspeita</option>
+              <option value="DISABLED_TEMP">Desativada temp.</option>
+              <option value="DISABLED_PERM">Desativada perm.</option>
+            </select>
+            <Link to="/admin/sources/new">
+              <Button variant="primary">Nova fonte</Button>
+            </Link>
+          </div>
         </div>
 
         <div className="mt-4">
