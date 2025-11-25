@@ -18,6 +18,7 @@ import IngestionRunDetailModal from '../components/IngestionRunDetailModal';
 import IngestionModeBadge from '../components/IngestionModeBadge';
 import IngestionStatusBadge from '../components/IngestionStatusBadge';
 import IngestionProgressBar from '../components/IngestionProgressBar';
+import { HttpError } from '../../../core/api/http-client';
 
 function IngestionSourceDetailPage() {
   const { sourceId = '' } = useParams<{ sourceId: string }>();
@@ -81,7 +82,7 @@ function IngestionSourceDetailPage() {
     return () => {
       if (timer) clearInterval(timer);
     };
-  }, [lastRun?.id, lastRun?.status]);
+  }, [lastRun]);
 
   const handleRunNow = async () => {
     setMessage(null);
@@ -90,7 +91,7 @@ function IngestionSourceDetailPage() {
       setMessage({ tone: 'success', text: `Ingestão iniciada para ${source?.name || sourceId}.` });
       await reloadRuns();
     } catch (err) {
-      const status = (err as any)?.status;
+      const status = err instanceof HttpError ? err.status : undefined;
       const text =
         status === 409
           ? 'Já existe uma ingestão em andamento para esta fonte.'

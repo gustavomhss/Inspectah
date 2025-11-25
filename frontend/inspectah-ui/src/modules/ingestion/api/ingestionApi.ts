@@ -1,12 +1,6 @@
 import { endpoints } from '../../../core/api/endpoints';
 import { httpClient } from '../../../core/api/http-client';
-import type {
-  IngestionConfig,
-  IngestionRun,
-  IngestionRunsResponse,
-  IngestionStatus,
-  TriggerRunResponse,
-} from '../../../core/api/api-types';
+import type { IngestionConfig, IngestionRun, IngestionRunsResponse, TriggerRunResponse } from '../../../core/api/api-types';
 
 export async function getRunsBySource(sourceId: string, params: { limit?: number; offset?: number } = {}, authToken?: string) {
   const search = new URLSearchParams();

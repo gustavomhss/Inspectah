@@ -6,6 +6,11 @@ SCORECARD_DIR="$ROOT_DIR/out/scorecards"
 EVIDENCE_DIR="$ROOT_DIR/out/evidence/S22_G0_grounding"
 SCORECARD_PATH="$SCORECARD_DIR/S22_G0_grounding.json"
 
+if ! command -v rg >/dev/null 2>&1; then
+  echo "[S22_G0] ripgrep (rg) não encontrado no PATH; instale antes de rodar este gate." >&2
+  exit 3
+fi
+
 mkdir -p "$SCORECARD_DIR" "$EVIDENCE_DIR"
 
 docs=(

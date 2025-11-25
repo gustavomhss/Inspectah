@@ -76,7 +76,7 @@ export function useIngestionSources() {
   };
 
   const changeMode = async (sourceId: string, mode: IngestionConfig['mode']) => {
-    const updated = await toggleIngestionMode(sourceId, mode, token || undefined);
+    await toggleIngestionMode(sourceId, mode, token || undefined);
     await load();
   };
 

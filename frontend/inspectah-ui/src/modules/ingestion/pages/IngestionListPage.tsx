@@ -9,6 +9,7 @@ import { useIngestionSources } from '../hooks/useIngestionSources';
 import IngestionFiltersBar from '../components/IngestionFiltersBar';
 import IngestionSourceTable from '../components/IngestionSourceTable';
 import Toast from '../../../shared/components/Toast';
+import { HttpError } from '../../../core/api/http-client';
 
 function IngestionListPage() {
   const { rows, loading, error, reload, runNow, changeMode } = useIngestionSources();
@@ -39,7 +40,7 @@ function IngestionListPage() {
       await runNow(sourceId);
       setMessage({ tone: 'success', text: `Ingestão iniciada para ${sourceId}.` });
     } catch (err) {
-      const status = (err as any)?.status;
+      const status = err instanceof HttpError ? err.status : undefined;
       const base =
         status === 409
           ? 'Já existe uma ingestão em andamento para esta fonte.'
@@ -62,7 +63,7 @@ function IngestionListPage() {
       await changeMode(sourceId, mode);
       setMessage({ tone: 'success', text: 'Modo de ingestão atualizado.' });
     } catch (err) {
-      const status = (err as any)?.status;
+      const status = err instanceof HttpError ? err.status : undefined;
       const base =
         status === 409
           ? 'Configuração incompatível para a fonte.'

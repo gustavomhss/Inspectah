@@ -19,7 +19,7 @@ set +e
 INSTALL_STATUS=$?
 (cd "$FRONTEND_DIR" && npm run lint) > "$EVIDENCE_DIR/lint.log" 2>&1
 LINT_STATUS=$?
-(cd "$FRONTEND_DIR" && npm run test -- --watch=false) > "$EVIDENCE_DIR/test.log" 2>&1
+(cd "$FRONTEND_DIR" && npm run test) > "$EVIDENCE_DIR/test.log" 2>&1
 TEST_STATUS=$?
 (cd "$FRONTEND_DIR" && npm run build) > "$EVIDENCE_DIR/build.log" 2>&1
 BUILD_STATUS=$?

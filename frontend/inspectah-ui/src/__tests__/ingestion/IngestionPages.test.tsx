@@ -1,7 +1,7 @@
 import { rest } from 'msw';
 import { Route, Routes } from 'react-router-dom';
 import userEvent from '@testing-library/user-event';
-import { screen, waitFor } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import IngestionListPage from '../../modules/ingestion/pages/IngestionListPage';
 import IngestionSourceDetailPage from '../../modules/ingestion/pages/IngestionSourceDetailPage';
 import { renderWithProviders } from '../test-utils';
