@@ -15,10 +15,12 @@ interface Props {
   onSend: (message: string) => Promise<void>;
   onNewChat: () => Promise<void>;
   onAttach: (file: globalThis.File) => Promise<void>;
+  agentMode: boolean;
+  onToggleAgentMode: (value: boolean) => void;
   onClose: () => void;
 }
 
-function CopilotoChatPanel({ messages, attachedFiles, loading, error, onSend, onNewChat, onAttach, onClose }: Props) {
+function CopilotoChatPanel({ messages, attachedFiles, loading, error, onSend, onNewChat, onAttach, agentMode, onToggleAgentMode, onClose }: Props) {
   const [input, setInput] = useState('');
 
   const handleSend = async () => {
@@ -40,6 +42,10 @@ function CopilotoChatPanel({ messages, attachedFiles, loading, error, onSend, on
           <p className="text-xs text-slate-300">Sugestões para preencher o formulário.</p>
         </div>
         <div className="flex gap-2">
+          <label className="flex items-center gap-1 text-xs text-slate-200">
+            <input type="checkbox" checked={agentMode} onChange={(e) => onToggleAgentMode(e.target.checked)} />
+            modo agente
+          </label>
           <Button type="button" variant="secondary" onClick={handleNewChat} disabled={!!loading}>
             Novo chat
           </Button>

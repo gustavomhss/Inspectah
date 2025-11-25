@@ -1,0 +1,8 @@
+source_id: src_data_api
+mode: MANUAL_ONLY
+items:
+  - id: "br-sp"
+    population: 12300000
+  - id: "br-rj"
+    population: 6700000
+expect_status: SUCCESS

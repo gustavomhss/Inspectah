@@ -50,6 +50,7 @@ class SourceBase(BaseModel):
     category: str
     themes: List[str] = Field(default_factory=list)
     info_types: List[str] = Field(default_factory=list)
+    refresh_interval: Optional[int] = Field(None, ge=15, le=10080)
     protocol: str = "https"
     format: str = "json"
     endpoint: str = Field("", alias="url_base")
@@ -70,7 +71,30 @@ class SourceCreate(SourceBase):
     created_by: str = "system"
 
 
-class SourceUpdate(SourceBase):
+class SourceUpdate(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    slug: Optional[str] = None
+    name: Optional[str] = None
+    description: Optional[str] = None
+    type: Optional[str] = None
+    category: Optional[str] = None
+    themes: Optional[List[str]] = None
+    info_types: Optional[List[str]] = None
+    refresh_interval: Optional[int] = Field(None, ge=15, le=10080)
+    protocol: Optional[str] = None
+    format: Optional[str] = None
+    endpoint: Optional[str] = Field(None, alias="url_base")
+    auth_type: Optional[str] = None
+    auth_config: Optional[Dict[str, Any]] = None
+    request_params: Optional[Dict[str, Any]] = None
+    headers: Optional[Dict[str, Any]] = None
+    frequency: Optional[str] = None
+    timeout_ms: Optional[int] = None
+    retry_policy: Optional[Dict[str, Any]] = None
+    parsing_config: Optional[Dict[str, Any]] = None
+    redundancy_group: Optional[str] = None
+    redundancy_role: Optional[str] = None
+    meta: Optional[Dict[str, Any]] = None
     updated_by: str = "system"
     state: Optional[SourceState] = None
     state_reason: Optional[str] = None
@@ -96,6 +120,7 @@ class SourceRead(SourceBase):
     last_health_error: Optional[str] = None
     last_health_at: Optional[datetime] = None
     recent_items_count: int = 0
+    ingestion_mode: Optional[str] = None
 
 
 class SourceFilter(BaseModel):

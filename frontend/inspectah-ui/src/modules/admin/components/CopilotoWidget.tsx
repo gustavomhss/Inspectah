@@ -11,10 +11,13 @@ interface Props {
   onSend: (message: string) => Promise<CopilotoAction[]>;
   onNewChat: () => Promise<void>;
   onAttach: (file: globalThis.File) => Promise<void>;
+  agentMode: boolean;
+  onToggleAgentMode: (value: boolean) => void;
+  autoOpen?: boolean;
 }
 
-function CopilotoWidget({ messages, attachedFiles, loading, error, onSend, onNewChat, onAttach }: Props) {
-  const [open, setOpen] = useState(false);
+function CopilotoWidget({ messages, attachedFiles, loading, error, onSend, onNewChat, onAttach, agentMode, onToggleAgentMode, autoOpen }: Props) {
+  const [open, setOpen] = useState(autoOpen ?? false);
 
   const handleSend = async (message: string) => {
     await onSend(message);
@@ -38,6 +41,8 @@ function CopilotoWidget({ messages, attachedFiles, loading, error, onSend, onNew
           onSend={handleSend}
           onNewChat={onNewChat}
           onAttach={onAttach}
+          agentMode={agentMode}
+          onToggleAgentMode={onToggleAgentMode}
           onClose={() => setOpen(false)}
         />
       ) : null}

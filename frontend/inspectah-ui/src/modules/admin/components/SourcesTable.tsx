@@ -18,6 +18,7 @@ function SourcesTable({ sources }: Props) {
           <tr className="text-left text-xs uppercase tracking-[0.2em] text-slate-300">
             <th className="px-4 py-3">Fonte</th>
             <th className="px-4 py-3">Tipo</th>
+            <th className="px-4 py-3">Refresh (min)</th>
             <th className="px-4 py-3">Estado</th>
             <th className="px-4 py-3">Saúde</th>
             <th className="px-4 py-3">Último health-check</th>
@@ -32,9 +33,10 @@ function SourcesTable({ sources }: Props) {
                 <Link to={`/admin/sources/${source.id}`} className="font-semibold text-white hover:underline">
                   {source.name || source.id}
                 </Link>
-                <div className="text-xs text-slate-300">{source.info_type || 'tipo não informado'}</div>
+                <div className="text-xs text-slate-300">{(source.info_types || []).join(', ') || 'tipo não informado'}</div>
               </td>
               <td className="px-4 py-3">{source.type}</td>
+              <td className="px-4 py-3">{source.refresh_interval ?? '—'}</td>
               <td className="px-4 py-3">
                 <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white">{source.state}</span>
               </td>

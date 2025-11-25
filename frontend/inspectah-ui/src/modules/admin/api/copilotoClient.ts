@@ -1,24 +1,23 @@
 import { endpoints } from '../../../core/api/endpoints';
 import { httpClient } from '../../../core/api/http-client';
-
-export type CopilotoActionType = 'set_field' | 'clear_field' | 'mark_suggested';
-
-export interface CopilotoAction {
-  type: CopilotoActionType;
-  field: string;
-  value?: unknown;
-}
+import type { CopilotoAction, CopilotoSessionResponse } from '../../../core/api/api-types';
+export type { CopilotoAction };
 
 export interface CopilotoMessagePayload {
   user_message: string;
   form_state: Record<string, unknown>;
   metadata?: Record<string, unknown>;
   files?: Array<{ file_id: string; filename?: string }>;
+  agent_mode?: boolean;
+  source_id?: string;
 }
 
 export interface CopilotoResponse {
   session_id?: string;
-  assistant_message: string;
+  agent_mode?: boolean;
+  source_id?: string | null;
+  assistant_message?: string;
+  message?: string;
   actions: CopilotoAction[];
 }
 
@@ -30,13 +29,18 @@ export interface CopilotoFileInfo {
   session_id?: string;
 }
 
-export async function createSession(authToken?: string): Promise<string> {
-  const response = await httpClient<{ session_id: string }>(endpoints.admin.copiloto.sessions, {
+export interface CopilotoSessionCreate {
+  agent_mode?: boolean;
+  source_id?: string;
+}
+
+export async function createSession(params?: CopilotoSessionCreate, authToken?: string): Promise<CopilotoSessionResponse> {
+  const response = await httpClient<CopilotoSessionResponse>(endpoints.admin.copiloto.sessions, {
     method: 'POST',
     authToken,
-    body: JSON.stringify({}),
+    body: JSON.stringify(params || {}),
   });
-  return response.session_id;
+  return response;
 }
 
 export async function sendMessage(sessionId: string, payload: CopilotoMessagePayload, authToken?: string): Promise<CopilotoResponse> {

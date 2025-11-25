@@ -35,6 +35,7 @@ Este documento descreve o modelo de dados implementável para o módulo de fonte
 ### 1.2 SourceType
 - Tabela de referência opcional para tipos (id, name, description, defaults).
 - Serve para popular UI e validações de config.
+- Tipos suportados na Fase 1/2 incluem: `news_rss`, `gossip_feed`, `sports_api`, `weather_api`, `official_open`, `data_api` (APIs REST/JSON/GraphQL com endpoint obrigatório).
 
 ### 1.3 SourceCategory / SourceTag
 - `SourceCategory`: id, name, description.

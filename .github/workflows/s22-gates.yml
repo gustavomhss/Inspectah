@@ -1,0 +1,68 @@
+name: Sprint 22 Gates
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "app/ingestion/**"
+      - "app/api/ingestion/**"
+      - "app/admin/ingestion/**"
+      - "tests/ingestion/**"
+      - "db/migrations/022_sprint22_ingestion.sql"
+      - "metrics/ingestion_s22.py"
+      - "dashboards/ingestion_s22_overview.json"
+      - "docs/sprint_22_*.md"
+      - "bin/s22_*"
+  pull_request:
+    branches: [main]
+    paths:
+      - "app/ingestion/**"
+      - "app/api/ingestion/**"
+      - "app/admin/ingestion/**"
+      - "tests/ingestion/**"
+      - "db/migrations/022_sprint22_ingestion.sql"
+      - "metrics/ingestion_s22.py"
+      - "dashboards/ingestion_s22_overview.json"
+      - "docs/sprint_22_*.md"
+      - "bin/s22_*"
+
+jobs:
+  sprint22-gates:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install ripgrep
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ripgrep
+
+      - name: Install project
+        run: pip install -e .
+
+      - name: Run Sprint 22 gates
+        run: |
+          export PYTHONPATH=.
+          bash bin/s22_all_gates.sh
+
+      - name: Upload scorecards
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sprint22-scorecards
+          path: out/scorecards
+
+      - name: Upload evidence (subset)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sprint22-evidence
+          path: |
+            out/evidence/S22_G*
+            out/evidence/S22_orr

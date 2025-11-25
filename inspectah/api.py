@@ -15,10 +15,14 @@ try:  # pragma: no cover
     from app.admin.routes import router as admin_router
     from app.auth.routes import router as auth_router
     from app.sources.routes_admin import router as sources_router
+    from inspectah.routers.copiloto_fontes import router as copiloto_fontes_router
+    from app.api.ingestion.routes import router as ingestion_router
 except ModuleNotFoundError:  # pragma: no cover
     admin_router = None
     auth_router = None
     sources_router = None
+    copiloto_fontes_router = None
+    ingestion_router = None
 
 
 def _add_cors(app: FastAPI, origins: Iterable[str]) -> None:
@@ -50,6 +54,10 @@ def build_app():  # pragma: no cover
         app.include_router(admin_router)
     if sources_router is not None:
         app.include_router(sources_router)
+    if ingestion_router is not None:
+        app.include_router(ingestion_router)
+    if copiloto_fontes_router is not None:
+        app.include_router(copiloto_fontes_router, prefix="/admin/copiloto-fontes", tags=["admin-copiloto-fontes"])
     if auth_router is not None:
         app.include_router(auth_router)
 

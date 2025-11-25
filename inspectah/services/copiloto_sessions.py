@@ -8,11 +8,18 @@ SessionData = Dict[str, Any]
 _SESSIONS: Dict[str, SessionData] = {}
 
 
-def create_session(user_id: Optional[str] = None, context: Optional[Dict[str, Any]] = None) -> str:
+def create_session(
+    user_id: Optional[str] = None,
+    context: Optional[Dict[str, Any]] = None,
+    agent_mode: bool = True,
+    source_id: Optional[str] = None,
+) -> str:
     session_id = f"s21_1_{uuid.uuid4().hex}"
     _SESSIONS[session_id] = {
         "user_id": user_id,
         "context": context or {},
+        "agent_mode": agent_mode,
+        "source_id": source_id,
         "messages": [],
         "files": [],
     }

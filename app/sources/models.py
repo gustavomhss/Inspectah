@@ -74,6 +74,7 @@ class Source:
     category: str
     themes: List[str]
     info_types: List[str]
+    refresh_interval: int
     protocol: str
     format: str
     endpoint: str
@@ -130,6 +131,7 @@ class Source:
         redundancy_role: Optional[str],
         created_by: str,
         meta: Optional[Dict[str, Any]] = None,
+        refresh_interval: Optional[int] = None,
     ) -> "Source":
         now = datetime.utcnow()
         return cls(
@@ -141,6 +143,7 @@ class Source:
             category=category,
             themes=themes,
             info_types=info_types,
+            refresh_interval=refresh_interval or 1440,
             protocol=protocol,
             format=format,
             endpoint=endpoint,
@@ -163,4 +166,3 @@ class Source:
             updated_by=created_by,
             meta=meta or {},
         )
-

@@ -22,14 +22,50 @@ const DEFAULT_TIMEOUT_MS = 15000;
 export interface HttpClientOptions extends RequestInit {
   authToken?: string;
   handleUnauthorized?: boolean;
+  isForm?: boolean;
+}
+
+function normalizeErrorDetail(body: unknown): string | undefined {
+  if (!body) return undefined;
+  if (typeof body === 'string') return body;
+  if (Array.isArray(body)) {
+    const parts = body
+      .map((item) => {
+        if (!item) return null;
+        if (typeof item === 'string') return item;
+        if (typeof item === 'object') {
+          const obj = item as Record<string, unknown>;
+          const msg = obj.message || obj.msg || obj.detail || obj.error;
+          if (typeof msg === 'string') return msg;
+          if (Array.isArray(msg)) {
+            return msg.map((m) => (typeof m === 'string' ? m : JSON.stringify(m))).join(', ');
+          }
+          const loc = obj.loc;
+          if (Array.isArray(loc)) return `${loc.join('.')}: ${JSON.stringify(obj)}`;
+        }
+        return JSON.stringify(item);
+      })
+      .filter(Boolean) as string[];
+    return parts.join('; ');
+  }
+  if (typeof body === 'object') {
+    const obj = body as Record<string, unknown>;
+    const direct = obj.error || obj.message || obj.detail;
+    if (typeof direct === 'string') return direct;
+    if (Array.isArray(direct)) {
+      return direct.map((d) => (typeof d === 'string' ? d : JSON.stringify(d))).join('; ');
+    }
+    return JSON.stringify(obj);
+  }
+  return undefined;
 }
 
 export async function httpClient<T>(path: string, options: HttpClientOptions = {}): Promise<T> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
-  const { authToken, handleUnauthorized = true, ...fetchOptions } = options;
+  const { authToken, handleUnauthorized = true, isForm = false, ...fetchOptions } = options;
   const headers: HeadersInit = {
-    'Content-Type': 'application/json',
+    ...(isForm ? {} : { 'Content-Type': 'application/json' }),
     ...(fetchOptions.headers || {}),
     ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
   };
@@ -52,7 +88,7 @@ export async function httpClient<T>(path: string, options: HttpClientOptions = {
       let detail: string | undefined;
       try {
         const body = await response.json();
-        detail = (body && (body.error || body.message || body.detail)) as string | undefined;
+        detail = normalizeErrorDetail(body);
       } catch {
         detail = undefined;
       }

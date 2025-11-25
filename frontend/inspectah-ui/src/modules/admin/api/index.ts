@@ -39,6 +39,20 @@ export async function updateSource(sourceId: string, payload: Partial<AdminSourc
   return response.source;
 }
 
+export async function changeSourceStatus(
+  sourceId: string,
+  target_state: AdminSource['state'],
+  reason: string,
+  authToken?: string
+): Promise<AdminSourceDetail> {
+  const response = await httpClient<{ source: AdminSourceDetail }>(`${endpoints.admin.sourceDetail(sourceId)}/status`, {
+    method: 'POST',
+    body: JSON.stringify({ target_state, reason, changed_by: 'admin-ui' }),
+    authToken,
+  });
+  return response.source;
+}
+
 export async function triggerSourceHealthcheck(sourceId: string, authToken?: string): Promise<{ status: AdminSourceHealthStatus }> {
   const response = await httpClient<{ status: AdminSourceHealthStatus }>(`${endpoints.admin.sourceDetail(sourceId)}/healthcheck`, {
     method: 'POST',

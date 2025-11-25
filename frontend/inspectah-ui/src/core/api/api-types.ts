@@ -81,19 +81,32 @@ export type AdminSourceState =
   | 'DISABLED_TEMP'
   | 'DISABLED_PERM';
 
+export type AdminSourceType =
+  | 'news_rss'
+  | 'gossip_feed'
+  | 'sports_api'
+  | 'weather_api'
+  | 'official_open'
+  | 'data_api'
+  | string;
+
 export interface AdminSource {
   id: string;
   name: string;
-  type: string;
-  info_type?: string;
+  type: AdminSourceType;
   category?: string;
   state: AdminSourceState;
+  ingestion_mode?: IngestionMode | null;
+  state_reason?: string | null;
+  refresh_interval?: number | null;
   last_health_status?: AdminSourceHealthStatus | null;
   last_health_at?: string | null;
   last_health_error?: string | null;
+  endpoint?: string;
   url_base?: string;
   themes?: string[];
   info_types?: string[];
+  description?: string;
 }
 
 export interface AdminSourceDetail extends AdminSource {
@@ -109,6 +122,38 @@ export interface AdminSourceDetail extends AdminSource {
     error?: string | null;
     latency_ms?: number | null;
   }>;
+}
+
+export type CopilotoActionType =
+  | 'set_field'
+  | 'clear_field'
+  | 'mark_suggested'
+  | 'propose_update'
+  | 'plan_status_change'
+  | 'SET_FIELD'
+  | 'SUGGEST_FIELD'
+  | 'CLEAR_FIELD'
+  | 'FOCUS_FIELD'
+  | 'PROPOSE_UPDATE'
+  | 'PLAN_STATUS';
+
+export interface CopilotoAction {
+  type: CopilotoActionType;
+  field?: string;
+  value?: unknown;
+  changes?: Array<{ field: string; from: unknown; to: unknown }>;
+  plan?: { from_state: string; to_state: string; reason?: string };
+}
+
+export interface CopilotoMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+export interface CopilotoSessionResponse {
+  session_id: string;
+  agent_mode?: boolean;
+  source_id?: string | null;
 }
 
 export interface AdminCase {
@@ -134,6 +179,47 @@ export interface AdminHealth {
   cases_attention: number;
   cases_stable: number;
   integrations: Record<string, string>;
+}
+
+// Ingestão 2.0 (Sprint 22)
+export type IngestionMode = 'MANUAL_ONLY' | 'AUTOMATIC';
+export type IngestionStatus = 'PENDING' | 'RUNNING' | 'SUCCESS' | 'PARTIAL_SUCCESS' | 'FAIL';
+
+export interface IngestionConfig {
+  id: string;
+  source_id: string;
+  enabled: boolean;
+  mode: IngestionMode;
+  interval_minutes: number;
+  max_attempts: number;
+  timeout_seconds: number;
+  last_run_id?: string | null;
+  updated_at: string;
+}
+
+export interface IngestionRun {
+  id: string;
+  source_id: string;
+  status: IngestionStatus;
+  trigger: string;
+  started_at: string;
+  finished_at?: string | null;
+  items_processed?: number;
+  error_code?: string | null;
+  error_message?: string | null;
+  payload_ref?: string | null;
+}
+
+export interface IngestionRunsResponse {
+  runs: IngestionRun[];
+  pagination?: { limit?: number; offset?: number; count?: number };
+  config_mode?: IngestionMode | null;
+}
+
+export interface TriggerRunResponse {
+  run_id: string;
+  status: IngestionStatus;
+  trigger: string;
 }
 
 export type TimelineSeverity = 'info' | 'warning' | 'critical' | string;

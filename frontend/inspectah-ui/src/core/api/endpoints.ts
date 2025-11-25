@@ -13,5 +13,16 @@ export const endpoints = {
     caseDetail: (caseId: string) => `/admin/cases/${encodeURIComponent(caseId)}`,
     timeline: (caseId: string) => `/admin/cases/${encodeURIComponent(caseId)}/timeline`,
     xray: (caseId: string) => `/admin/cases/${encodeURIComponent(caseId)}/xray`,
+    copiloto: {
+      sessions: '/admin/copiloto-fontes/sessions',
+      messages: (sessionId: string) => `/admin/copiloto-fontes/sessions/${encodeURIComponent(sessionId)}/messages`,
+      files: (sessionId: string) => `/admin/copiloto-fontes/sessions/${encodeURIComponent(sessionId)}/files`,
+    },
+    ingestion: {
+      run: (sourceId: string) => `/admin/ingestion/${encodeURIComponent(sourceId)}/run`,
+      toggleMode: (sourceId: string) => `/admin/ingestion/${encodeURIComponent(sourceId)}/toggle-mode`,
+      runsBySource: (sourceId: string) => `/admin/ingestion/${encodeURIComponent(sourceId)}/runs`,
+      runDetail: (runId: string) => `/admin/ingestion/runs/${encodeURIComponent(runId)}`,
+    },
   },
 };

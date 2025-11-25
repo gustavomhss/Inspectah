@@ -15,6 +15,7 @@ def test_source_creation_defaults():
         category="official",
         themes=["politica"],
         info_types=["news"],
+        refresh_interval=None,
         protocol="https",
         format="rss",
         endpoint="https://example.com/rss",
@@ -32,6 +33,7 @@ def test_source_creation_defaults():
     )
     assert src.state == SourceState.PROPOSED
     assert src.created_by == "tester"
+    assert src.refresh_interval == 1440
 
 
 def test_state_transition_rules():
@@ -43,6 +45,7 @@ def test_state_transition_rules():
         category="official",
         themes=["politica"],
         info_types=["news"],
+        refresh_interval=180,
         protocol="https",
         format="rss",
         endpoint="https://example.com/rss",
@@ -61,5 +64,8 @@ def test_state_transition_rules():
     )
     src = create_source(payload)
     assert src.state == SourceState.PROPOSED
+    activated = change_source_state(src.id, SourceState.ACTIVE, "aprovar", "tester")
+    assert activated is not None
+    assert activated.state == SourceState.ACTIVE
     with pytest.raises(ValueError):
-        change_source_state(src.id, SourceState.ACTIVE, "pular teste", "tester")
+        change_source_state(src.id, SourceState.PROPOSED, "retroceder", "tester")

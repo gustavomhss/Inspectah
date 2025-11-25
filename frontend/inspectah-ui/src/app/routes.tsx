@@ -9,6 +9,8 @@ import AdminOverviewPage from '../modules/admin/pages/AdminOverviewPage';
 import AdminSourceDetailPage from '../modules/admin/pages/AdminSourceDetailPage';
 import AdminSourcesPage from '../modules/admin/pages/AdminSourcesPage';
 import AdminSourceFormPage from '../modules/admin/pages/AdminSourceFormPage';
+import IngestionListPage from '../modules/ingestion/pages/IngestionListPage';
+import IngestionSourceDetailPage from '../modules/ingestion/pages/IngestionSourceDetailPage';
 import CaseTimelinePage from '../modules/cases/pages/CaseTimelinePage';
 import CaseXrayPage from '../modules/cases/pages/CaseXrayPage';
 import ConsultPage from '../modules/consult/pages/ConsultPage';
@@ -37,6 +39,8 @@ export function AppRoutes() {
         <Route path="/admin/cases/:caseId" element={<AdminCaseDetailPage />} />
         <Route path="/admin/cases/:caseId/timeline" element={<CaseTimelinePage />} />
         <Route path="/admin/cases/:caseId/xray" element={<CaseXrayPage />} />
+        <Route path="/admin/ingestion" element={<IngestionListPage />} />
+        <Route path="/admin/ingestion/sources/:sourceId" element={<IngestionSourceDetailPage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />
