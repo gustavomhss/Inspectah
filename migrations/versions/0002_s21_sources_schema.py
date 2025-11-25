@@ -20,6 +20,7 @@ SCHEMA_STMTS = [
         category TEXT,
         themes TEXT,
         info_types TEXT,
+        refresh_interval INTEGER,
         protocol TEXT,
         format TEXT,
         endpoint TEXT,
@@ -109,6 +110,7 @@ def apply_migration(db_path: Path) -> None:
         with conn:
             for stmt in SCHEMA_STMTS:
                 conn.executescript(stmt)
+            _ensure_refresh_interval(conn)
     finally:
         conn.close()
 
@@ -132,6 +134,14 @@ def _main(argv: list[str]) -> int:
     info = verify_schema(target)
     print(f"Sprint 21 sources migration applied to {target} ({info['tables']} tables).")
     return 0
+
+
+def _ensure_refresh_interval(conn: sqlite3.Connection) -> None:
+    info = conn.execute("PRAGMA table_info('sources')").fetchall()
+    columns = {row[1] for row in info}
+    if "refresh_interval" not in columns:
+        conn.execute("ALTER TABLE sources ADD COLUMN refresh_interval INTEGER")
+        conn.commit()
 
 
 if __name__ == "__main__":

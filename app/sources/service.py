@@ -10,6 +10,9 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
 from .models import Source, SourceHealthCheck, SourceHealthStatus, SourceState
+from app.ingestion.repository import IngestionRepository
+from app.ingestion.models import IngestionMode
+from .status import assert_valid_transition
 from .schemas import SourceCreate, SourceFilter, SourceRead, SourceUpdate
 from .validators import validate_source_config, validate_source_payload
 
@@ -28,6 +31,7 @@ def get_connection():
     conn = sqlite3.connect(_db_path())
     conn.row_factory = sqlite3.Row
     try:
+        _ensure_schema(conn)
         yield conn
     finally:
         conn.close()
@@ -54,7 +58,52 @@ def _deserialize(value: Optional[str], default):
         return default
 
 
+def _ensure_schema(conn: sqlite3.Connection) -> None:
+    cursor = conn.execute(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='sources'"
+    )
+    exists = cursor.fetchone()
+    if not exists:
+        return
+    info = conn.execute("PRAGMA table_info('sources')").fetchall()
+    columns = {row[1] for row in info}
+    if "refresh_interval" not in columns:
+        conn.execute("ALTER TABLE sources ADD COLUMN refresh_interval INTEGER")
+        conn.commit()
+
+
+MIN_REFRESH_INTERVAL = 15
+MAX_REFRESH_INTERVAL = 10080  # 7 dias em minutos
+
+
+def _default_refresh_interval(source_type: str) -> int:
+    defaults = {
+        "news_rss": 180,
+        "gossip_feed": 720,
+        "sports_api": 120,
+        "weather_api": 60,
+        "gov_record": 1440,
+        "legislation": 720,
+        "science_dataset": 10080,
+        "static_dataset": 10080,
+        "official_open": 1440,
+    }
+    return defaults.get(source_type, 1440)
+
+
+def _normalize_refresh_interval(refresh_interval: Optional[int], source_type: str) -> int:
+    value = refresh_interval if refresh_interval is not None else _default_refresh_interval(source_type)
+    if value is None:
+        value = _default_refresh_interval(source_type)
+    if not isinstance(value, int):
+        raise ValueError("refresh_interval deve ser inteiro em minutos")
+    if value < MIN_REFRESH_INTERVAL or value > MAX_REFRESH_INTERVAL:
+        raise ValueError("refresh_interval fora do intervalo permitido")
+    return value
+
+
 def _row_to_source(row: sqlite3.Row) -> Source:
+    refresh_from_row = row["refresh_interval"] if "refresh_interval" in row.keys() else None
     return Source(
         id=row["id"],
         slug=row["slug"],
@@ -64,6 +113,7 @@ def _row_to_source(row: sqlite3.Row) -> Source:
         category=row["category"] or "",
         themes=_deserialize(row["themes"], []),
         info_types=_deserialize(row["info_types"], []),
+        refresh_interval=_normalize_refresh_interval(refresh_from_row, row["type"]),
         protocol=row["protocol"] or "https",
         format=row["format"] or "json",
         endpoint=row["endpoint"] or "",
@@ -112,22 +162,6 @@ def _fetch_latest_health(conn: sqlite3.Connection, source_id: str) -> Optional[S
         error=row["error"],
         meta=_deserialize(row["meta"], {}),
     )
-
-
-def _allowed_transitions() -> Dict[SourceState, set[SourceState]]:
-    return {
-        SourceState.PROPOSED: {SourceState.TESTING},
-        SourceState.TESTING: {SourceState.ACTIVE, SourceState.UNDER_REVIEW},
-        SourceState.ACTIVE: {SourceState.UNDER_REVIEW, SourceState.SUSPECT, SourceState.DISABLED_TEMP},
-        SourceState.UNDER_REVIEW: {
-            SourceState.ACTIVE,
-            SourceState.SUSPECT,
-            SourceState.DISABLED_TEMP,
-            SourceState.DISABLED_PERM,
-        },
-        SourceState.SUSPECT: {SourceState.UNDER_REVIEW, SourceState.DISABLED_TEMP, SourceState.DISABLED_PERM},
-        SourceState.DISABLED_TEMP: {SourceState.UNDER_REVIEW, SourceState.ACTIVE},
-    }
 
 
 def list_sources(filters: Optional[SourceFilter] = None) -> List[Source]:
@@ -191,17 +225,19 @@ def create_source(payload: SourceCreate) -> Source:
     validate_source_config(payload.type, payload.model_dump())
     source_id = _generate_id("src")
     now = _now_iso()
+    refresh_interval = _normalize_refresh_interval(payload.refresh_interval, payload.type)
     with get_connection() as conn:
+        placeholders = ",".join(["?"] * 37)
         conn.execute(
-            """
+            f"""
             INSERT INTO sources (
-                id, slug, name, description, type, category, themes, info_types, protocol, format, endpoint,
+                id, slug, name, description, type, category, themes, info_types, refresh_interval, protocol, format, endpoint,
                 auth_type, auth_config, request_params, headers, frequency, timeout_ms, retry_policy, parsing_config,
                 redundancy_group, redundancy_role, state, state_reason, state_updated_at, created_at, updated_at,
                 created_by, updated_by, last_reviewed_by, meta, conflict_flags, conflict_with_sources,
                 has_open_contestation, last_conflict_at, evidence_refs, trust_severity
             ) VALUES (
-                ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?
+                {placeholders}
             )
             """,
             (
@@ -213,6 +249,7 @@ def create_source(payload: SourceCreate) -> Source:
                 payload.category,
                 _serialize(payload.themes),
                 _serialize(payload.info_types),
+                refresh_interval,
                 payload.protocol,
                 payload.format,
                 payload.endpoint,
@@ -254,7 +291,7 @@ def _update_source_record(conn: sqlite3.Connection, source: Source) -> None:
     conn.execute(
         """
         UPDATE sources SET
-            slug=?, name=?, description=?, type=?, category=?, themes=?, info_types=?, protocol=?, format=?, endpoint=?,
+            slug=?, name=?, description=?, type=?, category=?, themes=?, info_types=?, refresh_interval=?, protocol=?, format=?, endpoint=?,
             auth_type=?, auth_config=?, request_params=?, headers=?, frequency=?, timeout_ms=?, retry_policy=?, parsing_config=?,
             redundancy_group=?, redundancy_role=?, state=?, state_reason=?, state_updated_at=?, updated_at=?, updated_by=?,
             last_reviewed_by=?, meta=?, conflict_flags=?, conflict_with_sources=?, has_open_contestation=?, last_conflict_at=?,
@@ -269,6 +306,7 @@ def _update_source_record(conn: sqlite3.Connection, source: Source) -> None:
             source.category,
             _serialize(source.themes),
             _serialize(source.info_types),
+            source.refresh_interval,
             source.protocol,
             source.format,
             source.endpoint,
@@ -304,14 +342,21 @@ def update_source(source_id: str, payload: SourceUpdate) -> Optional[Source]:
     existing = get_source_detail(source_id)
     if not existing:
         return None
-    validate_source_payload(SourceCreate(**payload.model_dump(exclude_none=True), created_by=existing.created_by))
-    validate_source_config(payload.type or existing.type, payload.model_dump())
+    incoming = payload.model_dump(exclude_none=True, by_alias=True)
+    merged = existing.__dict__.copy()
+    merged.update(incoming)
+    merged["slug"] = existing.slug
+    merged["type"] = merged.get("type") or existing.type
+    merged["category"] = merged.get("category") or existing.category
+    merged["updated_by"] = payload.updated_by or existing.updated_by
+    merged.pop("url_base", None)
+    merged["refresh_interval"] = _normalize_refresh_interval(
+        merged.get("refresh_interval"), merged.get("type", existing.type)
+    )
+    validate_source_payload(SourceCreate(**{**merged, "created_by": existing.created_by}))
+    validate_source_config(merged["type"], merged)
 
-    updated = existing.__dict__.copy()
-    updated.update(payload.model_dump(exclude_none=True, by_alias=True))
-    updated["updated_by"] = payload.updated_by
-    updated.pop("url_base", None)
-    source = Source(**updated)  # type: ignore[arg-type]
+    source = Source(**merged)  # type: ignore[arg-type]
     # não muda estado diretamente aqui; usar change_source_state para transições
     with get_connection() as conn:
         _update_source_record(conn, source)
@@ -322,9 +367,7 @@ def update_source(source_id: str, payload: SourceUpdate) -> Optional[Source]:
 def _apply_state_transition(conn: sqlite3.Connection, source: Source, target_state: SourceState, reason: str, changed_by: str) -> Source:
     if source.state == SourceState.DISABLED_PERM:
         raise ValueError("Fonte está desativada permanentemente")
-    allowed = _allowed_transitions().get(source.state, set())
-    if target_state not in allowed and target_state != SourceState.DISABLED_PERM:
-        raise ValueError(f"Transição inválida: {source.state.value} -> {target_state.value}")
+    assert_valid_transition(source.state, target_state)
     prev = source.state
     source.state = target_state
     source.state_reason = reason
@@ -420,4 +463,15 @@ def enrich_source_read(source: Source) -> SourceRead:
         last_health_error=last_health.error if last_health else None,
         last_health_at=last_health.checked_at if last_health else None,
         recent_items_count=0,
+        ingestion_mode=_get_ingestion_mode(source.id),
     )
+
+
+def _get_ingestion_mode(source_id: str) -> str:
+    try:
+        cfg = IngestionRepository().get_config(source_id)
+        if cfg:
+            return cfg.mode.value
+    except Exception:
+        return IngestionMode.MANUAL_ONLY.value
+    return IngestionMode.MANUAL_ONLY.value

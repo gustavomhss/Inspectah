@@ -8,27 +8,30 @@ export type CopilotoMessage = {
   content: string;
 };
 
-export function useCopilotoAgent() {
+export function useCopilotoAgent(sourceId?: string) {
   const { token } = useAuth();
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<CopilotoMessage[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [attachedFiles, setAttachedFiles] = useState<CopilotoFileInfo[]>([]);
+  const [agentMode, setAgentMode] = useState(true);
+  const [interacted, setInteracted] = useState(false);
 
   const ensureSession = useCallback(async () => {
     if (sessionId) return sessionId;
-    const newSession = await createSession(token || undefined);
-    setSessionId(newSession);
-    return newSession;
-  }, [sessionId, token]);
+    const session = await createSession({ agent_mode: agentMode, source_id: sourceId }, token || undefined);
+    setSessionId(session.session_id);
+    return session.session_id;
+  }, [sessionId, token, agentMode, sourceId]);
 
   const startNewChat = useCallback(async () => {
-    const newSession = await createSession(token || undefined);
-    setSessionId(newSession);
+    const session = await createSession({ agent_mode: agentMode, source_id: sourceId }, token || undefined);
+    setSessionId(session.session_id);
     setMessages([]);
     setAttachedFiles([]);
-  }, [token]);
+    setInteracted(false);
+  }, [token, agentMode, sourceId]);
 
   const attachFile = useCallback(
     async (file: globalThis.File) => {
@@ -50,14 +53,18 @@ export function useCopilotoAgent() {
           user_message: userMessage,
           form_state: formState,
           files: attachedFiles.map((f) => ({ file_id: f.file_id, filename: f.filename })),
+          agent_mode: agentMode,
+          source_id: sourceId,
         };
         setMessages((prev) => [...prev, { role: 'user', content: userMessage }]);
         const response = await sendMessage(currentSession, payload, token || undefined);
-        setMessages((prev) => [...prev, { role: 'assistant', content: response.assistant_message }]);
+        const assistantText = response.message || response.assistant_message || 'Sem resposta do Copiloto.';
+        setMessages((prev) => [...prev, { role: 'assistant', content: assistantText }]);
         setAttachedFiles([]);
         if (response.session_id && response.session_id !== currentSession) {
           setSessionId(response.session_id);
         }
+        setInteracted(true);
         return response.actions || [];
       } catch (err) {
         const message = (err as Error).message || 'Falha ao enviar mensagem para o Copiloto.';
@@ -67,7 +74,7 @@ export function useCopilotoAgent() {
         setLoading(false);
       }
     },
-    [ensureSession, token, attachedFiles]
+    [ensureSession, token, attachedFiles, agentMode, sourceId]
   );
 
   useEffect(() => {
@@ -80,6 +87,9 @@ export function useCopilotoAgent() {
     loading,
     error,
     attachedFiles,
+    agentMode,
+    interacted,
+    setAgentMode,
     sendUserMessage,
     startNewChat,
     attachFile,

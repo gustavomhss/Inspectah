@@ -1,0 +1,8 @@
+source_id: src_news_rss
+mode: AUTOMATIC
+items:
+  - id: 1
+    title: "Notícia demo 1"
+  - id: 2
+    title: "Notícia demo 2"
+expect_status: SUCCESS

@@ -1,0 +1,10 @@
+source_id: src_prices
+mode: AUTOMATIC
+items:
+  - ts: "2025-01-01T00:00:00Z"
+    price_usd: 48000.5
+  - ts: "2025-01-01T01:00:00Z"
+    price_usd: 48200.1
+expect_status: PARTIAL_SUCCESS
+error_code: "network_error"
+error_message: "queda de conexão simulada"

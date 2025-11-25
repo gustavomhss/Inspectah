@@ -19,17 +19,17 @@ inspectah/ui/consultation_models.py:69
     class ConsultationResponse(BaseModel):  # type: ignore[misc]
 
 tests/sources/test_routes_admin.py::test_sources_crud_api
-  /Users/gustavoschneiter/Documents/Inspectah/migrations/versions/0003_s21_sources_seed_examples.py:103: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  /Users/gustavoschneiter/Documents/Inspectah/migrations/versions/0003_s21_sources_seed_examples.py:139: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
     now = datetime.utcnow().isoformat()
 
 tests/sources/test_routes_admin.py::test_sources_crud_api
 tests/sources/test_routes_admin.py::test_sources_crud_api
-  /Users/gustavoschneiter/Documents/Inspectah/app/sources/service.py:41: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  /Users/gustavoschneiter/Documents/Inspectah/app/sources/service.py:43: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
     return datetime.utcnow().isoformat()
 
 tests/sources/test_routes_admin.py::test_sources_crud_api
-  /Users/gustavoschneiter/Documents/Inspectah/app/sources/service.py:362: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  /Users/gustavoschneiter/Documents/Inspectah/app/sources/service.py:403: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
     checked_at=datetime.utcnow(),
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-1 passed, 5 deselected, 8 warnings in 2.12s
+1 passed, 10 deselected, 8 warnings in 0.61s

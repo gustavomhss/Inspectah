@@ -21,6 +21,7 @@ Uma fonte é qualquer origem estruturada de informação que o Inspectah consult
 | `gossip_feed` | Conteúdo de celebridades/entretenimento com baixo controle editorial. | HTTP GET/HTML scraping simples, RSS/Atom. | Blogs de fofoca, colunas de celebridades. |
 | `sports_api` | APIs de resultados esportivos e tabelas. | HTTP GET/POST, JSON. | API de campeonatos, placares em tempo quase real. |
 | `weather_api` | Dados climáticos e alertas meteorológicos. | HTTP GET, JSON, possivelmente auth por token. | Serviços nacionais de meteorologia, NOAA-like. |
+| `data_api` | APIs de dados estruturados (indicadores, estatísticas, datasets via REST/JSON/GraphQL). | HTTP GET/POST, JSON, possíveis chaves/headers. | API do IBGE, dados.gov, APIs setoriais. |
 | `gov_record` | Registros oficiais (atos, mandatos, diários). | HTTP GET/POST, CSV, XML, JSON. | Diários oficiais, portais de transparência. |
 | `legislation` | Projetos de lei e andamento legislativo. | HTTP GET, HTML/JSON, scraping leve. | Câmara/Assembleias, portais legislativos. |
 | `science_dataset` | Bases científicas ou repositórios de papers/resultados. | HTTP GET, CSV/JSON, OAI-PMH. | CrossRef, arXiv subset, datasets oficiais. |

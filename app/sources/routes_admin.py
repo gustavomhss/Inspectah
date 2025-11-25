@@ -2,9 +2,11 @@ from __future__ import annotations
 
 try:  # pragma: no cover
     from fastapi import APIRouter, HTTPException
+    from pydantic import BaseModel
 except ModuleNotFoundError:  # pragma: no cover
     APIRouter = None  # type: ignore[misc]
     HTTPException = None  # type: ignore[misc]
+    BaseModel = object  # type: ignore[misc,assignment]
 
 from . import service
 from .healthcheck import run_healthcheck
@@ -14,6 +16,11 @@ from .schemas import SourceCreate, SourceFilter, SourceRead, SourceUpdate
 
 if APIRouter is not None:  # pragma: no cover
     router = APIRouter(prefix="/admin/sources", tags=["sources"])
+
+    class StatusChange(BaseModel):  # type: ignore[misc]
+        target_state: SourceState
+        reason: str = "Solicitado via admin"
+        changed_by: str = "admin-ui"
 
     @router.get("")
     def list_admin_sources(
@@ -44,6 +51,16 @@ if APIRouter is not None:  # pragma: no cover
     @router.put("/{source_id}")
     def update_admin_source(source_id: str, payload: SourceUpdate):
         src = service.update_source(source_id, payload)
+        if not src:
+            raise HTTPException(status_code=404, detail="Fonte não encontrada")
+        return {"source": service.enrich_source_read(src).model_dump()}
+
+    @router.post("/{source_id}/status")
+    def change_status(source_id: str, payload: StatusChange):
+        try:
+            src = service.change_source_state(source_id, payload.target_state, payload.reason, payload.changed_by)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc))
         if not src:
             raise HTTPException(status_code=404, detail="Fonte não encontrada")
         return {"source": service.enrich_source_read(src).model_dump()}
