@@ -222,6 +222,116 @@ export interface TriggerRunResponse {
   trigger: string;
 }
 
+// Sprint 23 — Agents & Committees
+export type AgentLayer = 'interpretation' | 'classification' | 'debunk';
+export type AgentRole = 'interpreter' | 'classifier' | 'analyst' | 'debunker' | 'decision_maker' | 'librarian';
+export type AgentStatus = 'active' | 'paused' | 'deprecated';
+export type AgentRunStatus = 'PENDING' | 'RUNNING' | 'SUCCESS' | 'FAIL' | 'CANCELLED';
+
+export interface AgentKBRef {
+  id: string;
+  kind: string;
+  label: string;
+  path_or_uri: string;
+}
+
+export interface AgentProfile {
+  id: string;
+  name: string;
+  description: string;
+  instructions: string;
+  role: AgentRole;
+  layer: AgentLayer;
+  model_name?: string | null;
+  recommended_model_name?: string | null;
+  temperature: number;
+  max_tokens: number;
+  top_p: number;
+  status: AgentStatus;
+  kb_refs: AgentKBRef[];
+  created_at: string;
+  updated_at: string;
+  created_by?: string | null;
+  last_modified_by?: string | null;
+}
+
+export interface AgentInstructionVersion {
+  id: string;
+  agent_id: string;
+  version_number: number;
+  instructions?: string | null;
+  model_name?: string | null;
+  temperature?: number | null;
+  max_tokens?: number | null;
+  top_p?: number | null;
+  kb_snapshot: AgentKBRef[];
+  changelog: string;
+  created_at: string;
+  created_by?: string | null;
+}
+
+export interface CommitteePolicy {
+  required_agreement_ratio: number;
+  max_disagreement_tolerance: number;
+  resolve_ties_strategy: string;
+}
+
+export interface AgentCommittee {
+  id: string;
+  name: string;
+  description: string;
+  layer: AgentLayer;
+  primary_agents: string[];
+  mediator_agent: string;
+  policy: CommitteePolicy;
+  status: AgentStatus;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ModelUpgradePolicy {
+  global_default_model: string;
+  auto_upgrade_enabled: boolean;
+  adoption_delay_days: number;
+  allowed_models: string[];
+  last_upgrade_at?: string | null;
+  next_upgrade_at?: string | null;
+  updated_at: string;
+}
+
+export interface AgentRun {
+  id: string;
+  committee_id: string;
+  input_ref?: string | null;
+  payload_snapshot: Record<string, unknown>;
+  result_bundle_ref?: string | null;
+  status: AgentRunStatus;
+  error?: string | null;
+  started_at: string;
+  finished_at?: string | null;
+  created_at: string;
+}
+
+// Flow layers
+export type FlowLayerType =
+  | 'interpretation_layer'
+  | 'classification_layer'
+  | 'intermediate_layer'
+  | 'decision_maker_layer'
+  | 'librarian_layer';
+
+export interface AgentFlowLayer {
+  id: string;
+  name: string;
+  description: string;
+  layer_type: FlowLayerType;
+  layer_index: number;
+  agent_ids: string[];
+  mediator_agent_id: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export type TimelineSeverity = 'info' | 'warning' | 'critical' | string;
 
 export interface AdminTimelineEvent {

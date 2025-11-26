@@ -24,5 +24,16 @@ export const endpoints = {
       runsBySource: (sourceId: string) => `/admin/ingestion/${encodeURIComponent(sourceId)}/runs`,
       runDetail: (runId: string) => `/admin/ingestion/runs/${encodeURIComponent(runId)}`,
     },
+    agents: {
+      list: '/admin/agents',
+      detail: (agentId: string) => `/admin/agents/${encodeURIComponent(agentId)}`,
+      instructions: (agentId: string) => `/admin/agents/${encodeURIComponent(agentId)}/instructions`,
+      committees: '/admin/agents/committees',
+      committeeDetail: (committeeId: string) => `/admin/agents/committees/${encodeURIComponent(committeeId)}`,
+      committeeRuns: (committeeId: string) => `/admin/agents/committees/${encodeURIComponent(committeeId)}/runs`,
+      committeeDryRun: (committeeId: string) => `/admin/agents/committees/${encodeURIComponent(committeeId)}/dry-run`,
+      modelPolicy: '/admin/agents/policies/model-upgrades',
+      flow: '/admin/agents/flow',
+    },
   },
 };
