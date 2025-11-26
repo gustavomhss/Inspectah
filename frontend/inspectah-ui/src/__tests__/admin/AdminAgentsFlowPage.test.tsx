@@ -1,4 +1,3 @@
-import { rest } from 'msw';
 import { Route, Routes } from 'react-router-dom';
 import userEvent from '@testing-library/user-event';
 import { screen } from '@testing-library/react';
@@ -6,9 +5,7 @@ import { vi } from 'vitest';
 import { useState } from 'react';
 import AgentsFlowPage from '../../modules/agents/pages/AgentsFlowPage';
 import { renderWithProviders } from '../test-utils';
-import { server } from '../mocks/server';
-
-const BASE_URL = 'http://localhost:8000';
+import type { AgentProfile, FlowLayerType } from '../../core/api/api-types';
 
 const agentsMock = [
   { id: 'i1', name: 'Interp 1', role: 'interpreter', layer: 'interpretation' },
@@ -73,7 +70,7 @@ const flowMock = [
 
 vi.mock('../../modules/agents/hooks/useAgents', () => ({
   useAgents: () => ({
-    agents: agentsMock as any,
+    agents: agentsMock as AgentProfile[],
     loading: false,
     error: null,
     reload: vi.fn(),
@@ -81,7 +78,7 @@ vi.mock('../../modules/agents/hooks/useAgents', () => ({
 }));
 
 vi.mock('../../modules/agents/hooks/useAgentsFlow', () => {
-  function buildAllowedRoles(layerType: string) {
+  function buildAllowedRoles(layerType: FlowLayerType | 'intermediate_layer') {
     switch (layerType) {
       case 'interpretation_layer':
         return ['interpreter'];
@@ -159,7 +156,7 @@ vi.mock('../../modules/agents/hooks/useAgentsFlow', () => {
         return ok;
       };
 
-      const allowedRolesForLayer = (layerType: any) => buildAllowedRoles(layerType);
+      const allowedRolesForLayer = (layerType: FlowLayerType | 'intermediate_layer') => buildAllowedRoles(layerType);
 
       return {
         layers,
