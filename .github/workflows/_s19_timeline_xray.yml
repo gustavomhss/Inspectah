@@ -33,6 +33,7 @@ jobs:
         run: npm ci --prefer-offline
 
       - name: Gate S19_G3 (frontend qualidade)
+        timeout-minutes: 20
         run: |
           export PYTHONPATH=.
           bash bin/s19_g3_front_quality.sh

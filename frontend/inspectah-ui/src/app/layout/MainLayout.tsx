@@ -56,6 +56,15 @@ function MainLayout() {
               <NavLink to="/admin/ingestion" className={navLinkClass}>
                 Ingestão
               </NavLink>
+              <NavLink to="/admin/agents" className={navLinkClass}>
+                Agentes
+              </NavLink>
+              <NavLink to="/admin/agents/flow" className={navLinkClass}>
+                Fluxo de agentes
+              </NavLink>
+              <NavLink to="/admin/agents/model-policy" className={navLinkClass}>
+                Política de modelos
+              </NavLink>
               <NavLink to="/admin/cases" className={navLinkClass}>
                 Casos/Temas
               </NavLink>

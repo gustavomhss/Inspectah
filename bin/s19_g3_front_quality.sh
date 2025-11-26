@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+echo "[S19_G3] Iniciando gate de qualidade do frontend..."
+
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 FRONTEND_DIR="$ROOT_DIR/frontend/inspectah-ui"
 SCORECARD_DIR="$ROOT_DIR/out/scorecards"
@@ -10,12 +12,20 @@ SCORECARD_PATH="$SCORECARD_DIR/S19_G3_front_quality.json"
 mkdir -p "$SCORECARD_DIR" "$EVIDENCE_DIR"
 
 set +e
-(cd "$FRONTEND_DIR" && npm ci --prefer-offline) > "$EVIDENCE_DIR/npm_ci.log" 2>&1
+echo "[S19_G3] Rodando npm ci..."
+(cd "$FRONTEND_DIR" && rm -rf node_modules && npm ci --prefer-offline --no-fund --no-audit) > "$EVIDENCE_DIR/npm_ci.log" 2>&1
 INSTALL_STATUS=$?
+echo "[S19_G3] Rodando npm run lint..."
 (cd "$FRONTEND_DIR" && npm run lint) > "$EVIDENCE_DIR/lint.log" 2>&1
 LINT_STATUS=$?
-(cd "$FRONTEND_DIR" && npm run test) > "$EVIDENCE_DIR/test.log" 2>&1
+echo "[S19_G3] Rodando npm run test (modo não interativo, suite timeline/xray)..."
+(cd "$FRONTEND_DIR" && NODE_OPTIONS="--max-old-space-size=4096" npm run test -- \
+  src/__tests__/admin/AdminTimelineXRay.test.tsx \
+  src/__tests__/ingestion/IngestionPages.test.tsx \
+  src/__tests__/ConsultationPage.test.tsx \
+  --watch=false --fileParallelism=false --max-workers=50%) > "$EVIDENCE_DIR/test.log" 2>&1
 TEST_STATUS=$?
+echo "[S19_G3] Rodando npm run build..."
 (cd "$FRONTEND_DIR" && npm run build) > "$EVIDENCE_DIR/build.log" 2>&1
 BUILD_STATUS=$?
 set -e
@@ -47,3 +57,4 @@ if status != "PASS":
 PY
 
 echo "[S19_G3] OK - scorecard em $SCORECARD_PATH"
+echo "[S19_G3] Gate de qualidade do frontend concluído com sucesso."

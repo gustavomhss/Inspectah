@@ -11,6 +11,11 @@ import AdminSourcesPage from '../modules/admin/pages/AdminSourcesPage';
 import AdminSourceFormPage from '../modules/admin/pages/AdminSourceFormPage';
 import IngestionListPage from '../modules/ingestion/pages/IngestionListPage';
 import IngestionSourceDetailPage from '../modules/ingestion/pages/IngestionSourceDetailPage';
+import AgentsListPage from '../modules/agents/pages/AgentsListPage';
+import AgentDetailPage from '../modules/agents/pages/AgentDetailPage';
+import AgentCommitteesPage from '../modules/agents/pages/AgentCommitteesPage';
+import ModelPolicyPage from '../modules/agents/pages/ModelPolicyPage';
+import AgentsFlowPage from '../modules/agents/pages/AgentsFlowPage';
 import CaseTimelinePage from '../modules/cases/pages/CaseTimelinePage';
 import CaseXrayPage from '../modules/cases/pages/CaseXrayPage';
 import ConsultPage from '../modules/consult/pages/ConsultPage';
@@ -41,6 +46,11 @@ export function AppRoutes() {
         <Route path="/admin/cases/:caseId/xray" element={<CaseXrayPage />} />
         <Route path="/admin/ingestion" element={<IngestionListPage />} />
         <Route path="/admin/ingestion/sources/:sourceId" element={<IngestionSourceDetailPage />} />
+        <Route path="/admin/agents" element={<AgentsListPage />} />
+        <Route path="/admin/agents/:agentId" element={<AgentDetailPage />} />
+        <Route path="/admin/agents/:agentId/committees" element={<AgentCommitteesPage />} />
+        <Route path="/admin/agents/model-policy" element={<ModelPolicyPage />} />
+        <Route path="/admin/agents/flow" element={<AgentsFlowPage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

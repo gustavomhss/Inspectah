@@ -11,18 +11,31 @@ except ModuleNotFoundError:  # pragma: no cover
 
 from .explore.api import build_router
 from .ui.consultation_api import router as consultation_router
+# Routers carregados individualmente para que uma falha não silencie as demais rotas admin
 try:  # pragma: no cover
     from app.admin.routes import router as admin_router
-    from app.auth.routes import router as auth_router
-    from app.sources.routes_admin import router as sources_router
-    from inspectah.routers.copiloto_fontes import router as copiloto_fontes_router
-    from app.api.ingestion.routes import router as ingestion_router
 except ModuleNotFoundError:  # pragma: no cover
     admin_router = None
+try:  # pragma: no cover
+    from app.auth.routes import router as auth_router
+except ModuleNotFoundError:  # pragma: no cover
     auth_router = None
+try:  # pragma: no cover
+    from app.sources.routes_admin import router as sources_router
+except ModuleNotFoundError:  # pragma: no cover
     sources_router = None
+try:  # pragma: no cover
+    from inspectah.routers.copiloto_fontes import router as copiloto_fontes_router
+except ModuleNotFoundError:  # pragma: no cover
     copiloto_fontes_router = None
+try:  # pragma: no cover
+    from app.api.ingestion.routes import router as ingestion_router
+except ModuleNotFoundError:  # pragma: no cover
     ingestion_router = None
+try:  # pragma: no cover
+    from app.api.agents.routes_admin import router as agents_router
+except ModuleNotFoundError:  # pragma: no cover
+    agents_router = None
 
 
 def _add_cors(app: FastAPI, origins: Iterable[str]) -> None:
@@ -56,6 +69,8 @@ def build_app():  # pragma: no cover
         app.include_router(sources_router)
     if ingestion_router is not None:
         app.include_router(ingestion_router)
+    if agents_router is not None:
+        app.include_router(agents_router)
     if copiloto_fontes_router is not None:
         app.include_router(copiloto_fontes_router, prefix="/admin/copiloto-fontes", tags=["admin-copiloto-fontes"])
     if auth_router is not None:
