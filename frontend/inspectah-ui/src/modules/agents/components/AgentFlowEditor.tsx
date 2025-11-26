@@ -44,7 +44,7 @@ export function AgentFlowEditor({
         {layers.map((layer) => (
           <AgentFlowLayerCard
             key={layer.id}
-            layer={layer as any}
+            layer={layer}
             agents={agents}
             allowedRoles={allowedRolesForLayer(layer.layer_type)}
             onChangeAgents={(ids) => onChangeAgents(layer.id, ids)}

@@ -23,7 +23,12 @@ export function useAgents(filters: Filters = {}) {
     try {
       const data = await listAgents(token || undefined, filters);
       setAgents(data);
-      logEvent('admin.agents_list_open', { count: data.length, ...filters });
+      logEvent('admin.agents_list_open', {
+        count: data.length,
+        layer: filters.layer,
+        role: filters.role,
+        status: filters.status,
+      });
     } catch (err) {
       const message = (err as Error).message;
       setError(message);
@@ -31,7 +36,7 @@ export function useAgents(filters: Filters = {}) {
     } finally {
       setLoading(false);
     }
-  }, [token, logEvent, filters.layer, filters.role, filters.status]);
+  }, [token, logEvent, filters]);
 
   useEffect(() => {
     void load();

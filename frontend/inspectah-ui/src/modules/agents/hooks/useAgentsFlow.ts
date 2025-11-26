@@ -9,13 +9,6 @@ export interface EditableLayer extends Omit<AgentFlowLayer, 'created_at' | 'upda
   updated_at?: string;
 }
 
-const ORDERED_FIXED: FlowLayerType[] = [
-  'interpretation_layer',
-  'classification_layer',
-  'decision_maker_layer',
-  'librarian_layer',
-];
-
 export function useAgentsFlow() {
   const { token } = useAuth();
   const { logEvent } = useLogger();

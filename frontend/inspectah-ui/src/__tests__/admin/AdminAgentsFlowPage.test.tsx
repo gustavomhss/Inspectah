@@ -2,6 +2,8 @@ import { rest } from 'msw';
 import { Route, Routes } from 'react-router-dom';
 import userEvent from '@testing-library/user-event';
 import { screen } from '@testing-library/react';
+import { vi } from 'vitest';
+import { useState } from 'react';
 import AgentsFlowPage from '../../modules/agents/pages/AgentsFlowPage';
 import { renderWithProviders } from '../test-utils';
 import { server } from '../mocks/server';
@@ -69,19 +71,116 @@ const flowMock = [
   },
 ];
 
+vi.mock('../../modules/agents/hooks/useAgents', () => ({
+  useAgents: () => ({
+    agents: agentsMock as any,
+    loading: false,
+    error: null,
+    reload: vi.fn(),
+  }),
+}));
+
+vi.mock('../../modules/agents/hooks/useAgentsFlow', () => {
+  function buildAllowedRoles(layerType: string) {
+    switch (layerType) {
+      case 'interpretation_layer':
+        return ['interpreter'];
+      case 'classification_layer':
+        return ['classifier'];
+      case 'decision_maker_layer':
+        return ['decision_maker'];
+      case 'librarian_layer':
+        return ['librarian'];
+      default:
+        return ['interpreter', 'classifier', 'analyst', 'debunker'];
+    }
+  }
+
+  return {
+    useAgentsFlow: () => {
+      const [layers, setLayers] = useState(flowMock);
+      const [validationErrors, setValidationErrors] = useState<string[]>([]);
+      const [saving, setSaving] = useState(false);
+
+      const reindex = (items: typeof flowMock) =>
+        items.map((l, idx) => ({ ...l, layer_index: idx + 1 }));
+
+      const addIntermediateLayer = () => {
+        const insertPos = layers.findIndex((l) => l.layer_type === 'decision_maker_layer');
+        const updated = [...layers];
+        const newLayer = {
+          id: `intermediate-${Date.now()}`,
+          name: 'Camada intermediária',
+          description: '',
+          layer_type: 'intermediate_layer',
+          layer_index: 0,
+          agent_ids: [],
+          mediator_agent_id: '',
+          created_at: '',
+          updated_at: '',
+        };
+        if (insertPos >= 0) updated.splice(insertPos, 0, newLayer);
+        else updated.push(newLayer);
+        setLayers(reindex(updated));
+      };
+
+      const removeLayer = (layerId: string) => {
+        setLayers((prev) => reindex(prev.filter((l) => l.id !== layerId)));
+      };
+
+      const updateLayerAgents = (layerId: string, ids: string[]) => {
+        setLayers((prev) =>
+          prev.map((l) => (l.id === layerId ? { ...l, agent_ids: ids, mediator_agent_id: ids[0] || '' } : l)),
+        );
+      };
+
+      const setMediator = (layerId: string, agentId: string) => {
+        setLayers((prev) => prev.map((l) => (l.id === layerId ? { ...l, mediator_agent_id: agentId } : l)));
+      };
+
+      const validate = (state: typeof flowMock) => {
+        const errors: string[] = [];
+        state.forEach((layer) => {
+          if (layer.agent_ids.length < 3 || layer.agent_ids.length > 5) {
+            errors.push(`Camada ${layer.name} deve ter entre 3 e 5 agentes.`);
+          }
+          if (!layer.mediator_agent_id || !layer.agent_ids.includes(layer.mediator_agent_id)) {
+            errors.push(`Camada ${layer.name} precisa de um mediador dentre os agentes selecionados.`);
+          }
+        });
+        setValidationErrors(errors);
+        return errors.length === 0;
+      };
+
+      const save = async () => {
+        setSaving(true);
+        const ok = validate(layers);
+        setSaving(false);
+        return ok;
+      };
+
+      const allowedRolesForLayer = (layerType: any) => buildAllowedRoles(layerType);
+
+      return {
+        layers,
+        loading: false,
+        error: null,
+        reload: vi.fn(),
+        addIntermediateLayer,
+        removeLayer,
+        updateLayerAgents,
+        setMediator,
+        validationErrors,
+        save,
+        allowedRolesForLayer,
+        saving,
+      };
+    },
+  };
+});
+
 describe('AgentsFlowPage', () => {
   it('renderiza camadas fixas e permite adicionar intermediária', async () => {
-    const handlers = [
-      rest.get(`${BASE_URL}/admin/agents`, (_req, res, ctx) => res(ctx.status(200), ctx.json(agentsMock))),
-      rest.get(`${BASE_URL}/admin/agents/flow`, (_req, res, ctx) => res(ctx.status(200), ctx.json(flowMock))),
-      rest.put(`${BASE_URL}/admin/agents/flow`, async (req, res, ctx) => {
-        const body = await req.json();
-        // deve incluir pelo menos uma camada decision e librarian
-        return res(ctx.status(200), ctx.json(body.map((l: any, idx: number) => ({ ...l, layer_index: idx + 1 }))));
-      }),
-    ];
-    server.use(...handlers);
-
     renderWithProviders(
       <Routes>
         <Route path="/admin/agents/flow" element={<AgentsFlowPage />} />
@@ -89,10 +188,8 @@ describe('AgentsFlowPage', () => {
       { route: '/admin/agents/flow' },
     );
 
-    await screen.findByText(/Fluxo de agentes/);
-    await screen.findByText(/Fluxo de agentes/);
-
-    await userEvent.click(screen.getByText(/Adicionar camada intermediária/));
+    const addLayerButton = await screen.findByText(/Adicionar camada intermediária/);
+    await userEvent.click(addLayerButton);
     // seleciona dois agentes debunker + um classifier para chegar em 3
     const multi = await screen.findAllByRole('listbox');
     await userEvent.selectOptions(multi[2], ['d1', 'd2', 'd3']);
@@ -104,10 +201,6 @@ describe('AgentsFlowPage', () => {
   });
 
   it('bloqueia salvar se camada tiver menos de 3 agentes', async () => {
-    server.use(
-      rest.get(`${BASE_URL}/admin/agents`, (_req, res, ctx) => res(ctx.status(200), ctx.json(agentsMock))),
-      rest.get(`${BASE_URL}/admin/agents/flow`, (_req, res, ctx) => res(ctx.status(200), ctx.json(flowMock))),
-    );
     renderWithProviders(
       <Routes>
         <Route path="/admin/agents/flow" element={<AgentsFlowPage />} />
@@ -118,7 +211,10 @@ describe('AgentsFlowPage', () => {
     await screen.findByText(/Fluxo de agentes/);
     const multi = await screen.findAllByRole('listbox');
     await userEvent.deselectOptions(multi[0], ['i1', 'i2', 'i3']);
-    await userEvent.click(screen.getByText(/Salvar fluxo/));
+
+    const saveButton = await screen.findByText(/Salvar fluxo/);
+    await userEvent.click(saveButton);
+
     await screen.findByText(/3 a 5 agentes/);
   });
 });

@@ -118,8 +118,11 @@ export default function AgentCommitteesPage() {
                 <option value="debunk">Debunk</option>
               </select>
               <div className="space-y-1 text-sm text-slate-200">
-                <label className="text-xs uppercase text-slate-400">Debunker A</label>
+                <label className="text-xs uppercase text-slate-400" htmlFor="debunker-a">
+                  Debunker A
+                </label>
                 <select
+                  id="debunker-a"
                   className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white"
                   value={payload.primary_agents[0] || ''}
                   onChange={(e) =>
@@ -133,8 +136,11 @@ export default function AgentCommitteesPage() {
                     </option>
                   ))}
                 </select>
-                <label className="text-xs uppercase text-slate-400">Debunker B</label>
+                <label className="text-xs uppercase text-slate-400" htmlFor="debunker-b">
+                  Debunker B
+                </label>
                 <select
+                  id="debunker-b"
                   className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white"
                   value={payload.primary_agents[1] || ''}
                   onChange={(e) =>
@@ -148,8 +154,11 @@ export default function AgentCommitteesPage() {
                     </option>
                   ))}
                 </select>
-                <label className="text-xs uppercase text-slate-400">Mediador</label>
+                <label className="text-xs uppercase text-slate-400" htmlFor="mediator-agent">
+                  Mediador
+                </label>
                 <select
+                  id="mediator-agent"
                   className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white"
                   value={payload.mediator_agent}
                   onChange={(e) => setPayload((prev) => ({ ...prev, mediator_agent: e.target.value }))}
