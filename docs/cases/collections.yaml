@@ -1,0 +1,8 @@
+collections:
+  - collection_id: economia_2024
+    title: Panorama econômico 2024
+    description: Casos canônicos de economia brasileira em 2024.
+    case_ids:
+      - inflacao_br_2024
+      - desemprego_br_2024
+    tags: [economia, "2024"]

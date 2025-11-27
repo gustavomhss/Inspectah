@@ -1,0 +1,24 @@
+case_id: desemprego_br_2024
+title: Desemprego em 2024 e divergência entre discurso e dados
+summary: Caso que compara declarações otimistas sobre desemprego com dados oficiais da PNAD.
+theme: economia
+tags: [desemprego, pnad, trabalho]
+claims:
+  - claim_id: claim-desemprego-queda-recorde
+    description: "O desemprego atingiu o menor patamar histórico."
+    truth_state: PENDING_VALIDATION
+    debunk_target_id: claim-desemprego-queda-recorde
+    tags: [recorde]
+  - claim_id: claim-informalidade-alta
+    description: "A informalidade segue alta apesar da queda do desemprego."
+    truth_state: PROVISIONAL
+    debunk_target_id: claim-informalidade-alta
+    tags: [informalidade]
+timeline:
+  - "fev/2024: Declarações oficiais citando queda recorde."
+  - "abr/2024: Comitê de interpretação marca claims como controversos."
+  - "ago/2024: Debunker abre issues para checar informalidade."
+sources:
+  - https://www.ibge.gov.br/estatisticas/sociais/trabalho/9171-pesquisa-nacional-por-amostra-de-domicilios-continua-mensal.html
+metadata:
+  owner: squad_verdade

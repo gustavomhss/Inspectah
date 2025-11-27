@@ -1,0 +1,25 @@
+case_id: inflacao_br_2024
+title: Inflação brasileira em 2024 segue em desaceleração
+summary: Acompanhamento de narrativas sobre inflação no Brasil em 2024 com dados oficiais do IBGE e declarações públicas.
+theme: economia
+tags: [economia, inflacao, ibge]
+claims:
+  - claim_id: claim-inflacao-ipca-2024
+    description: "O IPCA de 2024 está abaixo da meta central."
+    truth_state: UNDER_REVIEW
+    debunk_target_id: claim-inflacao-ipca-2024
+    tags: [ipca, meta]
+  - claim_id: claim-alimentos-pressao
+    description: "Alimentos continuam sendo o maior vetor de pressão."
+    truth_state: CONTESTED
+    debunk_target_id: claim-alimentos-pressao
+    tags: [alimentos]
+timeline:
+  - "jan/2024: Divulgações iniciais e narrativas políticas."
+  - "mai/2024: Comitês detectam desaceleração consistente."
+  - "set/2024: Debunker v0 abre issues para claims de pressão de alimentos."
+sources:
+  - https://www.ibge.gov.br/
+  - http://agenciadenoticias.ibge.gov.br/
+metadata:
+  owner: squad_verdade
