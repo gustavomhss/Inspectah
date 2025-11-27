@@ -1,0 +1,29 @@
+[
+  {
+    "case_id": "case_golden_01",
+    "target_id": "claim-accuracy",
+    "expected_action": "SUGERE_PROMOVER",
+    "expected_decision_type": "CLAIM_BEM_SUPORTADO",
+    "confidence": 0.82,
+    "rationale": "Dataset oficial confirma o claim, múltiplas fontes consistentes.",
+    "evidence_refs": ["src_oficial_2025.pdf", "analise_crosscheck.md"]
+  },
+  {
+    "case_id": "case_golden_02",
+    "target_id": "claim-uncertain",
+    "expected_action": "MANTER_ESTADO_ATUAL",
+    "expected_decision_type": "DADOS_INCONCLUSIVOS",
+    "confidence": 0.48,
+    "rationale": "Fontes conflitantes; Debunker recomendou cautela.",
+    "evidence_refs": ["contradicao_fonte_a.json", "contradicao_fonte_b.json"]
+  },
+  {
+    "case_id": "case_real_01",
+    "target_id": "claim-rebaixa",
+    "expected_action": "SUGERE_REBAIXAR",
+    "expected_decision_type": "CLAIM_POUCO_SUPORTADO",
+    "confidence": 0.63,
+    "rationale": "Ausência de evidência confirmatória; relatos imprecisos.",
+    "evidence_refs": ["monitoramento_social.log"]
+  }
+]

@@ -1,0 +1,105 @@
+name: Sprint 24 Gates
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "app/debunk/**"
+      - "app/api/debunk/**"
+      - "app/cases/**"
+      - "app/api/cases/**"
+      - "app/integration/**"
+      - "db/migrations/025_sprint24_debunk.sql"
+      - "tests/debunk/**"
+      - "tests/cases/**"
+      - "tests/integration/test_s23_s24_s25_contracts.py"
+      - "bin/s24_*"
+      - "goldens/s24_*"
+      - "Sprint 24/**"
+      - ".github/workflows/s24-gates.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "app/debunk/**"
+      - "app/api/debunk/**"
+      - "app/cases/**"
+      - "app/api/cases/**"
+      - "app/integration/**"
+      - "db/migrations/025_sprint24_debunk.sql"
+      - "tests/debunk/**"
+      - "tests/cases/**"
+      - "tests/integration/test_s23_s24_s25_contracts.py"
+      - "bin/s24_*"
+      - "goldens/s24_*"
+      - "Sprint 24/**"
+      - ".github/workflows/s24-gates.yml"
+
+jobs:
+  sprint24-gates:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install project
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+
+      - name: Run Sprint 24 gates
+        id: run_gates
+        run: |
+          export PYTHONPATH=.
+          bash bin/s24_all_gates.sh
+        continue-on-error: true
+
+      - name: ORR aggregation
+        if: always()
+        run: |
+          export PYTHONPATH=.
+          bash bin/s24_orr.sh
+
+      - name: Build bundle
+        if: always()
+        run: |
+          export PYTHONPATH=.
+          bash bin/s24_bundle.sh
+
+      - name: Upload scorecards
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sprint24-scorecards
+          path: out/scorecards
+
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sprint24-evidence
+          path: |
+            out/evidence/S24_G*
+            out/evidence/S24_ORR
+            out/evidence/S24_cases*
+            out/evidence/S24_contracts_check
+            out/evidence/S24_bundle
+
+      - name: Upload bundle
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sprint24-bundle
+          path: out/bundles/inspectah_s24_evidence_bundle.zip
+
+      - name: Fail if gates failed
+        if: always()
+        run: |
+          if [ "${{ steps.run_gates.outcome }}" != "success" ]; then
+            echo "Some S24 gates failed (see scorecards/orr for details)." >&2
+            exit 1
+          fi
