@@ -1,0 +1,28 @@
+case_id: politics_case_01
+domain: politics
+title: "Política: Caso 01"
+entities:
+  - ent_pol_001
+claims:
+  - id: pol-claim-1
+    description: "Governador anunciou investimento de R$10M."
+    entities: [ent_pol_001]
+    sources: ["fonte_oficial", "jornal_local"]
+    expected_state: UNDER_REVIEW
+  - id: pol-claim-2
+    description: "Secretário confirma repasse adicional."
+    entities: [ent_pol_001]
+    sources: ["fonte_oficial"]
+    expected_state: UNDER_REVIEW
+  - id: pol-claim-3
+    description: "Opposition contesta valores."
+    entities: [ent_pol_001]
+    sources: ["jornal_local"]
+    expected_state: UNDER_REVIEW
+  - id: pol-claim-4
+    description: "Investimento tem fonte única questionável."
+    entities: [ent_pol_001]
+    sources: ["blog_partidario"]
+    expected_state: UNDER_REVIEW
+tags: ["politics", "budget"]
+expected_behaviour: "Pipeline hardened deve manter prudente até debunk/revisão humana."

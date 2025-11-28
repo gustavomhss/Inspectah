@@ -1,0 +1,13 @@
+case_id: climate_case_01
+domain: climate
+title: "Clima: Caso 01"
+entities:
+  - ent_climate_001
+claims:
+  - id: climate-claim-1
+    description: "Relatório indica aumento de temperatura média."
+    entities: [ent_climate_001]
+    sources: ["agencia_meteorologica"]
+    expected_state: UNDER_REVIEW
+tags: ["climate"]
+expected_behaviour: "Pipeline standard com cuidado, pronto para G7."

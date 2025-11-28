@@ -9,8 +9,8 @@
         "evidence": 0.2
       },
       "limits": {
-        "single_source_cap": 60,
-        "low_quality_cap": 55
+        "single_source_cap": 70,
+        "low_quality_cap": 60
       }
     },
     {
@@ -22,8 +22,8 @@
         "evidence": 0.1
       },
       "limits": {
-        "single_source_cap": 60,
-        "low_quality_cap": 50
+        "single_source_cap": 65,
+        "low_quality_cap": 55
       }
     },
     {
@@ -35,8 +35,8 @@
         "evidence": 0.2
       },
       "limits": {
-        "single_source_cap": 55,
-        "low_quality_cap": 45
+        "single_source_cap": 60,
+        "low_quality_cap": 50
       }
     }
   ]

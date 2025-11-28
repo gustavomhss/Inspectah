@@ -1,0 +1,13 @@
+case_id: science_case_01
+domain: science
+title: "Ciência: Caso 01"
+entities:
+  - ent_sci_001
+claims:
+  - id: sci-claim-1
+    description: "Estudo preliminar indica aumento de eficiência de vacina."
+    entities: [ent_sci_001]
+    sources: ["preprint_repo", "laboratorio_x"]
+    expected_state: UNDER_REVIEW
+tags: ["science", "health"]
+expected_behaviour: "Pipeline hardened deve exigir prudência."

@@ -1,0 +1,12 @@
+default:
+  max_flood: 5
+  min_source_diversity: 0.4
+  max_reversal_rate: 0.3
+politics:
+  max_flood: 3
+  min_source_diversity: 0.5
+  max_reversal_rate: 0.2
+science:
+  max_flood: 4
+  min_source_diversity: 0.5
+  max_reversal_rate: 0.25

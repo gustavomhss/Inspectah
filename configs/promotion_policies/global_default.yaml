@@ -1,0 +1,10 @@
+name: global_default
+domain: general
+min_confidence: 0.5
+min_sources: 1
+require_debunk: false
+require_human: false
+sensitive: false
+default_decision: HOLD
+metadata:
+  notes: Política padrão para domínios não sensíveis.

@@ -1,0 +1,31 @@
+{
+  "title": "Ingestion S22 Overview",
+  "panels": [
+    {
+      "id": "runs_by_source",
+      "type": "timeseries",
+      "metric": "ingestion_runs_total",
+      "breakdown": ["source_id", "status"],
+      "description": "Total de runs por fonte e status"
+    },
+    {
+      "id": "errors_recent",
+      "type": "table",
+      "metric": "ingestion_runs_fail_total",
+      "description": "Fontes com falhas recentes"
+    },
+    {
+      "id": "stale_sources",
+      "type": "table",
+      "metric": "ingestion_sources_without_recent_runs",
+      "description": "Fontes sem ingestões dentro do threshold"
+    },
+    {
+      "id": "latency_p95",
+      "type": "timeseries",
+      "metric": "ingestion_latency_ms_bucket",
+      "stat": "p95",
+      "description": "Latência p95 dos runs por fonte"
+    }
+  ]
+}
