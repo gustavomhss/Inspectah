@@ -12,6 +12,7 @@
 - Restaurei modelos/serviços principais (agents/debunk/core) e migrations da S25 (`0002_s25_truth_models.py`, `0003_s25_layers_traces_incidents.py`).
 - Sincronizei configs e dados da S25 (`configs/promotion_policies`, `configs/threatmodel`, `configs/profiles/confidence_profiles.json`, `data/s25`, dashboards) e scripts S25 (`bin/s25_g0`..`bin/s25_g7`, `bin/s25_make_bundle.sh`, `bin/s25_orr.sh`).
 - Adicionei pacotes/tests da S25 (context, layers, policies, threatmodel, truth, truthdb, fixtures, console tests).
+- Console frontend: `useAgentsFlow` normaliza payload fraco/[] e sempre constrói camadas fixas para evitar quebra da UI quando o arquivo não existe ou tem formato livre.
 
 ## Sanidade executada
 - `pytest tests/api/test_console_agents_flow.py` — OK
