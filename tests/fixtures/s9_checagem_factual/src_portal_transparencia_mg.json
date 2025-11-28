@@ -1,0 +1,15 @@
+{
+  "source": {
+    "id": "s9_src_portal_mg",
+    "name": "Portal Transparência MG",
+    "type": "noticias_rss_simplificado",
+    "info_type": "C3_checagem_factual",
+    "url_base": "fixture://portal_mg",
+    "selected_fields": ["pessoa", "caso", "status"],
+    "params": {"coverage": "MG", "fonte": "Portal"}
+  },
+  "items": [
+    {"id": "portal_mg_1", "pessoa": "carla fontes", "caso": "queda_diesel_30d", "status": "negado"},
+    {"id": "portal_mg_2", "pessoa": "carla fontes", "caso": "queda_diesel_30d", "status": "indefinido"}
+  ]
+}

@@ -3,33 +3,33 @@
     "api_create": {
       "p50": 90,
       "p95": 180,
-      "p99": 240
+      "p99": 250
     },
     "api_explore": {
       "p50": 70,
       "p95": 150,
-      "p99": 220
+      "p99": 230
     },
     "vault_manifest": {
-      "p50": 120,
+      "p50": 110,
       "p95": 190,
-      "p99": 260
+      "p99": 280
     },
     "fts_query": {
-      "p50": 65,
+      "p50": 60,
       "p95": 140,
       "p99": 210
     },
     "export_job": {
-      "p50": 100,
-      "p95": 185,
-      "p99": 250
+      "p50": 95,
+      "p95": 170,
+      "p99": 240
     }
   },
   "items_fetched_total": 500,
   "items_indexed_total": 495,
-  "queue_depth": 4,
-  "queue_age_seconds": 130,
+  "queue_depth": 5,
+  "queue_age_seconds": 150,
   "fts_query_total": 320,
   "export_total": 120
 }

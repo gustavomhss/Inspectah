@@ -22,18 +22,15 @@ echo "[e2e] starting dev environment"
 bin/dev_up.sh >/dev/null
 
 FIXTURE_PATH="${E2E_FIXTURE_PATH:-tests/fixtures/rss_sample.xml}"
-export E2E_FIXTURE_PATH_VALUE="$FIXTURE_PATH"
 
 echo "[e2e] running Inspectah v0 flow"
 "$PY_BIN" - <<'PY'
 import json
-import os
 from inspectah.explore.api import query_items
 from inspectah.ingest.pipeline import run_ingest_pipeline
 from inspectah.metrics import get_snapshot
 
-fixture_path = os.environ["E2E_FIXTURE_PATH_VALUE"]
-result = run_ingest_pipeline('rss_news_minimal', use_fixture=True, fixture_path=fixture_path)
+result = run_ingest_pipeline('rss_news_minimal', use_fixture=True, fixture_path='${FIXTURE_PATH}')
 print({"stage": "ingest", "items_ingested": result.items_ingested})
 
 items = query_items()["items"]

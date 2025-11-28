@@ -2,10 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd -- "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-PYTHON_BIN="${PYTHON_BIN:-python}"
-if ! command -v "${PYTHON_BIN}" >/dev/null 2>&1; then
-  PYTHON_BIN="python3"
-fi
+PYTHON_BIN="${PYTHON_BIN:-${ROOT_DIR}/.venv/bin/python}"
 export PYTHONPATH="${PYTHONPATH:-${ROOT_DIR}}"
 
 SCORECARDS_DIR="${ROOT_DIR}/out/scorecards"
@@ -21,17 +18,11 @@ started_at="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 start_ts=$(date +%s)
 
 set +e
-rm -f "${DB_PATH}"
-export INSPECTAH_S24_DB_PATH="${DB_PATH}"
-export DB_PATH_ENV="${DB_PATH}"
-export EVIDENCE_DIR_ENV="${EVIDENCE_DIR}"
 "${PYTHON_BIN}" - <<'PY' > "${log_file}" 2>&1
 import json
 from datetime import datetime
 from pathlib import Path
-import os
 
-from app.debunk import service
 from fastapi.testclient import TestClient
 
 from app.debunk.models import (
@@ -45,8 +36,7 @@ from app.debunk.models import (
 from app.debunk.repository import DebunkRepository
 from inspectah.api import app
 
-db_path = Path(os.environ["DB_PATH_ENV"])
-evidence_dir = Path(os.environ["EVIDENCE_DIR_ENV"])
+db_path = Path("${DB_PATH}")
 repo = DebunkRepository(db_path)
 client = TestClient(app)
 
@@ -76,13 +66,10 @@ task_resp = client.post(
 task_resp.raise_for_status()
 task = task_resp.json()
 
-service.update_task_status(
-    repo,
-    task_id=task["id"],
-    new_status=DebunkTaskStatus.DONE,
-    result="Demo concluída",
-    actor="demo_human",
-)
+client.post(
+    f"/api/debunk/tasks/{task['id']}/status",
+    json={"new_status": DebunkTaskStatus.DONE.value, "result": "Demo concluída", "actor": "demo_human"},
+).raise_for_status()
 
 decision_resp = client.post(
     f"/api/debunk/issues/{issue['id']}/decisions",
@@ -106,8 +93,8 @@ report = {
     "decision": decision_resp.json(),
 }
 
-(evidence_dir / "reports" / "demo_report.json").write_text(json.dumps(report, indent=2))
-(evidence_dir / "run_metadata.json").write_text(json.dumps({"db_path": str(db_path), "timestamp_utc": report["timestamp_utc"]}, indent=2))
+(Path("${EVIDENCE_DIR}") / "reports" / "demo_report.json").write_text(json.dumps(report, indent=2))
+(Path("${EVIDENCE_DIR}") / "run_metadata.json").write_text(json.dumps({"db_path": str(db_path), "timestamp_utc": report["timestamp_utc"]}, indent=2))
 print(json.dumps(report, indent=2))
 PY
 rc=$?
@@ -139,7 +126,7 @@ cat > "${SCORECARDS_DIR}/S24_G6_demo_and_sanity.json" <<JSON
   "finished_at": "${finished_at}",
   "duration_seconds": ${duration},
   "metrics": {
-    "gates_prereq_missing": ${#missing[@]},
+    "gates_prereq_present": ${#missing[@]},
     "run_rc": ${rc}
   },
   "details": "${details}",

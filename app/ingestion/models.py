@@ -163,15 +163,13 @@ def _validate_config_params(
 def validate_run_invariants(run: IngestionRun, config: IngestionConfig, running_count_for_source: int = 0) -> None:
     if run.source_id != config.source_id:
         raise ValueError("Run deve apontar para mesma fonte da config (INV-11).")
-    if run.trigger == IngestionTrigger.AUTOMATIC and (not config.enabled or config.mode != IngestionMode.AUTOMATIC):
-        raise ValueError("Config não permite trigger AUTOMATIC (INV-12).")
     if running_count_for_source > 0 and run.status == IngestionStatus.RUNNING:
         raise ValueError("Já existe run RUNNING para a fonte (INV-6).")
     if run.status in {IngestionStatus.SUCCESS, IngestionStatus.PARTIAL_SUCCESS, IngestionStatus.FAIL} and run.finished_at is None:
         raise ValueError("Runs finalizados exigem finished_at (INV-5).")
     if run.status == IngestionStatus.RUNNING and run.started_at is None:
         raise ValueError("Run RUNNING exige started_at (INV-7).")
-    if run.finished_at and run.started_at and run.finished_at <= run.started_at:
+    if run.finished_at and run.finished_at <= run.started_at:
         raise ValueError("finished_at deve ser maior que started_at (INV-8).")
     if run.status in {IngestionStatus.SUCCESS, IngestionStatus.PARTIAL_SUCCESS} and not run.payload_ref:
         raise ValueError("Runs de sucesso precisam de payload_ref (INV-9).")

@@ -40,16 +40,16 @@ valid_cases = [
         "titulo": "Obra piloto",
         "descricao_curta": "desc",
         "dominio": "obras_publicas",
-        "referencias_iniciais": ["fonte"],
+        "referencias_iniciais": ["fonte"]
     }),
     ("criar_fato_registravel", {
         "id_bloco": "obra_1",
         "id_fato": "obra_1_fato",
         "resumo_fato": "Prazo",
-        "descricao_detalhada": "det",
+        "descricao_detalhada": "detalhe",
         "estado_inicial": "planejado",
         "evidencias": ["fonte"],
-        "relatorio_simples": "rel",
+        "relatorio_simples": "relatorio"
     }),
 ]
 
@@ -60,9 +60,8 @@ invalid_cases = [
         "versao_id": "v1",
         "numero_versao": 1,
         "descricao": "desc",
-        "estado": "estado_invalido",
-        "evidencias": [],
-        "hash_conteudo": "",
+        "estado": "invalido",
+        "evidencias": []
     }),
 ]
 
@@ -75,24 +74,27 @@ invalid_hits = sum(
     if not actions_contract.validate_action_payload(name, payload).is_valid
 )
 
+valid_ratio = valid_hits / len(valid_cases)
+invalid_ratio = invalid_hits / len(invalid_cases)
+
 summary = {
-    "ratio_valid_actions_accepted": valid_hits / len(valid_cases),
-    "ratio_invalid_actions_rejected": invalid_hits / len(invalid_cases),
-    "samples": {
-        "valid": valid_cases,
-        "invalid": invalid_cases,
-    },
+    "ratio_valid_actions_accepted": valid_ratio,
+    "ratio_invalid_actions_rejected": invalid_ratio,
+    "valid_cases": valid_cases,
+    "invalid_cases": invalid_cases,
 }
-with open(sys.argv[1], "w", encoding="utf-8") as fp:
+path = sys.argv[1]
+with open(path, "w", encoding="utf-8") as fp:
     json.dump(summary, fp, indent=2)
 PY
 
 read_values=$(python3 - <<'PY' "$EVIDENCE_DIR/contract_sli.json"
-import json, sys
+import json
+import sys
 from pathlib import Path
-summary = json.loads(Path(sys.argv[1]).read_text())
-print(summary["ratio_valid_actions_accepted"])
-print(summary["ratio_invalid_actions_rejected"])
+data = json.loads(Path(sys.argv[1]).read_text())
+print(data["ratio_valid_actions_accepted"])
+print(data["ratio_invalid_actions_rejected"])
 PY
 )
 valid_ratio=$(echo "$read_values" | sed -n '1p')

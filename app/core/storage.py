@@ -231,7 +231,7 @@ def load_evidence_bundle(bundle_id: str) -> Optional[EvidenceBundle]:
     if not path.exists():
         return None
     data = _read_json(path)
-    items_by_source: Dict[str, List[EvidenceItemRef]] = {}
+    items_by_source = {}
     for source_id, items in data.get("items_by_source", {}).items():
         refs = [
             EvidenceItemRef(
@@ -302,5 +302,8 @@ def generate_entity_id(prefix: str) -> str:
 
 
 def ensure_fixture_sources(sources: Iterable[Source]) -> None:
+    """
+    Helper to quickly seed multiple sources in tests or fixtures.
+    """
     for source in sources:
         save_source(source)

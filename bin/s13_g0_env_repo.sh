@@ -43,7 +43,7 @@ checks["branch"] = {"value": branch, "valid": branch_ok}
 if not branch_ok:
     status = "FAIL"
 
-origin_ok = "Inspectah" in origin
+origin_ok = "inspectah" in origin.lower()
 checks["origin"] = {"value": origin, "valid": origin_ok}
 if not origin_ok:
     status = "FAIL"
@@ -66,7 +66,7 @@ if s12_decision_path.exists():
         decision = s12_data.get("decision") or s12_data.get("details", {}).get("decision")
         s12_ok = str(decision).upper() == "GO"
         s12_reason = f"decision={decision}"
-    except Exception as exc:  # pragma: no cover - defensive
+    except Exception as exc:  # pragma: no cover
         s12_reason = f"erro ao ler scorecard: {exc}"
 checks["s12_go"] = {"reason": s12_reason, "valid": s12_ok}
 if not s12_ok:

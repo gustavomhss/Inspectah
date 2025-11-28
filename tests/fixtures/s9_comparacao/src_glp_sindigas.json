@@ -1,0 +1,15 @@
+{
+  "source": {
+    "id": "s9_src_glp_sindigas",
+    "name": "Sindigás Monitor",
+    "type": "precos_api_simples",
+    "info_type": "C2_comparacao_simples",
+    "url_base": "fixture://glp_sindigas",
+    "selected_fields": ["produto", "cidade", "valor", "moeda"],
+    "params": {"coverage": "RJ", "fonte": "Sindigás"}
+  },
+  "items": [
+    {"id": "sindigas_capital", "produto": "glp13kg", "cidade": "rio de janeiro", "valor": 110.0, "moeda": "BRL"},
+    {"id": "sindigas_baixada", "produto": "glp13kg", "cidade": "nova iguaçu", "valor": 101.0, "moeda": "BRL"}
+  ]
+}

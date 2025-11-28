@@ -57,8 +57,7 @@ def post_query(payload: Dict[str, Any]) -> Dict[str, Any]:
     duration = time.perf_counter() - start
     metrics_s9.record_user_query(response.info_type, view["summary_card"].get("scenario_tag", scenario_hint), response.status, duration)
 
-    dto_payload = dto.to_dict()
-    return {"response": dto_payload, "dto": dto_payload, "view": view}
+    return {"response": dto.to_dict(), "view": view}
 
 
 def _prepare_sources_if_needed(request: schemas.UserQueryRequest) -> None:
@@ -66,7 +65,7 @@ def _prepare_sources_if_needed(request: schemas.UserQueryRequest) -> None:
     if scenario_id:
         try:
             admin_service.prepare_scenario_sources(scenario_id)
-        except Exception as exc:  # pragma: no cover
+        except Exception as exc:  # pragma: no cover - generalized for clarity
             raise UserQueryError(f"Erro ao preparar fontes para {scenario_id}: {exc}")
     elif request.info_type:
         try:
@@ -75,7 +74,7 @@ def _prepare_sources_if_needed(request: schemas.UserQueryRequest) -> None:
             raise UserQueryError(f"Erro ao preparar fontes para {request.info_type}: {exc}")
 
 
-def _resolve_info_type(request: schemas.UserQueryRequest) -> Optional[str]:
+def _resolve_info_type(request: schemas.UserQueryRequest) -> str | None:
     if request.info_type:
         return request.info_type
     if request.scenario_id and request.scenario_id in admin_service.SCENARIO_SPECS:
@@ -83,7 +82,7 @@ def _resolve_info_type(request: schemas.UserQueryRequest) -> Optional[str]:
     return None
 
 
-def _scenario_from_info_type(info_type: Optional[str]) -> Optional[str]:
+def _scenario_from_info_type(info_type: str | None) -> str | None:
     if not info_type:
         return None
     for scenario, spec in admin_service.SCENARIO_SPECS.items():

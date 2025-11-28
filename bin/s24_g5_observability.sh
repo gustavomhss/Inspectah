@@ -2,10 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd -- "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-PYTHON_BIN="${PYTHON_BIN:-python}"
-if ! command -v "${PYTHON_BIN}" >/dev/null 2>&1; then
-  PYTHON_BIN="python3"
-fi
+PYTHON_BIN="${PYTHON_BIN:-${ROOT_DIR}/.venv/bin/python}"
 export PYTHONPATH="${PYTHONPATH:-${ROOT_DIR}}"
 
 SCORECARDS_DIR="${ROOT_DIR}/out/scorecards"
@@ -21,14 +18,10 @@ started_at="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 start_ts=$(date +%s)
 
 set +e
-rm -f "${DB_PATH}"
-export DB_PATH_ENV="${DB_PATH}"
-export EVIDENCE_DIR_ENV="${EVIDENCE_DIR}"
 "${PYTHON_BIN}" - <<'PY' > "${log_file}" 2>&1
 import json
 from datetime import datetime
 from pathlib import Path
-import os
 
 from app.debunk import service
 from app.debunk.models import (
@@ -42,8 +35,7 @@ from app.debunk.models import (
 )
 from app.debunk.repository import DebunkRepository
 
-db_path = Path(os.environ["DB_PATH_ENV"])
-evidence_dir = Path(os.environ["EVIDENCE_DIR_ENV"])
+db_path = Path("${DB_PATH}")
 repo = DebunkRepository(db_path)
 
 issue = service.open_issue(
@@ -102,8 +94,8 @@ if not all(checks.values()):
 metrics["audit_gaps"] = audit_gap
 metrics["issue_id"] = issue.id
 
-(evidence_dir / "metrics" / "observability_metrics.json").write_text(json.dumps(metrics, indent=2))
-(evidence_dir / "run_metadata.json").write_text(
+(Path("${EVIDENCE_DIR}") / "metrics" / "observability_metrics.json").write_text(json.dumps(metrics, indent=2))
+(Path("${EVIDENCE_DIR}") / "run_metadata.json").write_text(
     json.dumps(
         {
             "timestamp_utc": datetime.utcnow().isoformat() + "Z",
@@ -126,12 +118,10 @@ if [ ${rc} -ne 0 ]; then
   status="NO_GO"
   details="Falha ao validar observabilidade e regressões básicas."
 else
-  export EVIDENCE_DIR_ENV="${EVIDENCE_DIR}"
   audit_gaps=$("${PYTHON_BIN}" - <<'PY'
 import json
 from pathlib import Path
-import os
-data = json.loads(Path(os.environ["EVIDENCE_DIR_ENV"]).joinpath("metrics/observability_metrics.json").read_text())
+data = json.loads(Path("${EVIDENCE_DIR}/metrics/observability_metrics.json").read_text())
 print(data.get("audit_gaps", 0))
 PY
 )

@@ -122,7 +122,9 @@ class Auditor:
         )
 
     def ensure_executable(self, path: Path, category: str) -> None:
-        if not path.exists() or path.suffix != ".sh":
+        if not path.exists():
+            return
+        if path.suffix != ".sh":
             return
         mode = path.stat().st_mode
         if mode & 0o111:
@@ -137,7 +139,7 @@ class Auditor:
 
 def audit_inspectah(auditor: Auditor) -> None:
     category = "inspectah"
-    auditor.cat(category)
+    cat = auditor.cat(category)
     s5_inspectah = S5_ROOT / "inspectah"
     dest_root = ROOT / "inspectah"
     if not s5_inspectah.exists():
@@ -254,7 +256,9 @@ def audit_bin(auditor: Auditor) -> None:
     ]
     if s5_bin.exists():
         for file in sorted(p for p in s5_bin.iterdir()):
-            if not file.is_file() or not file_should_be_processed(file):
+            if not file.is_file():
+                continue
+            if not file_should_be_processed(file):
                 continue
             if not file.name.startswith("s5_") and "s5_gate" not in file.name:
                 continue
@@ -277,7 +281,9 @@ def audit_scripts(auditor: Auditor) -> None:
     dest_root = ROOT / "scripts"
     if s5_scripts.exists():
         for file in sorted(p for p in s5_scripts.iterdir()):
-            if not file.is_file() or not file_should_be_processed(file):
+            if not file.is_file():
+                continue
+            if not file_should_be_processed(file):
                 continue
             if not file.name.startswith("s5_"):
                 continue
@@ -340,11 +346,14 @@ def audit_docs(auditor: Auditor) -> None:
             if "docs/sprint_5/" in marker:
                 rel_part = marker.split("docs/sprint_5/", 1)[1]
                 rel_part = rel_part.strip("\"' ")
-                rel_part = rel_part.split("$", 1)[0]
-                rel_part = rel_part.split(")", 1)[0]
                 rel_part = rel_part.strip()
                 if rel_part:
-                    expected_docs.add(rel_part)
+                    rel_part = rel_part.rstrip("\"'")
+                    rel_part = rel_part.split("$", 1)[0]
+                    rel_part = rel_part.split(")", 1)[0]
+                    rel_part = rel_part.strip()
+                    if rel_part:
+                        expected_docs.add(rel_part)
 
     if s5_docs.exists():
         for file in sorted(p for p in s5_docs.rglob("*") if p.is_file()):
@@ -357,14 +366,14 @@ def audit_docs(auditor: Auditor) -> None:
     for rel in sorted(expected_docs):
         path = dest_root / rel
         if not path.exists():
-            msg = f"Documento operacional ausente: {path.relative_to(ROOT)}"
+            msg = f"Documento operacional ausente: {(path).relative_to(ROOT)}"
             auditor.log(msg)
             cat["warnings"].append(msg)
 
 
 def audit_out(auditor: Auditor) -> None:
     category = "out_s5_gates"
-    auditor.cat(category)
+    cat = auditor.cat(category)
     s5_out = S5_ROOT / "out" / "s5_gates"
     dest_root = ROOT / "out" / "s5_gates"
     if not s5_out.exists():

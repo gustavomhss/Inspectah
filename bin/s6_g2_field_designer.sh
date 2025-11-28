@@ -16,17 +16,16 @@ OUTPUT_JSON="$EVIDENCE_DIR/fields_preview.json"
 if ! "$REPO_ROOT/bin/inspectah_fields_preview.sh" "$DOMAIN" | tee "$OUTPUT_JSON"; then
   status="FAIL"
 else
-  status=$("$PYTHON_BIN" - "$OUTPUT_JSON" <<'PY'
+  status=$("$PYTHON_BIN" - <<'PY' "$OUTPUT_JSON"
 import json, sys
 with open(sys.argv[1], encoding='utf-8') as handle:
     data = json.load(handle)
 errors = [name for name, entry in data.get('samples', {}).items() if any(sample['errors'] for sample in entry.get('previews', []))]
 print('FAIL' if errors else 'PASS')
-PY
-)
+PY)
 fi
 
-"$PYTHON_BIN" - "$SCORECARD" "$status" "$OUTPUT_JSON" <<'PY'
+"$PYTHON_BIN" - <<'PY' "$SCORECARD" "$status" "$OUTPUT_JSON"
 import json, sys
 scorecard_path, status, output_json = sys.argv[1:4]
 try:

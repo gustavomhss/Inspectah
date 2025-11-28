@@ -45,6 +45,14 @@ try:  # pragma: no cover
 except ModuleNotFoundError:  # pragma: no cover
     cases_router = None
     collections_router = None
+try:  # pragma: no cover
+    from app.api.truth_routes import router as truth_router
+except ModuleNotFoundError:  # pragma: no cover
+    truth_router = None
+try:  # pragma: no cover
+    from app.api.console_routes import router as console_router
+except ModuleNotFoundError:  # pragma: no cover
+    console_router = None
 
 
 def _add_cors(app: FastAPI, origins: Iterable[str]) -> None:
@@ -86,6 +94,10 @@ def build_app():  # pragma: no cover
         app.include_router(cases_router, prefix="/api", tags=["cases"])
     if collections_router is not None:
         app.include_router(collections_router, prefix="/api", tags=["collections"])
+    if truth_router is not None:
+        app.include_router(truth_router)
+    if console_router is not None:
+        app.include_router(console_router)
     if copiloto_fontes_router is not None:
         app.include_router(copiloto_fontes_router, prefix="/admin/copiloto-fontes", tags=["admin-copiloto-fontes"])
     if auth_router is not None:

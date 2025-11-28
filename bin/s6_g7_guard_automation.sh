@@ -18,7 +18,7 @@ else
   status="FAIL"
 fi
 
-"$PYTHON_BIN" - "$SCORECARD" "$status" "$GUARD_LOG" <<'PY'
+"$PYTHON_BIN" - <<'PY' "$SCORECARD" "$status" "$GUARD_LOG"
 import json, sys
 scorecard_path, status, guard_log = sys.argv[1:4]
 json.dump({

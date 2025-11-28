@@ -1,0 +1,15 @@
+{
+  "source": {
+    "id": "s9_src_cesta_sp_seae",
+    "name": "Painel SEAE Cesta SP",
+    "type": "precos_api_simples",
+    "info_type": "C1_preco_medio",
+    "url_base": "fixture://cesta_sp_seae",
+    "selected_fields": ["produto", "cidade", "valor", "moeda"],
+    "params": {"coverage": "SP", "canal": "SEAE"}
+  },
+  "items": [
+    {"id": "it_sp_seae_1", "produto": "cesta_basica_sp", "cidade": "sao paulo", "valor": 127.5, "moeda": "BRL", "info_type": "preco"},
+    {"id": "it_sp_seae_2", "produto": "cesta_basica_sp", "cidade": "sao paulo", "valor": 129.2, "moeda": "BRL", "info_type": "preco"}
+  ]
+}

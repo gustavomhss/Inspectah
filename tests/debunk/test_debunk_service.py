@@ -7,7 +7,6 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from app.api.debunk.routes import router as debunk_router, get_repo
-from app.debunk import service
 from app.debunk.models import (
     DebunkDecisionType,
     DebunkIssueStatus,
@@ -18,6 +17,7 @@ from app.debunk.models import (
     RecommendedTruthAction,
 )
 from app.debunk.repository import DebunkRepository
+from app.debunk import service
 
 
 def _make_repo(tmp_path: Path) -> DebunkRepository:

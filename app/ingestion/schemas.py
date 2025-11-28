@@ -39,6 +39,8 @@ class RunDetail(RunSummary):
 class RunsResponse(BaseModel):
     runs: List[RunSummary]
     pagination: dict = Field(default_factory=dict)
+    config_mode: Optional[IngestionMode] = None
+    config_mode: Optional[IngestionMode] = None
 
 
 class ConfigResponse(BaseModel):

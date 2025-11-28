@@ -1,14 +1,12 @@
 from __future__ import annotations
 
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 from app.core.models import UserResponse
-from app.core.query_types import normalize_query_type
 
 
 def build_summary_card(response: UserResponse) -> Dict[str, Any]:
     summary = response.summary.copy()
-    summary["query_type"] = normalize_query_type(response.query_type)
     summary["status"] = response.status
     summary["confidence_level"] = response.confidence.get("level")
     summary["confidence_reasons"] = response.confidence.get("reasons", [])
@@ -22,7 +20,6 @@ def build_evidence_links(response: UserResponse) -> Dict[str, Any]:
     items_preview = evidence.get("items_preview", [])
     return {
         "bundle_id": evidence.get("bundle_id") or response.evidence_bundle_id,
-        "bundle_path": evidence.get("bundle_path"),
         "sources": sources,
         "items_preview": items_preview,
     }
@@ -40,4 +37,5 @@ def build_user_response_view(response: UserResponse) -> Dict[str, Any]:
         "status": response.status,
         "confidence": response.confidence,
         "limitations": response.limitations,
+        "scenario_tag": response.summary.get("scenario_tag") or response.info_type.split("_", 1)[0],
     }

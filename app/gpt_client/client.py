@@ -1,12 +1,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-import os
 from statistics import mean
 from typing import Any, Dict, List
 
 from app.core.models import EvidenceBundle
-from app.core.query_types import QueryType
+from app.core.query_types import InfoType, QueryType
 
 from . import prompts
 
@@ -20,60 +19,93 @@ class GptAnswer:
     prompt_used: Dict[str, Any] = field(default_factory=dict)
 
 
-def run_query(bundle: EvidenceBundle, user_query: str, query_type: QueryType) -> GptAnswer:
-    if not bundle.id:
-        raise ValueError("EvidenceBundle.id não pode ser vazio")
-    supported_types = {"preco_medio", "comparacao_simples", "checagem_factual", "fora_de_escopo"}
-    if query_type not in supported_types:
-        raise ValueError(f"Tipo de query não suportado na Sprint 9: {query_type}")
+PROMPT_BUILDERS: Dict[str, Any] = {
+    "C1_preco_medio": prompts.build_price_prompt,
+    "C2_comparacao_simples": prompts.build_comparison_prompt,
+    "C3_checagem_factual": prompts.build_fact_prompt,
+}
 
-    prompt_payload = prompts.build_decision_prompt(bundle, user_query, query_type)
+
+def run_query(
+    *,
+    info_type: InfoType,
+    bundle: EvidenceBundle,
+    query_spec: Dict[str, Any],
+    scenario_tag: str,
+    user_query: str,
+) -> GptAnswer:
+    builder = PROMPT_BUILDERS.get(info_type)
+    if not builder:
+        raise ValueError(f"InfoType não suportado na Sprint 9: {info_type}")
+
+    prompt_payload = builder(bundle, query_spec, scenario_tag, user_query)
     context = prompt_payload["context"]
+    decision = _simulate_model_decision(info_type, context, query_spec)
+    return GptAnswer(
+        answer_text=decision["answer_text"],
+        summary_structured=decision["summary_structured"],
+        confidence_flags=decision["confidence_flags"],
+        limitations=decision["limitations"],
+        prompt_used={**prompt_payload, "context": context},
+    )
+
+
+def _simulate_model_decision(info_type: InfoType, context: Dict[str, Any], query_spec: Dict[str, Any]) -> Dict[str, Any]:
     meta = context["meta"]
     sources = context["sources"]
-
     limitations = ["Somente dados do EvidenceBundle foram considerados."]
-    if meta["num_sources"] < 2:
-        limitations.append("Menos de duas fontes disponíveis para o tipo consultado.")
 
+    query_type: QueryType = query_spec.get("query_type", "fora_de_escopo")  # type: ignore[assignment]
     if query_type == "fora_de_escopo":
-        summary = _base_summary(query_type, meta, extra={"resolution": "fora_de_escopo"})
-        answer_text = "A pergunta está fora do escopo suportado nesta sprint."
-        confidence = {"level": "low", "reasons": ["fora de escopo"]}
-        return GptAnswer(answer_text, summary, confidence, limitations, prompt_payload)
+        summary = _base_summary(meta, query_type)
+        summary["resolution"] = "fora_de_escopo"
+        return {
+            "answer_text": "A pergunta está fora do escopo suportado nesta fase.",
+            "summary_structured": summary,
+            "confidence_flags": {"level": "low", "reasons": ["fora de escopo"]},
+            "limitations": limitations,
+        }
 
-    if meta["num_items"] == 0:
-        extra = {"main_value": None, "range": None, "resolution": "dados_insuficientes"}
-        summary = _base_summary(query_type, meta, extra)
-        answer_text = "Dados insuficientes para chegar a uma conclusão."
-        confidence = {"level": "low", "reasons": ["sem itens no bundle"]}
-        return GptAnswer(answer_text, summary, confidence, limitations, prompt_payload)
+    if meta["num_sources"] < 2 or meta["num_items"] == 0:
+        summary = _base_summary(meta, query_type)
+        summary["resolution"] = "dados_insuficientes"
+        return {
+            "answer_text": "Dados insuficientes para chegar a uma conclusão confiável.",
+            "summary_structured": summary,
+            "confidence_flags": {"level": "low", "reasons": ["dados insuficientes"]},
+            "limitations": limitations + ["Menos de duas fontes úteis."],
+        }
 
     if query_type == "preco_medio":
-        extra, answer_text = _summarize_agregacao(meta, sources)
+        extra, answer = _summarize_price(meta, sources)
     elif query_type == "comparacao_simples":
-        extra, answer_text = _summarize_comparacao(meta, sources)
+        extra, answer = _summarize_comparison(meta, sources)
     else:
-        extra, answer_text = _summarize_factual(meta, sources)
+        extra, answer = _summarize_fact(meta, sources)
 
-    summary = _base_summary(query_type, meta, extra)
-    confidence = _derive_confidence(meta, extra)
-    return GptAnswer(answer_text, summary, confidence, limitations, prompt_payload)
+    summary = _base_summary(meta, query_type)
+    summary.update(extra)
+    summary.setdefault("resolution", "ok")
+    confidence = _derive_confidence(summary)
+    return {
+        "answer_text": answer,
+        "summary_structured": summary,
+        "confidence_flags": confidence,
+        "limitations": limitations,
+    }
 
 
-def _base_summary(query_type: str, meta: Dict[str, Any], extra: Dict[str, Any]) -> Dict[str, Any]:
-    summary = {
+def _base_summary(meta: Dict[str, Any], query_type: str) -> Dict[str, Any]:
+    return {
         "query_type": query_type,
-        "num_sources": meta["num_sources"],
-        "num_items": meta["num_items"],
         "info_type": meta.get("info_type"),
         "scenario_tag": meta.get("scenario_tag"),
+        "num_sources": meta.get("num_sources", 0),
+        "num_items": meta.get("num_items", 0),
     }
-    summary.update(extra)
-    return summary
 
 
-def _summarize_agregacao(meta: Dict[str, Any], sources: List[Dict[str, Any]]) -> tuple[Dict[str, Any], str]:
+def _summarize_price(meta: Dict[str, Any], sources: List[Dict[str, Any]]) -> tuple[Dict[str, Any], str]:
     values: List[float] = []
     produto = None
     cidade = None
@@ -82,10 +114,8 @@ def _summarize_agregacao(meta: Dict[str, Any], sources: List[Dict[str, Any]]) ->
     for source in sources:
         for item in source["items"]:
             payload = item.get("payload", {})
-            if produto is None and payload.get("produto"):
-                produto = payload["produto"]
-            if cidade is None and payload.get("cidade"):
-                cidade = payload["cidade"]
+            produto = produto or payload.get("produto")
+            cidade = cidade or payload.get("cidade")
             if payload.get("moeda"):
                 moeda = payload["moeda"]
             valor = _to_float(payload.get("valor") or payload.get("valor_medio"))
@@ -94,34 +124,34 @@ def _summarize_agregacao(meta: Dict[str, Any], sources: List[Dict[str, Any]]) ->
             values.append(valor)
             details.append(f"{source['source_id']} registrou {valor:.2f} {moeda}")
     if not values:
-        extra = {"main_value": None, "range": None, "unit": moeda}
-        return extra, "As fontes não forneceram valores numéricos suficientes."
+        return {"resolution": "dados_insuficientes", "main_value": None, "range": None}, "Sem dados suficientes."
     avg_val = mean(values)
     extra = {
         "main_value": avg_val,
         "range": {"min": min(values), "max": max(values)},
         "unit": moeda,
+        "resolution": "ok",
     }
     product_desc = produto or "o item consultado"
     location_hint = f" em {cidade}" if cidade else ""
-    answer_text = (
-        f"Com {meta['num_sources']} fontes, o preço médio de {product_desc}{location_hint} fica em {avg_val:.2f} {moeda}. "
+    answer = (
+        f"Com {meta['num_sources']} fontes, o preço médio de {product_desc}{location_hint} é {avg_val:.2f} {moeda}. "
         f"Detalhes: {'; '.join(details)}."
     )
-    return extra, answer_text
+    return extra, answer
 
 
-def _summarize_comparacao(meta: Dict[str, Any], sources: List[Dict[str, Any]]) -> tuple[Dict[str, Any], str]:
+def _summarize_comparison(meta: Dict[str, Any], sources: List[Dict[str, Any]]) -> tuple[Dict[str, Any], str]:
     best_location = None
     best_value = None
     best_source = None
+    second_value = None
     moeda = "BRL"
     produto = None
     for source in sources:
         for item in source["items"]:
             payload = item.get("payload", {})
-            if produto is None and payload.get("produto"):
-                produto = payload["produto"]
+            produto = produto or payload.get("produto")
             if payload.get("moeda"):
                 moeda = payload["moeda"]
             valor = _to_float(payload.get("valor"))
@@ -129,12 +159,24 @@ def _summarize_comparacao(meta: Dict[str, Any], sources: List[Dict[str, Any]]) -
             if valor is None or not location:
                 continue
             if best_value is None or valor < best_value:
+                second_value = best_value
                 best_value = valor
                 best_location = location
                 best_source = source["source_id"]
-    extra = {"best_location": best_location, "best_value": best_value, "unit": moeda}
+            elif second_value is None or valor < second_value:
+                second_value = valor
+    extra = {
+        "best_location": best_location,
+        "best_value": best_value,
+        "runner_up": second_value,
+        "price_delta_pct": None,
+        "unit": moeda,
+        "resolution": "ok" if best_location and best_value is not None else "dados_insuficientes",
+    }
     if best_location is None or best_value is None:
         return extra, "Não há dados suficientes para comparar regiões."
+    if second_value is not None and second_value:
+        extra["price_delta_pct"] = (second_value - best_value) / second_value * 100
     product_desc = produto or "o item consultado"
     answer = (
         f"{product_desc} está mais barato em {best_location} segundo {best_source}, custando {best_value:.2f} {moeda}."
@@ -142,7 +184,7 @@ def _summarize_comparacao(meta: Dict[str, Any], sources: List[Dict[str, Any]]) -
     return extra, answer
 
 
-def _summarize_factual(meta: Dict[str, Any], sources: List[Dict[str, Any]]) -> tuple[Dict[str, Any], str]:
+def _summarize_fact(meta: Dict[str, Any], sources: List[Dict[str, Any]]) -> tuple[Dict[str, Any], str]:
     confirmations = 0
     negatives = 0
     person = None
@@ -151,10 +193,8 @@ def _summarize_factual(meta: Dict[str, Any], sources: List[Dict[str, Any]]) -> t
     for source in sources:
         for item in source["items"]:
             payload = item.get("payload", {})
-            if person is None and payload.get("pessoa"):
-                person = payload["pessoa"]
-            if case is None and payload.get("caso"):
-                case = payload["caso"]
+            person = person or payload.get("pessoa")
+            case = case or payload.get("caso")
             status = str(payload.get("status", "")).lower()
             if status in {"confirmado", "sim", "true"}:
                 confirmations += 1
@@ -179,32 +219,30 @@ def _summarize_factual(meta: Dict[str, Any], sources: List[Dict[str, Any]]) -> t
         "confirmations": confirmations,
         "negatives": negatives,
         "notes": notes,
+        "resolution": "ok" if confirmations or negatives else "dados_insuficientes",
     }
     return extra, answer
 
 
-def _derive_confidence(meta: Dict[str, Any], summary_extra: Dict[str, Any]) -> Dict[str, Any]:
+def _derive_confidence(summary: Dict[str, Any]) -> Dict[str, Any]:
     level = "high"
     reasons: List[str] = []
-    if meta["num_sources"] < 2:
+    if summary.get("num_sources", 0) < 2:
         level = "medium"
         reasons.append("apenas uma fonte disponível")
-    rng = summary_extra.get("range")
-    if rng and rng.get("max") and rng.get("min"):
+    rng = summary.get("range")
+    if rng and isinstance(rng, dict) and rng.get("max") and rng.get("min"):
         spread = rng["max"] - rng["min"]
-        if spread > 0.15 * rng["max"]:
+        if rng["max"] and spread > 0.15 * rng["max"]:
             level = "medium"
             reasons.append("variação relevante entre as fontes")
-    if summary_extra.get("verdict") == "divergente":
+    if summary.get("verdict") == "divergente":
         level = "low"
         reasons.append("fontes se contradizem")
-    if level == "high" and not reasons and _legacy_mode_enabled():
-        reasons.append("dados consistentes entre as fontes analisadas")
+    if summary.get("resolution") != "ok":
+        level = "low"
+        reasons.append(f"resolução {summary['resolution']}")
     return {"level": level, "reasons": reasons}
-
-
-def _legacy_mode_enabled() -> bool:
-    return os.getenv("INSPECTAH_PARSER_LEGACY_TYPES") == "1"
 
 
 def _to_float(value: Any) -> float | None:

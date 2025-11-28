@@ -14,9 +14,7 @@ TMP_DB="$(mktemp "${TMPDIR:-/tmp}/inspectah_t5_1_XXXXXX")"
 trap 'rm -f "$TMP_DB"' EXIT
 export INSPECTAH_DB_PATH="$TMP_DB"
 PYTHONPATH="src:${PYTHONPATH:-}"
-export PYTHONPATH
-CALIB_DATA="$EVID_DIR/calibration_dataset.json"
-python3 -m confidence_engine.audit_runner --config-dir "configs/sources" --db-path "$TMP_DB" --report "$REPORT" --calibration "$CALIB_DATA"
+python3 -m confidence_engine.audit_runner --config-dir "configs/sources" --db-path "$TMP_DB" --report "$REPORT"
 python3 - <<'PY' "$REPORT" "$SCORECARD"
 import json
 import sys

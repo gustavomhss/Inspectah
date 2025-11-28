@@ -21,7 +21,7 @@ if ! "$REPO_ROOT/bin/inspectah_query.sh" "$DOMAIN" --format json --page 1 --page
   status="FAIL"
 fi
 
-FIRST_ITEM=$("$PYTHON_BIN" - "$QUERY_STDOUT" "$QUERY_RESULTS" <<'PY'
+FIRST_ITEM=$("$PYTHON_BIN" - <<'PY' "$QUERY_STDOUT" "$QUERY_RESULTS"
 import json, sys
 from pathlib import Path
 stdout_path, results_path = sys.argv[1:3]
@@ -33,8 +33,7 @@ except json.JSONDecodeError:
     items = []
 Path(results_path).write_text(json.dumps(items, indent=2, ensure_ascii=False), encoding='utf-8')
 print(items[0]['item_id'] if items else '', end='')
-PY
-)
+PY)
 if [[ -z "$FIRST_ITEM" ]]; then
   status="FAIL"
 fi
@@ -46,7 +45,7 @@ if [[ "$status" == "PASS" ]]; then
   fi
 fi
 
-"$PYTHON_BIN" - "$SCORECARD" "$status" "$QUERY_RESULTS" <<'PY'
+"$PYTHON_BIN" - <<'PY' "$SCORECARD" "$status" "$QUERY_RESULTS"
 import json, sys
 scorecard_path, status, results_path = sys.argv[1:4]
 try:

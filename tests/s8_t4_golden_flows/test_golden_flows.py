@@ -13,11 +13,13 @@ SCENARIOS = [
 ]
 
 
-@pytest.fixture(autouse=True)
-def _sandbox(tmp_path, monkeypatch):
-    monkeypatch.setenv("INSPECTAH_DATA_DIR", str(tmp_path))
+@pytest.fixture(scope="module", autouse=True)
+def _sandbox(tmp_path_factory, monkeypatch):
+    data_dir = tmp_path_factory.mktemp("evidence")
+    monkeypatch.setenv("INSPECTAH_DATA_DIR", str(data_dir))
     admin_service = importlib.import_module("app.admin.service")
     admin_service.ensure_default_sources()
+    return data_dir
 
 
 def _normalize(dto):
@@ -40,6 +42,7 @@ def test_golden_flow(name: str, query: str):
     payload = user_routes.post_query({"query": query})
     dto = payload["dto"]
     normalized = _normalize(dto)
+
     golden_path = Path("tests/goldens") / f"{name}.json"
     assert golden_path.exists(), f"Golden missing for {name}"
     expected = json.loads(golden_path.read_text(encoding="utf-8"))

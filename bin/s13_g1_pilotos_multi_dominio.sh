@@ -28,10 +28,14 @@ evidence_path = Path(sys.argv[2])
 try:
     data = registry.load_pilots_config()
 except Exception as exc:
-    ts = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     scorecard_path.write_text(
         json.dumps(
-            {"gate": "S13_G1", "status": "FAIL", "error": f"Erro ao carregar config: {exc}", "ts": ts},
+            {
+                "gate": "S13_G1",
+                "status": "FAIL",
+                "error": f"Erro ao carregar config: {exc}",
+                "ts": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+            },
             indent=2,
             ensure_ascii=False,
         ),
@@ -46,14 +50,15 @@ total_pilots = sum(len(data[domain]) for domain in expected)
 coverage = len(covered) / len(expected)
 status = "PASS" if coverage == 1.0 else "FAIL"
 
-evidence = {domain: data[domain] for domain in expected}
-evidence_path.write_text(json.dumps(evidence, indent=2, ensure_ascii=False), encoding="utf-8")
+snapshot = {
+    domain: data[domain] for domain in expected
+}
+evidence_path.write_text(json.dumps(snapshot, indent=2, ensure_ascii=False), encoding="utf-8")
 
-ts = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 payload = {
     "gate": "S13_G1",
     "status": status,
-    "ts": ts,
+    "ts": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
     "metrics": {
         "domain_pilot_coverage": round(coverage, 3),
         "total_pilots": total_pilots,

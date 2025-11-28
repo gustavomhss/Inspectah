@@ -16,7 +16,7 @@ OUTPUT_JSON="$EVIDENCE_DIR/collect_summary.json"
 if ! "$REPO_ROOT/bin/inspectah_collect_once.sh" "$DOMAIN" | tee "$OUTPUT_JSON"; then
   status="FAIL"
 else
-  status=$("$PYTHON_BIN" - "$OUTPUT_JSON" <<'PY'
+  status=$("$PYTHON_BIN" - <<'PY' "$OUTPUT_JSON"
 import json, sys
 with open(sys.argv[1], encoding='utf-8') as handle:
     data = json.load(handle)
@@ -25,11 +25,10 @@ if data.get('canonical_records_total', 0) <= 0 or errors:
     print('FAIL')
 else:
     print('PASS')
-PY
-)
+PY)
 fi
 
-"$PYTHON_BIN" - "$SCORECARD" "$status" "$OUTPUT_JSON" <<'PY'
+"$PYTHON_BIN" - <<'PY' "$SCORECARD" "$status" "$OUTPUT_JSON"
 import json, sys
 scorecard_path, status, output_json = sys.argv[1:4]
 try:

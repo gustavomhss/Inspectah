@@ -20,14 +20,11 @@ from app.agents.models import (
     AgentStatus,
     CommitteePolicy,
     ModelUpgradePolicy,
-    AgentFlowLayer,
-    FlowLayerType,
 )
 from scripts.db.migrate import apply_sql
 
 DEFAULT_DB_PATH = Path(os.environ.get("INSPECTAH_S23_DB_PATH", "out/databases/s23_agents.sqlite"))
 MIGRATION_PATH = Path(__file__).resolve().parents[2] / "db/migrations/023_sprint23_agents.sql"
-MIGRATION_FLOW_PATH = Path(__file__).resolve().parents[2] / "db/migrations/024_sprint23_agents_flow.sql"
 
 
 class AgentsRepository:
@@ -37,8 +34,6 @@ class AgentsRepository:
 
     def _ensure_db(self) -> None:
         apply_sql(MIGRATION_PATH, self.db_path)
-        if MIGRATION_FLOW_PATH.exists():
-            apply_sql(MIGRATION_FLOW_PATH, self.db_path)
 
     @contextmanager
     def _conn(self):
@@ -443,53 +438,4 @@ class AgentsRepository:
             started_at=datetime.fromisoformat(row["started_at"]),
             finished_at=datetime.fromisoformat(row["finished_at"]) if row["finished_at"] else None,
             created_at=datetime.fromisoformat(row["created_at"]),
-        )
-
-    # Flow layers
-    def get_flow(self) -> List[AgentFlowLayer]:
-        with self._conn() as conn:
-            rows = conn.execute("SELECT * FROM ai_agent_flow_layers ORDER BY layer_index ASC").fetchall()
-        return [self._row_to_flow_layer(r) for r in rows]
-
-    def replace_flow(self, layers: List[AgentFlowLayer]) -> List[AgentFlowLayer]:
-        with self._conn() as conn:
-            conn.execute("DELETE FROM ai_agent_flow_layers")
-            for layer in layers:
-                conn.execute(
-                    """
-                    INSERT INTO ai_agent_flow_layers (
-                        id, name, description, layer_type, layer_index, agent_ids, mediator_agent_id, created_at, updated_at
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    """,
-                    (
-                        layer.id,
-                        layer.name,
-                        layer.description,
-                        layer.layer_type.value,
-                        layer.layer_index,
-                        json.dumps(layer.agent_ids, ensure_ascii=False),
-                        layer.mediator_agent_id,
-                        layer.created_at.isoformat(),
-                        layer.updated_at.isoformat(),
-                    ),
-                )
-            conn.commit()
-        return layers
-
-    def _row_to_flow_layer(self, row: sqlite3.Row) -> AgentFlowLayer:
-        agent_ids: list[str] = []
-        try:
-            agent_ids = json.loads(row["agent_ids"]) if row["agent_ids"] else []
-        except Exception:
-            agent_ids = []
-        return AgentFlowLayer(
-            id=row["id"],
-            name=row["name"],
-            description=row["description"] or "",
-            layer_type=FlowLayerType(row["layer_type"]),
-            layer_index=int(row["layer_index"]),
-            agent_ids=agent_ids,
-            mediator_agent_id=row["mediator_agent_id"],
-            created_at=datetime.fromisoformat(row["created_at"]),
-            updated_at=datetime.fromisoformat(row["updated_at"]),
         )

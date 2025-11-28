@@ -25,7 +25,24 @@ A Sprint 9 implantou o “Inspectah Evidence OS” completo para os cenários C1
 - **GPT Engine especializado** — `app/gpt_client/prompts.py` e `app/gpt_client/client.py` geram decisões determinísticas bundle-only, usados unicamente pelo pipeline (Inv3).
 - **Observabilidade e métricas S9** — `app/observability/metrics_s9.py` + hooks em Admin/User/Core alimentam `get_metrics_snapshot`, permitindo medir p50/p95, erros e admin actions.
 - **Fixtures e goldens oficiais** — `tests/fixtures/s9_*` alinham C1–C3 com casos reais e `tests/goldens/s9_*.json` são verificados via `tests/s9_t4_golden_flows`.
-- **Gates automatizados + CI/decisão** — `bin/s9_t{1..6}_*.sh`, `bin/s9_ci.sh`, `bin/s9_t7_ci_pipeline.sh`, `bin/s9_t8_go_no_go.sh` e `.github/workflows/s9-ci.yml` levam os gates para CI e consolidam o GO/NO_GO com este resumo.
+- **Gates automatizados T1–T6** — Scripts `bin/s9_t{1..6}_*.sh` produzem scorecards e summaries em `out/scorecards/` e `out/evidence/`, preparando o terreno para CI/T7.
+- **CI & decisão** — `bin/s9_ci.sh`, `bin/s9_t7_ci_pipeline.sh`, `bin/s9_t8_go_no_go.sh` e `.github/workflows/s9-ci.yml` levam os gates para CI e consolidam o GO/NO_GO com `docs/sprint_9_summary.md`.
+
+## Demo & checklist final
+
+- Runbook e script: `docs/sprint_9_cenarios_demo.md` detalha o passo a passo dos cenários e `bin/s9_demo.sh` automatiza o mesmo fluxo (Admin → User → evidências → métricas) com `NET=0`.
+
+| Cenário | Demo rodada? | Evidências principais | Observações |
+|---------|--------------|----------------------|-------------|
+| C1 — Preço médio (SP) | Sim (`bin/s9_demo.sh`) | `out/evidence/s9_logs/*.json`, `out/evidence/s9_bundles/*.json`, `out/evidence/s9_responses/*.json`, scorecards `S9_T4/S9_T5/S9_T6` | Valor médio ≈ 221,58 BRL, `num_sources=3`, confiança alta, p95 ≪ 1,5 s |
+| C2 — Comparação GLP (RJ) | Sim | Mesmos diretórios + scorecards `S9_T4/S9_T5/S9_T6` | Ranking capital×Baixada com divergências explícitas >5 % quando ocorrem |
+| C3 — Checagem factual (BH) | Sim | Mesmos diretórios + scorecards `S9_T4/S9_T5/S9_T6` | Veredito `negado`, limitações claras, trilha completa auditada |
+
+- Invariantes comprovadas no encerramento:
+  - **Inv1** — `out/evidence/S9_T6_logs_and_evidence/summary.json` + a demo (`bin/s9_demo.sh`) mostram QueryLog↔EvidenceBundle↔UserResponse acessíveis e coerentes.
+  - **Inv2** — Bundles de C1–C3 mantêm `meta.num_sources >= 2` e isso está registrado nos bundles e nos scorecards T4/T6.
+  - **Inv3** — Toda decisão passa por `app/gpt_client/client.py`, provado pelos testes T4–T6 e reforçado no runbook (pipeline usa apenas bundles).
+  - **Inv4** — Métricas (`metrics_s9`) e scorecards T5/T6 documentam p95 < 1,5 s e ausência de erros silenciosos; a demo não introduziu falhas adicionais.
 
 ## Evidências e referências
 
@@ -39,5 +56,5 @@ A Sprint 9 implantou o “Inspectah Evidence OS” completo para os cenários C1
 
 1. **Hardening de fontes dinâmicas** — fixtures S9 são snapshots; precisamos integrar conectores online com fallback seguro antes da produção.
 2. **Observabilidade persistente** — métricas vivem em memória; estabelecer backend Prometheus/exporter e dashboards oficiais nas próximas sprints.
-3. **Cobertura adicional de UX/Admin** — UI/Admin ainda não expõe todas as métricas de `metrics_s9`; incorporar health badges/dashboards.
+3. **Cobertura adicional de UX/Admin** — UI Admin ainda não expõe todas as métricas de `metrics_s9`; incorporar health badges/dashboards.
 4. **Automação de demo/checklist** — Fase 8 ainda depende de execução manual; sugerimos scripts/guias de demo reutilizando os goldens e métricas para evitar desvios.

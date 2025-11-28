@@ -30,7 +30,7 @@
 | **T5.1** | **Inexistente**: não há `confidence_engine`, `configs/profiles/` ou script `bin/orr_t5_1_confidence_gate.sh`. | Cap.2 exige heurística de `confidence_score`, cobertura ≥95%, e plano explícito para dados de calibração (T5.2 futuro). | Criar módulo `src/confidence_engine/`, perfis em `configs/profiles/confidence_profiles.yaml`, script de Gate que produz `out/scorecards/T5_1_confidence.json` + `out/evidence/T5_1_confidence/`, registrar onde métricas de calibração viverão. |
 | **T6** | `bin/orr_t6.sh` apenas agrega scorecards e chama `bin/orr_t6_ci`. Não existe `ops/otel/`/`ops/prometheus/`/`ops/grafana/`; observabilidade dispersa. | Gate T6 precisa validar coletores, alertas, dashboards e exporters. | Criar `ops/` árvore, scripts de smoke checks para métricas/logs/traces, evidências `out/evidence/T6_observability/`, atualizar ORR. |
 | **T7** | `.ci/` contém apenas shell scripts (`bench.sh`, `tests.sh`, etc.). Não há `.ci/orr_pipeline.yml`. `bin/orr_t7.sh` só lê bundle local. | Precisamos de pipeline replicável (local + CI) que execute todos os Gates T0–T7, gere bundle único e scorecard `T7_orr.json`. | Adicionar `.ci/orr_pipeline.yml`, `bin/orr_t7_orr_pipeline.sh`, CLI helper `bin/orr_all.sh` apontando para os novos scripts, atualizar evidências `out/evidence/T7_orr/`. |
-| **T8** | `bin/orr_t8.sh` verifica scorecards legados (`T6_ci.json`, `T7_ready.json`, `D8_ci.json`) e `docs/d8_summary.md`. Não há integração com dados reais de uso/API. | Gate T8 precisa medir ready state com métricas reais + feedback de operadores, `out/evidence/T8_go_nogo/`, `out/scorecards/T8_go_nogo.json`. | Atualizar fontes de verdade (API telemetry, UI usage), ajustar script/go helper para os novos scorecards e garantir `GO` depende da simultaneidade ORR. |
+| **T8** | `bin/orr_t8.sh` verifica scorecards legados (`T6_ci.json`, `T7_ready.json`, `D8_ci.json`) e `docs/d8_summary.md`. Não há integração com dados reais de uso/API. | Gate T8 precisa medir ready state com métricas reais + feedback de operadores, `out/evidence/T8_go_nogo/`, `out/scorecards/T8_go_nogo.json`. | Atualizar fontes de verdade (API telemetry, UI usage), ajustar script/go helper para os novos scorecards e garantir `GO` depende da simultaneidade T0–T7. |
 
 ## 3. Backlog de blocos de trabalho (Gate-first)
 
@@ -54,7 +54,7 @@
 4. **B4 – T4 Evidence Vault:** Reforçar bundling, auditoria e manifests, preparando terreno para performance/confidence.
 5. **B5 – T5 Performance:** Instrumentar métricas e garantir limiares do Cap.2.
 6. **B6 – T5.1 Confidence (High Risk):** Implementar engine, perfis e Gate, com plano explícito de calibração T5.2.
-7. **B7 – T6 Observabilidade:** Ativar `ops/` e smoke tests para métricas, logs e alertas.
+7. **B7 – T6 Observability:** Ativar `ops/` e smoke tests para métricas, logs e alertas.
 8. **B8 – T7 ORR Pipeline:** Conectar todos os Gates em `.ci/orr_pipeline.yml`, orquestrar bundle único e garantir PASS simultâneo.
 9. **B9 – T8 Go/No-Go:** Consumar decisão baseada em uso real + métricas pós-ORR.
 
@@ -64,13 +64,8 @@
 - **Scorecards e evidências:** Cada Gate passará a produzir `out/scorecards/TX_*.json` (formato comum com `gate`, `name`, `version`, `status`, `timestamp`, `metrics`, `thresholds`, `details`) e `out/evidence/TX_*/` sincronizados.
 - **Confidence = alta criticidade:** Qualquer mudança em `confidence_score` ou `confidence_profile_id` deve seguir B6, com plano explícito para calibração T5.2 registrado no `docs/sprint_3_plan_codex.md`.
 - **ORR simultâneo:** Nenhum bloco será encerrado sem rodar `bin/orr_tX_*` relevantes localmente **e** ter evidência na CI (`.ci/orr_pipeline.yml`) mostrando T0–T7 `PASS` simultâneos após a mudança.
-- **T1 baseline migrado:** `schema/inspectah_ddl.sql` + `schema/migrations/V001__bootstrap_schema.sql` representam o modelo (Fontes, Observações, Items, Item Versions, Evidence) e `bin/orr_t1_schema_check.sh` já valida o Gate produzindo `T1_schema.json`.
-- **T2 Field Designer em dry-run:** `configs/sources/*.yaml` definem três fontes (RSS/API/HTML), `src/field_designer/*` executa previews e `bin/orr_t2_field_designer_smoke.sh` gera `T2_field_designer.json` + evidências com amostras.
-- **T3 Pipeline invariants:** `src/watchers/pipeline_runner.py` aplica as fixtures via Field Designer, escreve no schema canônico e `bin/orr_t3_pipeline_invariants.sh` assegura dedup/imutabilidade/lineage com `T3_pipeline_invariants.json` + `pipeline_report.json`.
-- **T4 Evidence Vault:** `src/evidence_vault/bundle_builder.py` cria bundles (raw + manifest) após o pipeline, `src/evidence_vault/audit_runner.py` audita hashes/completude e `bin/orr_t4_evidence_audit.sh` gera `T4_evidence_vault.json` + `evidence_report.json`.
-- **T5 Performance:** `src/observability/perf_runner.py` roda ingestão/consultas sintéticas, mede p95/p99 e `bin/orr_t5_performance_gate.sh` publica `T5_performance.json` + `perf_report.json`.
-- **T5.1 Confidence:** `src/confidence_engine/*` (core/profiles/audit) calcula scores explicáveis, `configs/profiles/confidence_profiles.json` define pesos e `bin/orr_t5_1_confidence_gate.sh` gera `T5_1_confidence.json` + `audit_report.json`/`calibration_dataset.json`.
-- **T6 Observabilidade:** `src/observability/metrics.py` agrega scorecards T2–T5.1, `bin/orr_t6_observability_smoke.sh` valida e produz `T6_observability.json` + `metrics_snapshot.json`.
-- **T7 ORR/CI:** `bin/orr_all.sh` orquestra T0–T6 e `.ci/orr_pipeline.yml` executa em CI, gerando `T7_orr_pipeline.json` + `out/evidence/T7_orr_pipeline/orr_summary.json`.
+- **T6 Observabilidade:** `src/observability/metrics.py` consolida scorecards T2–T5.1; `bin/orr_t6_observability_smoke.sh` gera `T6_observability.json` + `out/evidence/T6_observability/metrics_snapshot.json`.
+- **T7 ORR/CI:** `bin/orr_all.sh` orquestra T0–T6 e `.ci/orr_pipeline.yml` roda o mesmo fluxo em CI, produzindo `T7_orr_pipeline.json` + `out/evidence/T7_orr_pipeline/orr_summary.json`.
+- **T8 Go/No-Go:** `bin/orr_t8_go_no_go.sh` (wrapper legado em `bin/orr_t8.sh`) lê T7, referencia `docs/sprint_3_orr_summary.md` e gera `T8_go_no_go.json` + `out/evidence/T8_go_no_go/summary.json`.
 
 Este plano será atualizado conforme blocos forem entregues e as lacunas do filemap forem fechadas.

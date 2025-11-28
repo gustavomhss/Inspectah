@@ -1,0 +1,15 @@
+{
+  "source": {
+    "id": "s9_src_do_bh",
+    "name": "Diário Oficial BH",
+    "type": "noticias_rss_simplificado",
+    "info_type": "C3_checagem_factual",
+    "url_base": "fixture://do_bh",
+    "selected_fields": ["pessoa", "caso", "status"],
+    "params": {"coverage": "BH", "fonte": "DO"}
+  },
+  "items": [
+    {"id": "do_bh_1", "pessoa": "carla fontes", "caso": "queda_diesel_30d", "status": "negado"},
+    {"id": "do_bh_2", "pessoa": "carla fontes", "caso": "queda_diesel_30d", "status": "negado"}
+  ]
+}

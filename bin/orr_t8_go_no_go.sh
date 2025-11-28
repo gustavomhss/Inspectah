@@ -27,14 +27,13 @@ fi
 python3 - <<'PY' "$T7_SCORECARD" "$SUMMARY_JSON" "$WRAP_DOC"
 import json
 import sys
-from pathlib import Path
 scorecard_path, summary_path, wrap_doc = sys.argv[1:4]
 data = json.loads(Path(scorecard_path).read_text())
 gates = data.get('details', {}).get('gates', [])
 metrics = data.get('metrics', {})
 summary = {
     'gates_total': metrics.get('gates_total', len(gates)),
-    'gates_passed': metrics.get('gates_passed', sum(1 for gate in gates if gate.get('status') == 'PASS')), 
+    'gates_passed': metrics.get('gates_passed', sum(1 for gate in gates if gate.get('status') == 'PASS')),
     'gates_failed': metrics.get('gates_failed', sum(1 for gate in gates if gate.get('status') != 'PASS')),
     'gates': gates,
     't7_scorecard': scorecard_path,
@@ -44,6 +43,7 @@ Path(summary_path).write_text(json.dumps(summary, indent=2), encoding='utf-8')
 PY
 
 python3 - <<'PY' "$SUMMARY_JSON" "$SCORECARD"
+import hashlib
 import json
 import sys
 from datetime import datetime, timezone
@@ -65,7 +65,7 @@ scorecard = {
         'decision': decision,
     },
     'thresholds': {
-        'gates_failed': '== 0'
+        'gates_failed': '== 0',
     },
     'details': {
         't7_scorecard': summary.get('t7_scorecard'),

@@ -40,7 +40,7 @@ run_pipeline() {
   local evidence_dir="$tmp_dir/evidence"
   local index_dir="$tmp_dir/index"
   mkdir -p "$evidence_dir" "$index_dir"
-  if ! python3 - <<PY
+  if ! python3 - <<PY2
 import json
 from pathlib import Path
 from inspectah.pipeline.pipeline_fixtures import run_pipeline_with_fixtures
@@ -51,7 +51,7 @@ result = run_pipeline_with_fixtures(
     summary_path="$PIPELINE_SUMMARY",
 )
 Path("$PIPELINE_ITEMS").write_text(json.dumps(result["items"], indent=2))
-PY
+PY2
   then
     notes+=("Falha ao executar pipeline com fixtures")
     status="FAIL"
@@ -65,7 +65,7 @@ compare_golden() {
     status="FAIL"
     return
   fi
-  if ! python3 - <<PY
+  if ! python3 - <<PY3
 import json
 from pathlib import Path
 summary = json.loads(Path("$PIPELINE_SUMMARY").read_text())
@@ -81,7 +81,7 @@ diff = {
 Path("$GOLDEN_DIFF").write_text(json.dumps(diff, indent=2))
 if diff["items_total_delta"] != 0 or diff["bundles_total_delta"] != 0 or not diff["items_by_state_match"] or not diff["items_by_source_match"]:
     raise SystemExit(1)
-PY
+PY3
   then
     notes+=("Diferenças encontradas no golden data")
     status="FAIL"
@@ -96,16 +96,16 @@ run_tests_and_invariants() {
 }
 
 extract_tests_run() {
-  python3 - "$LOG_DIR/pipeline_tests.log" <<'PY'
+  python3 - "$LOG_DIR/pipeline_tests.log" <<'PY4'
 import re
 import sys
 from pathlib import Path
 text = Path(sys.argv[1]).read_text() if Path(sys.argv[1]).exists() else ""
-match = re.search(r"collected (\d+) items?", text)
+match = re.search(r"collected (\d+) items", text)
 if not match:
     match = re.search(r"Ran (\d+) tests?", text)
 print(match.group(1) if match else "0")
-PY
+PY4
 }
 
 run_pipeline
@@ -113,9 +113,13 @@ compare_golden
 run_tests_and_invariants
 
 tests_run=$(extract_tests_run)
-metrics_json=$(METRICS_TESTS_RUN="$tests_run" python3 - <<PY
+summary_json="{}"
+if [[ -f "$PIPELINE_SUMMARY" ]]; then
+  summary_json=$(cat "$PIPELINE_SUMMARY")
+fi
+
+metrics_json=$(python3 - <<PY5
 import json
-import os
 from pathlib import Path
 summary = {}
 try:
@@ -123,13 +127,13 @@ try:
 except Exception:
     summary = {}
 metrics = {
-    "tests_run": int(os.environ.get("METRICS_TESTS_RUN", "0") or 0),
+    "tests_run": int("$tests_run" or 0),
     "items_total": summary.get("items_total", 0),
     "bundles_total": summary.get("bundles_total", 0),
     "items_by_state": summary.get("items_by_state", {}),
 }
 print(json.dumps(metrics))
-PY
+PY5
 )
 
 notes_text="PASS"

@@ -19,7 +19,7 @@ else
   status="PASS"
 fi
 
-"$PYTHON_BIN" - "$SCORECARD" "$status" "$OUTPUT_JSON" <<'PY'
+"$PYTHON_BIN" - <<'PY' "$SCORECARD" "$status" "$OUTPUT_JSON"
 import json, sys
 scorecard_path, status, output_json = sys.argv[1:4]
 try:
@@ -35,7 +35,7 @@ json.dump({
         "records_total": metrics.get('records_total'),
         "latency_minutes_p95": metrics.get('latency_minutes_p95'),
     },
-}, open(scorecard_path, "w", encoding='utf-8'), indent=2)
+}, open(scorecard_path, "w", encoding="utf-8"), indent=2)
 PY
 
 if [[ "$status" != "PASS" ]]; then

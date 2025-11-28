@@ -19,7 +19,7 @@ if [[ ! -f "$DOC_MODELOS" ]]; then
   status="FAIL"
   notes="Doc de modelos/invariantes ausente."
 else
-  inv_defined=$(rg --no-heading -o "INV-[0-9]+" "$DOC_MODELOS" | wc -l | tr -d ' ' || echo "0")
+  inv_defined=$(rg --no-heading -c "INV-" "$DOC_MODELOS" || echo "0")
 fi
 
 echo "[S22_G1] Aplicando migration SQL..." > "$EVIDENCE_DIR/migration.log"

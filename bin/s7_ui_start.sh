@@ -22,6 +22,10 @@ print(s.host, s.port, int(s.debug))
 PY
 )"
 
+EXTRA_ARGS=()
+if [[ "$DEBUG" == "1" ]]; then
+  EXTRA_ARGS+=(--reload)
+fi
 
 PID_DIR="$REPO_ROOT/out/ui"
 LOG_DIR="$REPO_ROOT/out/logs"
@@ -39,7 +43,7 @@ fi
 
 echo "Iniciando Inspectah UI em http://$HOST:$PORT (log: $LOG_FILE)"
 set +e
-nohup "$UVICORN_BIN" "inspectah.ui:app" --host "$HOST" --port "$PORT" >"$LOG_FILE" 2>&1 &
+nohup "$UVICORN_BIN" "inspectah.ui:app" --host "$HOST" --port "$PORT" ${EXTRA_ARGS[@]} >"$LOG_FILE" 2>&1 &
 pid=$!
 set -e
 echo "$pid" >"$PID_FILE"

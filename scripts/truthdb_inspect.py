@@ -9,9 +9,9 @@ from inspectah.pipelines import s10_domain_a_obras, s10_domain_b_precos
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Inspeciona dados demo da Truth-DB da S10.")
+    parser = argparse.ArgumentParser(description="Inspeciona dados demo da Truth-DB S10.")
     parser.add_argument("--domain", choices=("a", "b"), default="a", help="Domínio a inspecionar")
-    parser.add_argument("--output", type=Path, help="Arquivo JSON opcional para salvar o relatório")
+    parser.add_argument("--output", type=Path, help="Opcional: arquivo de saída JSON")
     args = parser.parse_args()
 
     report = (
@@ -21,7 +21,7 @@ def main() -> int:
     )
     summary = report["summary"]
 
-    print(f"[Domain {args.domain.upper()}] métricas principais:")
+    print(f"[Domain {args.domain.upper()}] resumo das métricas:")
     for key, value in summary.items():
         print(f"- {key}: {value}")
 

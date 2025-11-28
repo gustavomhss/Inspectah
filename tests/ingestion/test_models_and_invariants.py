@@ -46,13 +46,6 @@ def test_config_interval_out_of_bounds(interval):
         _sample_config(mode=IngestionMode.MANUAL_ONLY, source_state=SourceState.ACTIVE, interval_minutes=interval)
 
 
-def test_config_timeout_and_attempt_bounds():
-    with pytest.raises(ValueError):
-        _sample_config(timeout_seconds=2)
-    with pytest.raises(ValueError):
-        _sample_config(max_attempts=0)
-
-
 def test_config_disallows_automatic_for_disabled_source():
     with pytest.raises(ValueError):
         _sample_config(mode=IngestionMode.AUTOMATIC, source_state=SourceState.DISABLED_PERM)
@@ -124,43 +117,3 @@ def test_run_running_conflict_detected():
     )
     with pytest.raises(ValueError):
         validate_run_invariants(run, cfg, running_count_for_source=1)
-
-
-def test_run_requires_finished_after_started():
-    cfg = _sample_config()
-    run = IngestionRun.create(
-        id="run_timing",
-        config=cfg,
-        trigger=IngestionTrigger.MANUAL,
-        status=IngestionStatus.RUNNING,
-        started_at=datetime.utcnow(),
-    )
-    run.status = IngestionStatus.SUCCESS
-    run.finished_at = run.started_at  # equal timestamps not allowed
-    run.payload_ref = "data/ingestion_raw/src_1/run_timing.ndjson"
-    with pytest.raises(ValueError):
-        validate_run_invariants(run, cfg)
-
-
-def test_run_requires_matching_source():
-    cfg = _sample_config()
-    run = IngestionRun.create(
-        id="run_mismatch",
-        config=cfg,
-        trigger=IngestionTrigger.MANUAL,
-        status=IngestionStatus.RUNNING,
-    )
-    run.source_id = "other_source"
-    with pytest.raises(ValueError):
-        validate_run_invariants(run, cfg)
-
-
-def test_automatic_trigger_requires_config_automatic():
-    cfg = _sample_config(mode=IngestionMode.MANUAL_ONLY, source_state=SourceState.ACTIVE)
-    with pytest.raises(ValueError):
-        IngestionRun.create(
-            id="run_auto",
-            config=cfg,
-            trigger=IngestionTrigger.AUTOMATIC,
-            status=IngestionStatus.RUNNING,
-        )

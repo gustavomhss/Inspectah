@@ -1,0 +1,15 @@
+{
+  "source": {
+    "id": "s9_src_glp_anp",
+    "name": "ANP GLP RJ",
+    "type": "precos_api_simples",
+    "info_type": "C2_comparacao_simples",
+    "url_base": "fixture://glp_anp",
+    "selected_fields": ["produto", "cidade", "bairro", "valor", "moeda"],
+    "params": {"coverage": "RJ", "fonte": "ANP"}
+  },
+  "items": [
+    {"id": "anp_glp_capital", "produto": "glp13kg", "cidade": "rio de janeiro", "bairro": "copacabana", "valor": 108.0, "moeda": "BRL"},
+    {"id": "anp_glp_baixada", "produto": "glp13kg", "cidade": "duque de caxias", "bairro": "centro", "valor": 102.5, "moeda": "BRL"}
+  ]
+}

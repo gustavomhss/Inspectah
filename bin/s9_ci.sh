@@ -17,7 +17,7 @@ STEPS=(
 
 for step in "${STEPS[@]}"; do
   echo "[S9_CI] Executando ${step}"
-  if ! "$ROOT/${step}"; then
+  if ! "${ROOT}/${step}"; then
     echo "[S9_CI] ${step} falhou" >&2
     exit 1
   fi

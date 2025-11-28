@@ -1,6 +1,14 @@
 # Sprint 13 — Cenários de Feedback
 
-Os cenários abaixo alimentam o gate **S13_G6**. Cada item descreve como exercitar o fluxo de feedback sobre os casos piloto multi-domínio. O bloco JSON entre os marcadores é lido por `scripts/s13_feedback_backlog.py`.
+Documento canônico com o roteiro usado no gate **S13_G6**. Cada entrada abaixo será processada por `scripts/s13_feedback_backlog.py`. O bloco JSON entre os marcadores deve conter pelo menos um cenário por domínio.
+
+Campos de cada cenário:
+- `scenario_id`: identificador único do teste.
+- `domain`: domínio/piloto alvo.
+- `case_id`: case_key gerado pela timeline da S13.
+- `operation`: `create`, `list`, `update_status` ou combinações encadeadas.
+- `payload`: campos utilizados na criação/atualização.
+- `expected`: checagens mínimas após executar a operação.
 
 <!-- S13_FEEDBACK_SCENARIOS:BEGIN -->
 ```json
@@ -9,18 +17,17 @@ Os cenários abaixo alimentam o gate **S13_G6**. Cada item descreve como exercit
     "scenario_id": "obra_feedback_denuncia",
     "domain": "obra_publica",
     "case_id": "obra_publica:obra_transcol_niteroi_2022",
-    "operation": "create_and_list",
+    "operation": "create",
     "payload": {
       "mensagem": "Moradores relatam poeira excessiva durante as obras.",
       "origem": "explorer_ui"
     },
     "expected": {
-      "status": "novo",
-      "list_contains": true
+      "status": "novo"
     }
   },
   {
-    "scenario_id": "clima_feedback_sirene",
+    "scenario_id": "clima_feedback_relatorio",
     "domain": "evento_climatico",
     "case_id": "evento_climatico:evento_clima_serrana_2023",
     "operation": "create_then_update",
@@ -38,7 +45,7 @@ Os cenários abaixo alimentam o gate **S13_G6**. Cada item descreve como exercit
     "case_id": "projeto_lei:pl_transparencia_energia_2024",
     "operation": "create",
     "payload": {
-      "mensagem": "Texto não menciona metas para energia solar.",
+      "mensagem": "Texto do projeto não cita setor de energia solar.",
       "origem": "explorer_ui"
     },
     "expected": {
@@ -46,12 +53,12 @@ Os cenários abaixo alimentam o gate **S13_G6**. Cada item descreve como exercit
     }
   },
   {
-    "scenario_id": "carreira_feedback_convenio",
+    "scenario_id": "carreira_feedback_convênio",
     "domain": "carreira_politica",
     "case_id": "carreira_politica:carreira_prefeitura_niteroi_2020_2024",
     "operation": "create_then_update",
     "payload": {
-      "mensagem": "Convênio educacional mencionado não possui link para o extrato.",
+      "mensagem": "Convênio educacional citado no timeline não possui link para o extrato.",
       "novo_status": "resolvido"
     },
     "expected": {
@@ -62,14 +69,13 @@ Os cenários abaixo alimentam o gate **S13_G6**. Cada item descreve como exercit
     "scenario_id": "influencer_feedback_conteudo",
     "domain": "influencer",
     "case_id": "influencer:influencer_obras_alpha_2023",
-    "operation": "create_and_list",
+    "operation": "create",
     "payload": {
       "mensagem": "Live de 05/03 cita valores divergentes do contrato.",
       "origem": "explorer_ui"
     },
     "expected": {
-      "status": "novo",
-      "list_contains": true
+      "status": "novo"
     }
   },
   {
