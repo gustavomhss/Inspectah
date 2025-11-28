@@ -8,7 +8,77 @@ from fastapi import APIRouter, HTTPException
 from . import service
 from .schemas import SourceCreateRequest
 
+# Dashboard/admin overview endpoints
 
+dashboard_router = APIRouter(prefix="/admin", tags=["admin-dashboard"])
+
+
+@dashboard_router.get("/health")
+def get_health() -> Dict[str, Any]:
+    """Retorna saúde básica para a UI de admin."""
+    sources = service.list_sources()
+    sources_total = len(sources)
+    return {
+        "health": {
+            "sources_total": sources_total,
+            "sources_healthy": sources_total,
+            "sources_degraded": 0,
+            "cases_total": 0,
+            "cases_attention": 0,
+            "cases_stable": 0,
+            "integrations": {},
+        }
+    }
+
+
+@dashboard_router.get("/cases")
+def list_cases() -> Dict[str, Any]:
+    """Lista casos/temas para o painel; devolve vazio por padrão."""
+    return {"cases": []}
+
+
+@dashboard_router.get("/cases/{case_id}")
+def get_case(case_id: str) -> Dict[str, Any]:
+    """Detalhe mínimo para evitar 404 na UI."""
+    return {
+        "case": {
+            "id": case_id,
+            "title": "Caso não definido",
+            "category": "indefinido",
+            "status": "estavel",
+            "risk": "baixo",
+            "updated_at": "",
+            "key_sources": [],
+            "description": "Caso ainda não está configurado no backend.",
+            "top_evidence": [],
+        }
+    }
+
+
+@dashboard_router.get("/cases/{case_id}/timeline")
+def get_case_timeline(case_id: str) -> Dict[str, Any]:
+    return {"timeline": {"case_id": case_id, "events": []}}
+
+
+@dashboard_router.get("/cases/{case_id}/xray")
+def get_case_xray(case_id: str) -> Dict[str, Any]:
+    return {
+        "xray": {
+            "case_id": case_id,
+            "title": "Caso não definido",
+            "category": "indefinido",
+            "status": "estavel",
+            "risk": "baixo",
+            "summary": "Raio-X não disponível para este caso.",
+            "debunker": {"risk_level": None, "explanation": "", "flags": [], "last_evaluated_at": None},
+            "committees": {"summary": "", "decisions": []},
+            "anchors": {"summary": "", "anchors": []},
+            "evidences": {"summary": "", "evidences": []},
+        }
+    }
+
+
+# Admin de fontes (compatibilidade com UI atual)
 router = APIRouter(prefix="/admin/sources", tags=["admin-sources"])
 
 

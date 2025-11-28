@@ -13,9 +13,10 @@ from .explore.api import build_router
 from .ui.consultation_api import router as consultation_router
 # Routers carregados individualmente para que uma falha não silencie as demais rotas admin
 try:  # pragma: no cover
-    from app.admin.routes import router as admin_router
+    from app.admin.routes import dashboard_router, router as admin_router
 except ModuleNotFoundError:  # pragma: no cover
     admin_router = None
+    dashboard_router = None
 try:  # pragma: no cover
     from app.auth.routes import router as auth_router
 except ModuleNotFoundError:  # pragma: no cover
@@ -82,6 +83,8 @@ def build_app():  # pragma: no cover
 
     if admin_router is not None:
         app.include_router(admin_router)
+    if dashboard_router is not None:
+        app.include_router(dashboard_router)
     if sources_router is not None:
         app.include_router(sources_router)
     if ingestion_router is not None:

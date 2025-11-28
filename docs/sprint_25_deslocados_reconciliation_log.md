@@ -13,6 +13,7 @@
 - Sincronizei configs e dados da S25 (`configs/promotion_policies`, `configs/threatmodel`, `configs/profiles/confidence_profiles.json`, `data/s25`, dashboards) e scripts S25 (`bin/s25_g0`..`bin/s25_g7`, `bin/s25_make_bundle.sh`, `bin/s25_orr.sh`).
 - Adicionei pacotes/tests da S25 (context, layers, policies, threatmodel, truth, truthdb, fixtures, console tests).
 - Console frontend: `useAgentsFlow` normaliza payload fraco/[] e sempre constrói camadas fixas para evitar quebra da UI quando o arquivo não existe ou tem formato livre.
+- Console/admin UI: expostos endpoints mínimos de admin (`/admin/health`, `/admin/cases`, `/admin/cases/{id}`, timeline/xray) para alinhar com o frontend e remover 404/Not Found.
 
 ## Sanidade executada
 - `pytest tests/api/test_console_agents_flow.py` — OK
