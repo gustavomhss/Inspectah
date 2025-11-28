@@ -23,12 +23,9 @@ export function useAgentsFlow() {
     setError(null);
     try {
       const data = await getAgentsFlow(token || undefined);
-      setLayers(
-        data.map((l) => ({
-          ...l,
-        })),
-      );
-      logEvent('admin.agents_flow_loaded', { count: data.length });
+      const normalized = normalizeFlow(data);
+      setLayers(normalized);
+      logEvent('admin.agents_flow_loaded', { count: normalized.length });
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -165,6 +162,77 @@ export function useAgentsFlow() {
   );
 
   return value;
+}
+
+function normalizeFlow(data: unknown): EditableLayer[] {
+  const arrayData = Array.isArray(data) ? data : [];
+  const safeLayers: EditableLayer[] = arrayData.map((raw, idx) => {
+    const item = (raw || {}) as Record<string, unknown>;
+    const layerType = isValidLayerType(item.layer_type) ? item.layer_type : 'intermediate_layer';
+    const agentIds = Array.isArray(item.agent_ids) ? item.agent_ids.map(String) : [];
+    const mediator = typeof item.mediator_agent_id === 'string' ? item.mediator_agent_id : '';
+    const description = typeof item.description === 'string' ? item.description : '';
+    const name = typeof item.name === 'string' ? item.name : `Camada ${idx + 1}`;
+    const id = typeof item.id === 'string' ? item.id : `layer_${idx + 1}`;
+    const layerIndex = typeof item.layer_index === 'number' ? item.layer_index : idx + 1;
+    const createdAt = typeof item.created_at === 'string' ? item.created_at : undefined;
+    const updatedAt = typeof item.updated_at === 'string' ? item.updated_at : undefined;
+
+    return {
+      id,
+      name,
+      description,
+      layer_type: layerType,
+      layer_index: layerIndex,
+      agent_ids: agentIds,
+      mediator_agent_id: mediator,
+      created_at: createdAt,
+      updated_at: updatedAt,
+    };
+  });
+
+  const base = ensureFixedLayers(safeLayers);
+  return reindex(base);
+}
+
+function ensureFixedLayers(layers: EditableLayer[]): EditableLayer[] {
+  const findByType = (type: FlowLayerType) => layers.find((l) => l.layer_type === type);
+
+  const interpretation = findByType('interpretation_layer') || buildDefaultLayer('interpretation_layer', 1);
+  const classification = findByType('classification_layer') || buildDefaultLayer('classification_layer', 2);
+  const decision = findByType('decision_maker_layer') || buildDefaultLayer('decision_maker_layer', layers.length + 1);
+  const librarian = findByType('librarian_layer') || buildDefaultLayer('librarian_layer', layers.length + 2);
+
+  const intermediates = layers.filter((l) => l.layer_type === 'intermediate_layer');
+  return [interpretation, classification, ...intermediates, decision, librarian];
+}
+
+function buildDefaultLayer(layerType: FlowLayerType, idx: number): EditableLayer {
+  const names: Record<FlowLayerType, string> = {
+    interpretation_layer: 'Interpretação',
+    classification_layer: 'Classificação',
+    decision_maker_layer: 'Decision Maker',
+    librarian_layer: 'Librarian',
+  };
+  return {
+    id: `layer_${layerType}_${idx}`,
+    name: names[layerType] || `Camada ${idx}`,
+    description: '',
+    layer_type: layerType,
+    layer_index: idx,
+    agent_ids: [],
+    mediator_agent_id: '',
+  };
+}
+
+function isValidLayerType(value: unknown): value is FlowLayerType | 'intermediate_layer' {
+  return (
+    value === 'interpretation_layer' ||
+    value === 'classification_layer' ||
+    value === 'decision_maker_layer' ||
+    value === 'librarian_layer' ||
+    value === 'intermediate_layer'
+  );
 }
 
 function reindex(layers: EditableLayer[]): EditableLayer[] {
