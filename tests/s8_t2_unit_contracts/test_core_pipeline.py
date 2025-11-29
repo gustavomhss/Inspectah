@@ -112,9 +112,11 @@ def test_parse_query_detects_all_main_types():
     fact = parse_query("Político João Silva foi condenado no caso Lava Jato?")
     out = parse_query("Quem vai ganhar a eleição ano que vem?")
 
-    assert agg.query_type == "agregacao_simples"
+    # Após a S9, preço médio passou a ter tipo específico (preco_medio),
+    # e checagem factual usa o tipo detalhado.
+    assert agg.query_type == "preco_medio"
     assert comp.query_type == "comparacao_simples"
-    assert fact.query_type == "checagem_factual_simples"
+    assert fact.query_type == "checagem_factual"
     assert out.query_type == "fora_de_escopo"
 
 
