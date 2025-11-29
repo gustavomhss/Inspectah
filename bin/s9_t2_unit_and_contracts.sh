@@ -19,11 +19,13 @@ if [[ ! -x "$PY_BIN" ]]; then
   PY_BIN="python3"
 fi
 
-if PYTHONPATH=. "$PY_BIN" -m pytest tests/s9_t2_unit_contracts -q >"$PYTEST_LOG" 2>&1; then
-  TEST_STATUS="PASS"
-else
-  TEST_STATUS="FAIL"
+PYTHONPATH=. "$PY_BIN" -m pytest tests/s9_t2_unit_contracts -q 2>&1 | tee "$PYTEST_LOG"
+TEST_STATUS=${PIPESTATUS[0]}
+if [[ "$TEST_STATUS" -ne 0 ]]; then
   STATUS="FAIL"
+  TEST_STATUS="FAIL"
+else
+  TEST_STATUS="PASS"
 fi
 
 python3 - "$SUMMARY_FILE" "$SCORECARD_FILE" "$PYTEST_LOG" "$STATUS" "$TIMESTAMP" <<'PY'
