@@ -3,7 +3,7 @@ set -euo pipefail
 
 ROOT_DIR="$(git rev-parse --show-toplevel)"
 cd "$ROOT_DIR"
-export NET=0
+export NET="${NET:-0}"
 
 EVIDENCE_DIR="$ROOT_DIR/out/evidence/S9_T2_unit_and_contracts"
 SCORECARDS_DIR="$ROOT_DIR/out/scorecards"
@@ -14,8 +14,12 @@ TIMESTAMP="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 
 mkdir -p "$EVIDENCE_DIR" "$SCORECARDS_DIR"
 STATUS="PASS"
+PY_BIN="$ROOT_DIR/.venv/bin/python"
+if [[ ! -x "$PY_BIN" ]]; then
+  PY_BIN="python3"
+fi
 
-if PYTHONPATH=. .venv/bin/python -m pytest tests/s9_t2_unit_contracts -q >"$PYTEST_LOG" 2>&1; then
+if PYTHONPATH=. "$PY_BIN" -m pytest tests/s9_t2_unit_contracts -q >"$PYTEST_LOG" 2>&1; then
   TEST_STATUS="PASS"
 else
   TEST_STATUS="FAIL"
