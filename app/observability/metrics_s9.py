@@ -18,8 +18,9 @@ def record_user_query(info_type: str, scenario_id: str, outcome: str, duration_s
     _user_latency[latency_key].append(duration_seconds)
 
 
-def record_admin_action(action: str) -> None:
-    key = (action,)
+def record_admin_action(action: str, **labels) -> None:
+    extra = tuple(f"{k}:{labels[k]}" for k in sorted(labels)) if labels else ()
+    key = (action, *extra)
     _admin_actions_total[key] += 1
 
 

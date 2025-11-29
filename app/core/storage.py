@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import uuid
+import unicodedata
 from dataclasses import asdict, is_dataclass
 from datetime import datetime
 from pathlib import Path
@@ -215,7 +216,9 @@ def list_items_by_filter(
 def _normalize(value: Any) -> str:
     if value is None:
         return ""
-    return str(value).strip().lower()
+    text = str(value).strip().lower()
+    text = unicodedata.normalize("NFKD", text)
+    return "".join(ch for ch in text if not unicodedata.combining(ch))
 
 
 def save_evidence_bundle(bundle: EvidenceBundle) -> Path:

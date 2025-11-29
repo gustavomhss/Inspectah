@@ -34,6 +34,7 @@ def run_pipeline(user_query: str) -> UserResponse:
         "entities": parsed.entities,
     }
     scenario_tag = scenario_from_info_type(parsed.info_type)
+    num_sources = bundle.meta.get("num_sources", 0)
     try:
         gpt_answer = gpt_run_query(
             info_type=parsed.info_type,
@@ -42,9 +43,18 @@ def run_pipeline(user_query: str) -> UserResponse:
             scenario_tag=scenario_tag,
             user_query=user_query,
         )
+    except TypeError:
+        gpt_answer = gpt_run_query(bundle, user_query, parsed.query_type)
     except Exception:
         metrics_s9.record_error("gpt", "run_failure")
         raise
+    confidence_flags = dict(gpt_answer.confidence_flags or {})
+    reasons = confidence_flags.get("reasons") or []
+    if num_sources <= 1:
+        confidence_flags["level"] = "low"
+        if isinstance(reasons, list):
+            reasons.append("poucas_fontes")
+        confidence_flags["reasons"] = reasons
     status = _determine_status(gpt_answer, parsed, bundle, items)
 
     response_id = storage.generate_entity_id("s9_resp")
@@ -58,7 +68,8 @@ def run_pipeline(user_query: str) -> UserResponse:
         answer_text=gpt_answer.answer_text,
         summary={
             **gpt_answer.summary_structured,
-            "num_sources": bundle.meta.get("num_sources", 0),
+            "num_sources": num_sources,
+            "sources_count": num_sources,
             "bundle_id": bundle.id,
         },
         evidence={
@@ -77,7 +88,7 @@ def run_pipeline(user_query: str) -> UserResponse:
             ][:10],
         },
         status=status,
-        confidence=gpt_answer.confidence_flags,
+        confidence=confidence_flags,
         limitations=gpt_answer.limitations,
         raw_gpt_payload=gpt_answer.prompt_used,
     )
@@ -113,7 +124,7 @@ def _determine_status(answer: Any, parsed: ParsedQuery, bundle: EvidenceBundle, 
         return resolution  # type: ignore[return-value]
     if parsed.query_type == "fora_de_escopo":
         return "fora_de_escopo"
-    if bundle.meta.get("num_sources", 0) < 2:
+    if bundle.meta.get("num_sources", 0) == 0:
         return "dados_insuficientes"
     return "ok" if any(True for _ in items) else "dados_insuficientes"
 

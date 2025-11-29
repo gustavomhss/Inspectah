@@ -230,7 +230,30 @@ def _load_fixture_records_for_source(source_id: str) -> List[Dict[str, Any]]:
 
 def _load_fixture_payload(path: Path) -> tuple[Dict[str, Any], List[Dict[str, Any]]]:
     data = json.loads(path.read_text(encoding="utf-8"))
-    return data["source"], data.get("items", [])
+    if "source" in data:
+        return data["source"], data.get("items", [])
+
+    # Fallback para fixtures antigas que só trazem source_id/info_type/items
+    source_id = data.get("source_id") or path.stem
+    info_type = data.get("info_type")
+    params = data.get("params", {})
+    if info_type:
+        params.setdefault("info_type", info_type)
+    source_meta = {
+        "id": source_id,
+        "name": data.get("source_name", source_id),
+        "type": data.get("source_type", "precos_api_simples"),
+        "url_base": data.get("url_base", f"fixture://{source_id}"),
+        "selected_fields": data.get("selected_fields"),
+        "params": params,
+        "auth_token": data.get("auth_token"),
+        "is_active": data.get("is_active", True),
+    }
+    if not source_meta["selected_fields"]:
+        items = data.get("items", [])
+        if items:
+            source_meta["selected_fields"] = list(items[0].keys())
+    return source_meta, data.get("items", [])
 
 
 def _ingest_items(source_id: str, items: List[Dict[str, Any]]) -> None:

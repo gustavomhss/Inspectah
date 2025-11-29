@@ -8,13 +8,14 @@ fi
 EVID_DIR="$OUT/evidence/T5_1_confidence"
 SCORECARD="$OUT/scorecards/T5_1_confidence.json"
 REPORT="$EVID_DIR/audit_report.json"
+CALIBRATION="$EVID_DIR/calibration_dataset.json"
 rm -rf "$EVID_DIR"
 mkdir -p "$EVID_DIR" "$OUT/scorecards"
 TMP_DB="$(mktemp "${TMPDIR:-/tmp}/inspectah_t5_1_XXXXXX")"
 trap 'rm -f "$TMP_DB"' EXIT
 export INSPECTAH_DB_PATH="$TMP_DB"
 PYTHONPATH="src:${PYTHONPATH:-}"
-python3 -m confidence_engine.audit_runner --config-dir "configs/sources" --db-path "$TMP_DB" --report "$REPORT"
+python3 -m confidence_engine.audit_runner --config-dir "configs/sources" --db-path "$TMP_DB" --report "$REPORT" --calibration "$CALIBRATION"
 python3 - <<'PY' "$REPORT" "$SCORECARD"
 import json
 import sys

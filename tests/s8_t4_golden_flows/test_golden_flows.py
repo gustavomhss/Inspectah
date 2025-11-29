@@ -13,7 +13,7 @@ SCENARIOS = [
 ]
 
 
-@pytest.fixture(scope="module", autouse=True)
+@pytest.fixture(autouse=True)
 def _sandbox(tmp_path_factory, monkeypatch):
     data_dir = tmp_path_factory.mktemp("evidence")
     monkeypatch.setenv("INSPECTAH_DATA_DIR", str(data_dir))

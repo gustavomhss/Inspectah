@@ -31,7 +31,7 @@ run_step "compile_app" python3 -m compileall "$ROOT_DIR/app"
 run_step "compile_tests_s8" python3 -m compileall "$ROOT_DIR/tests/s8_t2_unit_contracts" "$ROOT_DIR/tests/s8_t3_property"
 
 secret_log="$EVIDENCE_DIR/secret_scan.log"
-if ROOT_DIR="$ROOT_DIR" python3 - "$ROOT_DIR" >"$secret_log" 2>&1 <<'PY'; then
+if ROOT_DIR="$ROOT_DIR" python3 - "$ROOT_DIR" >"$secret_log" 2>&1 <<'PY'
 import os
 import re
 from pathlib import Path
