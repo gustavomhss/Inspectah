@@ -19,7 +19,7 @@ def record_user_query(info_type: str, scenario_id: str, outcome: str, duration_s
 
 
 def record_admin_action(action: str, **labels) -> None:
-    extra = tuple(f"{k}:{labels[k]}" for k in sorted(labels)) if labels else ()
+    extra = tuple(f"{k}={labels[k]}" for k in sorted(labels)) if labels else ()
     key = (action, *extra)
     _admin_actions_total[key] += 1
 
@@ -30,12 +30,37 @@ def record_error(route: str, kind: str) -> None:
 
 
 def get_metrics_snapshot() -> Dict[str, object]:
-    return {
+    user_queries_map = {
+        f"info_type={key[0]},scenario_id={key[1]},outcome={key[2]}": value for key, value in _user_queries_total.items()
+    }
+    base = {
         "user_queries_total": _format_counter(_user_queries_total),
         "user_latency_seconds": _format_latency(_user_latency),
         "admin_actions_total": _format_counter(_admin_actions_total),
         "errors_total": _format_counter(_errors_total),
     }
+    # Compat com formato legado usado nos testes de S9
+    latency_map = {
+        f"info_type={key[0]},scenario_id={key[1]}": _latency_stats(samples)
+        for key, samples in _user_latency.items()
+    }
+    admin_map = {}
+    for key, value in _admin_actions_total.items():
+        action = key[0] if key else "unknown"
+        extras = list(key[1:]) if len(key) > 1 else []
+        parts = [f"action={action}", *extras]
+        admin_map[",".join(parts)] = value
+    error_map = {}
+    for key, value in _errors_total.items():
+        route, kind = key if len(key) == 2 else ("unknown", "unknown")
+        error_map[f"route={route},kind={kind}"] = value
+    legacy = {
+        "inspectah_s9_user_queries_total": user_queries_map,
+        "inspectah_s9_user_latency_seconds": latency_map,
+        "inspectah_s9_admin_actions_total": admin_map,
+        "inspectah_s9_errors_total": error_map,
+    }
+    return {**base, **legacy}
 
 
 def reset() -> None:
@@ -43,6 +68,11 @@ def reset() -> None:
     _user_latency.clear()
     _admin_actions_total.clear()
     _errors_total.clear()
+
+
+# Compat para suítes antigas
+def reset_metrics() -> None:
+    reset()
 
 
 def _format_counter(counter: Dict[MetricKey, int]) -> List[Dict[str, object]]:
