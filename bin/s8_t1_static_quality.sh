@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-export INSPECTAH_PARSER_LEGACY_TYPES=1
 ROOT_DIR="$(git rev-parse --show-toplevel)"
 EVIDENCE_DIR="$ROOT_DIR/out/evidence/S8_T1_static"
 SCORECARDS_DIR="$ROOT_DIR/out/scorecards"
@@ -18,8 +17,8 @@ export STATUS TIMESTAMP ROOT_DIR
 
 run_step() {
   local name="$1"
-  shift
   local log_file="$EVIDENCE_DIR/${name// /_}.log"
+  shift
   if "$@" >"$log_file" 2>&1; then
     TOOLS_INFO+="${name}::PASS::${log_file};;"
   else
@@ -42,7 +41,7 @@ targets = [root / "app"]
 patterns = [
     (re.compile(r"AKIA[0-9A-Z]{16}"), "aws_access_key"),
     (re.compile(r"-----BEGIN (?:RSA|EC|DSA) PRIVATE KEY-----"), "private_key"),
-    (re.compile(r"api[_-]?key\s*=\s*['\"][A-Za-z0-9]{20,}"), "api_key_literal"),
+    (re.compile(r"api[_-]?key\\s*=\\s*['\\\"][A-Za-z0-9]{20,}"), "api_key_literal"),
 ]
 issues = []
 for target in targets:
@@ -68,16 +67,15 @@ else
   TOOLS_INFO+="secret_scan::FAIL::${secret_log};;"
 fi
 
-export TOOLS_INFO SUMMARY_FILE MANIFEST_FILE SCORECARD_FILE
-python3 - <<'PY'
+export TOOLS_INFO
+python3 - "$SUMMARY_FILE" "$MANIFEST_FILE" "$SCORECARD_FILE" <<'PY'
 import json
 import os
+import sys
 from pathlib import Path
 
-summary_path = Path(os.environ["SUMMARY_FILE"])
-manifest_path = Path(os.environ["MANIFEST_FILE"])
-scorecard_path = Path(os.environ["SCORECARD_FILE"])
-status = os.environ["STATUS"]
+summary_path, manifest_path, scorecard_path = sys.argv[1:4]
+status = os.environ["STATUS"] if "STATUS" in os.environ else "PASS"
 timestamp = os.environ["TIMESTAMP"]
 tools_info = os.environ.get("TOOLS_INFO", "")
 tools = []
@@ -86,13 +84,17 @@ for chunk in tools_info.split(";;"):
         continue
     name, tool_status, log = chunk.split("::", 2)
     log_path = Path(log)
-    output = log_path.read_text() if log_path.exists() else ""
-    tools.append({
-        "name": name,
-        "status": tool_status,
-        "log": str(log_path),
-        "output_tail": output[-4000:],
-    })
+    output = ""
+    if log_path.exists():
+        output = log_path.read_text()
+    tools.append(
+        {
+            "name": name,
+            "status": tool_status,
+            "log": str(log_path),
+            "output_tail": output[-4000:],
+        }
+    )
 
 summary = {
     "gate": "S8_T1_static",
@@ -100,21 +102,25 @@ summary = {
     "timestamp": timestamp,
     "tools": tools,
 }
-summary_path.write_text(json.dumps(summary, indent=2, ensure_ascii=False), encoding="utf-8")
+with open(summary_path, "w", encoding="utf-8") as handle:
+    json.dump(summary, handle, indent=2, ensure_ascii=False)
 
 manifest = {
     "gate": "S8_T1_static",
     "artifacts": [str(summary_path), str(manifest_path)],
 }
-manifest_path.write_text(json.dumps(manifest, indent=2, ensure_ascii=False), encoding="utf-8")
+with open(manifest_path, "w", encoding="utf-8") as handle:
+    json.dump(manifest, handle, indent=2, ensure_ascii=False)
 
 scorecard = {
     "gate_id": "S8_T1_static",
     "status": status,
     "timestamp": timestamp,
+    "inputs": {"root": os.environ.get("ROOT_DIR", "")},
     "outputs": {"summary_file": str(summary_path)},
 }
-scorecard_path.write_text(json.dumps(scorecard, indent=2, ensure_ascii=False), encoding="utf-8")
+with open(scorecard_path, "w", encoding="utf-8") as handle:
+    json.dump(scorecard, handle, indent=2, ensure_ascii=False)
 PY
 
 if [[ "$STATUS" != "PASS" ]]; then

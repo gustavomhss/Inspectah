@@ -66,7 +66,6 @@ export S8_T0_ISSUES="$(printf '%s\n' "${ISSUES[@]-}")"
 export S8_T0_SUMMARY="$SUMMARY_FILE"
 export S8_T0_SCORECARD="$SCORECARD_FILE"
 export S8_T0_MANIFEST="$MANIFEST_FILE"
-export ROOT_DIR
 
 python3 - "$SUMMARY_FILE" "$MANIFEST_FILE" "$SCORECARD_FILE" <<'PY'
 import json
@@ -108,7 +107,7 @@ scorecard.update(
     gate_id="S8_T0_scope",
     checks_total=len(split_env("S8_T0_DOCS")) + len(split_env("S8_T0_DIRS")),
     checks_failed=len(split_env("S8_T0_ISSUES")),
-    summary_file=os.path.relpath(summary_path, os.environ.get("ROOT_DIR", summary_path)),
+    summary_file=summary_path.replace(os.environ["ROOT_DIR"] if "ROOT_DIR" in os.environ else "", "").lstrip("/"),
 )
 with open(scorecard_path, "w", encoding="utf-8") as fh:
     json.dump(scorecard, fh, indent=2, ensure_ascii=False)

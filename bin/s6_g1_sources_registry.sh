@@ -16,16 +16,15 @@ OUTPUT_JSON="$EVIDENCE_DIR/sources_validation.json"
 if ! "$REPO_ROOT/bin/inspectah_sources_validate.sh" "$DOMAIN" | tee "$OUTPUT_JSON"; then
   status="FAIL"
 else
-  status=$("$PYTHON_BIN" - "$OUTPUT_JSON" <<'PY'
+  status=$("$PYTHON_BIN" - <<'PY' "$OUTPUT_JSON"
 import json, sys
 with open(sys.argv[1], encoding='utf-8') as handle:
     data = json.load(handle)
 print(data.get('status', 'FAIL'))
-PY
-)
+PY)
 fi
 
-"$PYTHON_BIN" - "$SCORECARD" "$status" "$OUTPUT_JSON" <<'PY'
+"$PYTHON_BIN" - <<'PY' "$SCORECARD" "$status" "$OUTPUT_JSON"
 import json, sys
 scorecard_path, status, output_json = sys.argv[1:4]
 try:

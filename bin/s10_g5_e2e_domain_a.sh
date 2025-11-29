@@ -57,7 +57,8 @@ if python3 - <<PY
 value=float("$valid_ratio")
 exit(0 if value >= 1.0 else 1)
 PY
-then true
+then
+  true
 else
   valid_ratio_status="FAIL"
   status="FAIL"
@@ -67,7 +68,8 @@ if python3 - <<PY
 value=float("$invalid_ratio")
 exit(0 if value >= 1.0 else 1)
 PY
-then true
+then
+  true
 else
   invalid_ratio_status="FAIL"
   status="FAIL"
@@ -77,7 +79,8 @@ if python3 - <<PY
 value=float("$audit_ratio")
 exit(0 if value >= 1.0 else 1)
 PY
-then true
+then
+  true
 else
   audit_status="FAIL"
   status="FAIL"

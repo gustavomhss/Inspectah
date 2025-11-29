@@ -1,0 +1,10 @@
+name: politics_default
+domain: politics
+min_confidence: 0.7
+min_sources: 2
+require_debunk: true
+require_human: true
+sensitive: true
+default_decision: HOLD
+metadata:
+  notes: Política conservadora para política; exige debunker e revisão humana antes de promover.

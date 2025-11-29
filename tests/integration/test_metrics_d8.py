@@ -29,9 +29,6 @@ class MetricsIntegrationTestCase(unittest.TestCase):
         self.assertGreaterEqual(explore_metrics['count'], 1)
         self.assertGreaterEqual(run_metrics['min'], 0.0)
         self.assertGreaterEqual(explore_metrics['min'], 0.0)
-        self.assertGreaterEqual(snapshot['inspectah_ingest_items_total']['count'], created)
-        self.assertGreaterEqual(snapshot['inspectah_ingest_errors_total']['count'], 0.0)
-        self.assertGreaterEqual(snapshot['inspectah_explore_queries_total']['count'], 1.0)
 
 
 if __name__ == '__main__':

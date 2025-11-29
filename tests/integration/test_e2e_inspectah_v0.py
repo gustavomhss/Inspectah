@@ -25,19 +25,19 @@ class InspectahE2ETestCase(unittest.TestCase):
     def test_end_to_end_demo_flow(self):
         fixture = 'tests/fixtures/rss_sample.xml'
         result = run_ingest_pipeline('rss_news_minimal', use_fixture=True, fixture_path=fixture)
-        assert result.items_ingested >= 1
+        self.assertGreaterEqual(result.items_ingested, 1)
 
         response = query_items()
-        assert len(response['items']) >= 1
+        self.assertGreaterEqual(len(response['items']), 1)
         first_item = response['items'][0]
         manifest_path = first_item['manifest_path']
         with open(manifest_path, 'r', encoding='utf-8') as handle:
             manifest = json.load(handle)
-        assert manifest['source_id'] == 'rss_news_minimal'
+        self.assertEqual(manifest['source_id'], 'rss_news_minimal')
 
         snapshot = get_snapshot()
-        assert snapshot['inspectah_ingest_items_total']['count'] >= result.items_ingested
-        assert snapshot['inspectah_explore_queries_total']['count'] >= 1.0
+        self.assertGreaterEqual(snapshot['inspectah_ingest_items_total']['count'], result.items_ingested)
+        self.assertGreaterEqual(snapshot['inspectah_explore_queries_total']['count'], 1.0)
 
 
 if __name__ == '__main__':

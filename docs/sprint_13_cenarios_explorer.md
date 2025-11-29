@@ -15,7 +15,7 @@ Este documento descreve o roteiro de testes automatizados usado no gate **S13_G4
     "scenario_id": "obra_search_transcol",
     "domain": "obra_publica",
     "type": "search",
-    "query": "obra_transcol_niteroi_2022",
+    "query": "Transcol Niteroi",
     "expected_case_id": "obra_publica:obra_transcol_niteroi_2022",
     "min_results": 1
   },
@@ -30,7 +30,7 @@ Este documento descreve o roteiro de testes automatizados usado no gate **S13_G4
     "scenario_id": "clima_search_serrana",
     "domain": "evento_climatico",
     "type": "search",
-    "query": "evento_clima_serrana_2023",
+    "query": "Serrana alerta INMET",
     "expected_case_id": "evento_climatico:evento_clima_serrana_2023",
     "min_results": 1
   },
@@ -45,7 +45,7 @@ Este documento descreve o roteiro de testes automatizados usado no gate **S13_G4
     "scenario_id": "pl_search_transparencia",
     "domain": "projeto_lei",
     "type": "search",
-    "query": "pl_transparencia_energia_2024",
+    "query": "Transparência contratos energia",
     "expected_case_id": "projeto_lei:pl_transparencia_energia_2024",
     "min_results": 1
   },
@@ -60,7 +60,7 @@ Este documento descreve o roteiro de testes automatizados usado no gate **S13_G4
     "scenario_id": "carreira_search_prefeitura",
     "domain": "carreira_politica",
     "type": "search",
-    "query": "carreira_prefeitura_niteroi_2020_2024",
+    "query": "Prefeito interino Niterói",
     "expected_case_id": "carreira_politica:carreira_prefeitura_niteroi_2020_2024",
     "min_results": 1
   },
@@ -75,7 +75,7 @@ Este documento descreve o roteiro de testes automatizados usado no gate **S13_G4
     "scenario_id": "influencer_search_alpha",
     "domain": "influencer",
     "type": "search",
-    "query": "influencer_obras_alpha_2023",
+    "query": "Influencer Alpha obras",
     "expected_case_id": "influencer:influencer_obras_alpha_2023",
     "min_results": 1
   },
@@ -90,7 +90,7 @@ Este documento descreve o roteiro de testes automatizados usado no gate **S13_G4
     "scenario_id": "atleta_search_bolsa",
     "domain": "atleta",
     "type": "search",
-    "query": "atleta_bolsa_esporte_2024",
+    "query": "Bolsa Esporte Beta",
     "expected_case_id": "atleta:atleta_bolsa_esporte_2024",
     "min_results": 1
   },

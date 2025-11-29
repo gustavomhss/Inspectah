@@ -67,11 +67,11 @@ summary = {
     "decision": decision,
     "risks": [
         "Monitor saúde das fontes reais quando migrarmos das fixtures.",
-        "Persistir métricas em backend dedicado em sprints futuras.",
+        "Persistir métricas em backend dedicado (Prometheus/exporter) nas próximas sprints.",
     ],
     "recommendations": [
-        "Automatizar demos/checklist usando os goldens de C1–C3.",
-        "Expandir dashboards de observabilidade contínua (metrics_s9).",
+        "Automatizar demos e checklist da Fase 8 com base nos goldens.",
+        "Priorizar conectores dinâmicos e dashboards para observabilidade contínua.",
     ],
 }
 summary_path.write_text(json.dumps(summary, indent=2, ensure_ascii=False), encoding="utf-8")

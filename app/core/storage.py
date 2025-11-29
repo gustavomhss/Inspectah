@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import uuid
+import unicodedata
 from dataclasses import asdict, is_dataclass
 from datetime import datetime
 from pathlib import Path
@@ -215,7 +216,9 @@ def list_items_by_filter(
 def _normalize(value: Any) -> str:
     if value is None:
         return ""
-    return str(value).strip().lower()
+    text = str(value).strip().lower()
+    text = unicodedata.normalize("NFKD", text)
+    return "".join(ch for ch in text if not unicodedata.combining(ch))
 
 
 def save_evidence_bundle(bundle: EvidenceBundle) -> Path:
@@ -231,7 +234,7 @@ def load_evidence_bundle(bundle_id: str) -> Optional[EvidenceBundle]:
     if not path.exists():
         return None
     data = _read_json(path)
-    items_by_source: Dict[str, List[EvidenceItemRef]] = {}
+    items_by_source = {}
     for source_id, items in data.get("items_by_source", {}).items():
         refs = [
             EvidenceItemRef(
@@ -302,5 +305,8 @@ def generate_entity_id(prefix: str) -> str:
 
 
 def ensure_fixture_sources(sources: Iterable[Source]) -> None:
+    """
+    Helper to quickly seed multiple sources in tests or fixtures.
+    """
     for source in sources:
         save_source(source)

@@ -49,9 +49,8 @@ PY
 
 python3 - <<'PY' "$EVIDENCE_DIR/pilot_snapshot.json"
 import json
-import sys
 from inspectah.truthdb.models import build_pilot_truthdb
-path = sys.argv[1]
+path = __import__("sys").argv[1]
 snapshot = build_pilot_truthdb().snapshot()
 with open(path, "w", encoding="utf-8") as fp:
     json.dump(snapshot, fp, default=str, indent=2)

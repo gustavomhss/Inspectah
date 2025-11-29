@@ -8,7 +8,7 @@ SCORECARD_PATH="$SCORECARD_DIR/S15_T8_go_no_go.json"
 
 mkdir -p "$SCORECARD_DIR" "$EVIDENCE_DIR"
 
-PYTHONPATH="$ROOT_DIR" python3 - <<'PY' "$SCORECARD_DIR" "$EVIDENCE_DIR" "$SCORECARD_PATH"
+python3 - <<'PY' "$SCORECARD_DIR" "$EVIDENCE_DIR" "$SCORECARD_PATH"
 import json
 import sys
 from datetime import datetime, timezone

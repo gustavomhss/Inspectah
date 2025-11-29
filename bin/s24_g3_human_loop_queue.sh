@@ -2,10 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd -- "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-PYTHON_BIN="${PYTHON_BIN:-python}"
-if ! command -v "${PYTHON_BIN}" >/dev/null 2>&1; then
-  PYTHON_BIN="python3"
-fi
+PYTHON_BIN="${PYTHON_BIN:-${ROOT_DIR}/.venv/bin/python}"
 export PYTHONPATH="${PYTHONPATH:-${ROOT_DIR}}"
 
 SCORECARDS_DIR="${ROOT_DIR}/out/scorecards"
@@ -15,21 +12,18 @@ DB_PATH="${INSPECTAH_S24_G3_DB_PATH:-${ROOT_DIR}/out/databases/s24_g3_queue.sqli
 mkdir -p "${SCORECARDS_DIR}" "${EVIDENCE_DIR}/logs" "${EVIDENCE_DIR}/metrics" "$(dirname "${DB_PATH}")"
 
 log_file="${EVIDENCE_DIR}/logs/human_loop.log"
+run_meta="${EVIDENCE_DIR}/run_metadata.json"
 status="GO"
 details=""
 started_at="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 start_ts=$(date +%s)
 
 set +e
-rm -f "${DB_PATH}"
-export DB_PATH_ENV="${DB_PATH}"
-export EVIDENCE_DIR_ENV="${EVIDENCE_DIR}"
 "${PYTHON_BIN}" - <<'PY' > "${log_file}" 2>&1
 import json
 import statistics
 from datetime import datetime, timedelta
 from pathlib import Path
-import os
 
 from app.debunk.models import (
     DebunkIssue,
@@ -40,8 +34,8 @@ from app.debunk.models import (
 )
 from app.debunk.repository import DebunkRepository, gen_id
 
-db_path = Path(os.environ["DB_PATH_ENV"])
-evidence_dir = Path(os.environ["EVIDENCE_DIR_ENV"])
+root = Path(__file__).resolve().parents[1]
+db_path = Path("${DB_PATH}")
 repo = DebunkRepository(db_path)
 
 now = datetime.utcnow()
@@ -129,8 +123,8 @@ metrics = {
 
 print(json.dumps({"metrics": metrics, "stale_cases": stale_cases, "db_path": str(db_path)}, indent=2, ensure_ascii=False))
 
-(evidence_dir / "metrics" / "queue_metrics.json").write_text(json.dumps(metrics, indent=2))
-(evidence_dir / "run_metadata.json").write_text(
+(Path("${EVIDENCE_DIR}") / "metrics" / "queue_metrics.json").write_text(json.dumps(metrics, indent=2))
+(Path("${EVIDENCE_DIR}") / "run_metadata.json").write_text(
     json.dumps(
         {
             "timestamp_utc": datetime.utcnow().isoformat() + "Z",

@@ -13,6 +13,7 @@ data/ingestion_raw/{source_id}/{YYYY}/{MM}/{DD}/{run_id}.ndjson
 ## 3. Metadados em SQLite
 - Tabela `ingestion_configs` (definida em G1).
 - Tabela `ingestion_runs` inclui `payload_ref` e `error_code/error_message`.
+- `repository.save_raw_payload(run_id, source_id, items)` escreve NDJSON e devolve o path que é salvo em `payload_ref`. `repository.load_raw_payload` faz o caminho inverso.
 
 ## 4. Consultas exemplo
 - Runs por fonte e janela:

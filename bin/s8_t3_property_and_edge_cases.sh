@@ -1,13 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-export INSPECTAH_PARSER_LEGACY_TYPES=1
 ROOT_DIR="$(git rev-parse --show-toplevel)"
-PYTHON_BIN="$ROOT_DIR/.venv/bin/python"
-if [[ ! -x "$PYTHON_BIN" ]]; then
-  PYTHON_BIN="python3"
-fi
-
 EVIDENCE_DIR="$ROOT_DIR/out/evidence/S8_T3_property"
 SCORECARDS_DIR="$ROOT_DIR/out/scorecards"
 SUMMARY_FILE="$EVIDENCE_DIR/summary.json"
@@ -19,7 +13,7 @@ TIMESTAMP="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 mkdir -p "$EVIDENCE_DIR" "$SCORECARDS_DIR"
 
 STATUS="PASS"
-if ! (cd "$ROOT_DIR" && PYTHONPATH="$ROOT_DIR" "$PYTHON_BIN" -m pytest tests/s8_t3_property -q >"$LOG_FILE" 2>&1); then
+if ! (cd "$ROOT_DIR" && PYTHONPATH="$ROOT_DIR" pytest tests/s8_t3_property -q >"$LOG_FILE" 2>&1); then
   STATUS="FAIL"
 fi
 
@@ -37,8 +31,11 @@ summary_path = Path(os.environ["SUMMARY_FILE"])
 manifest_path = Path(os.environ["MANIFEST_FILE"])
 scorecard_path = Path(os.environ["SCORECARD_FILE"])
 
-log_text = log_file.read_text() if log_file.exists() else ""
-properties_checked = re.findall(r"::(test_[^ ]+)", log_text)
+log_text = ""
+if log_file.exists():
+    log_text = log_file.read_text()
+
+properties_checked = re.findall(r"::(test_[^ ]+) ", log_text)
 
 summary = {
     "gate": "S8_T3_property",

@@ -1,0 +1,15 @@
+{
+  "source": {
+    "id": "s9_src_cesta_sp_retail",
+    "name": "Encarte Digital SP Retail",
+    "type": "precos_api_simples",
+    "info_type": "C1_preco_medio",
+    "url_base": "fixture://encarte_sp",
+    "selected_fields": ["produto", "cidade", "valor", "moeda"],
+    "params": {"coverage": "SP", "canal": "retail"}
+  },
+  "items": [
+    {"id": "it_sp_encarte_1", "produto": "cesta_basica_sp", "cidade": "sao paulo", "valor": 125.0, "moeda": "BRL", "info_type": "preco"},
+    {"id": "it_sp_encarte_2", "produto": "cesta_basica_sp", "cidade": "sao paulo", "valor": 126.4, "moeda": "BRL", "info_type": "preco"}
+  ]
+}

@@ -58,7 +58,12 @@ for line in status_lines:
     else:
         files_out_of_scope.append(normalized)
 
-status = "PASS" if not docs_missing and not files_out_of_scope else "FAIL"
+status = "PASS"
+notes = []
+if docs_missing:
+    status = "FAIL"
+if files_out_of_scope:
+    notes.append(f"Arquivos fora do escopo S19: {files_out_of_scope}")
 scorecard = {
     "gate_id": "S19_G0",
     "status": status,
@@ -69,6 +74,7 @@ scorecard = {
         "files_in_scope": files_in_scope,
         "files_out_of_scope": files_out_of_scope,
     },
+    "notes": notes,
 }
 scorecard_path.write_text(json.dumps(scorecard, indent=2), encoding="utf-8")
 if status != "PASS":

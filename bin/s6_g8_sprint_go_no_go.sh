@@ -23,8 +23,7 @@ CARD_PATHS=(
 )
 
 SUMMARY_MD="$EVIDENCE_DIR/summary.md"
-FINAL_STATUS=$(
-"$PYTHON_BIN" - "$SCORECARD" "$SUMMARY_MD" "${CARD_PATHS[@]}" <<'PY'
+FINAL_STATUS=$("$PYTHON_BIN" - <<'PY' "$SCORECARD" "$SUMMARY_MD" "${CARD_PATHS[@]}"
 import json, sys
 scorecard_path, summary_md, *paths = sys.argv[1:]
 statuses = {}
@@ -47,8 +46,7 @@ json.dump({
     },
 }, open(scorecard_path, 'w', encoding='utf-8'), indent=2)
 print(final)
-PY
-)
+PY)
 
 echo "Decision: $FINAL_STATUS" >> "$SUMMARY_MD"
 

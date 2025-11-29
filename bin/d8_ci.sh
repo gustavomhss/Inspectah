@@ -1,9 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 OUT="${ORR_OUTDIR:-out}"
-if [[ "$OUT" != /* ]]; then
-  OUT="$(pwd)/$OUT"
-fi
 TIMESTAMP=$(date -u +"%Y%m%d-%H%M%S")
 RUN_DIR="$OUT/evidence/D8_smoke_run_$TIMESTAMP"
 BUNDLE_ZIP="$OUT/evidence/D8_smoke_bundle_$TIMESTAMP.zip"
@@ -22,7 +19,6 @@ bin/orr_t3.sh
 python3 - <<'PY' "$RUN_DIR" "$METRICS_PATH" "$SUMMARY_PATH" "$LATEST_METRICS" "$FIXTURE"
 import json
 import shutil
-import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -32,25 +28,23 @@ from inspectah.models import fetch_items_by_source, get_connection, init_db, res
 from inspectah.watchers import run_once_for_source
 from inspectah.explore.api import query_items
 
-run_dir = Path(sys.argv[1])
-metrics_path = Path(sys.argv[2])
-summary_path = Path(sys.argv[3])
-latest_metrics_path = Path(sys.argv[4])
-fixture = sys.argv[5]
+run_dir, metrics_path, summary_path, latest_metrics_path, fixture = [Path(arg) if i < 4 else Path(arg) for i, arg in enumerate(__import__('sys').argv[1:5])] + [__import__('sys').argv[5]]
 reset_db()
 if EVIDENCE_DIR.exists():
     shutil.rmtree(EVIDENCE_DIR)
 EVIDENCE_DIR.mkdir(parents=True, exist_ok=True)
 init_db()
 reset_metrics()
-created = run_once_for_source('rss_news_minimal', use_fixture=True, fixture_path=fixture)
+created = run_once_for_source('rss_news_minimal', use_fixture=True, fixture_path=str(fixture))
 query = query_items()
 snapshot = get_snapshot()
 metrics_path.write_text(json.dumps(snapshot, indent=2), encoding='utf-8')
 latest_metrics_path.write_text(json.dumps(snapshot, indent=2), encoding='utf-8')
 with get_connection() as conn:
     items = fetch_items_by_source(conn, 'rss_news_minimal')
-manifest_path = Path(items[0]['manifest_path']) if items else None
+manifest_path = None
+if items:
+    manifest_path = Path(items[0]['manifest_path'])
 summary = {
     'timestamp': datetime.now(timezone.utc).isoformat(),
     'items_created': created,
@@ -62,10 +56,17 @@ if manifest_path:
     target = run_dir / 'sample_manifest'
     if target.exists():
         shutil.rmtree(target)
-    shutil.copytree(manifest_path.parent, target, dirs_exist_ok=True)
+    target.mkdir(parents=True, exist_ok=True)
+    for file_path in manifest_path.parent.iterdir():
+        if file_path.is_file():
+            shutil.copy(file_path, target / file_path.name)
 PY
 cp out/evidence/T2_unit/unittest.log "$RUN_DIR/T2_unit.log"
 cp out/evidence/T3_contract/unittest.log "$RUN_DIR/T3_contract.log"
+SAMPLE_MANIFEST=$(find data/evidence/rss_news_minimal -name manifest.json | head -n 1 || true)
+if [[ -n "$SAMPLE_MANIFEST" ]]; then
+  cp "$SAMPLE_MANIFEST" "$RUN_DIR/rss_manifest.json"
+fi
 python3 - <<'PY' "$RUN_DIR"
 import hashlib
 import json
@@ -85,17 +86,16 @@ BUNDLE_SHA=$(shasum -a 256 "$BUNDLE_ZIP" | awk '{print $1}')
 FINISH=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 python3 - <<'PY' "$LATEST_INFO" "$BUNDLE_ZIP" "$BUNDLE_SHA" "$RUN_DIR" "$SUMMARY_PATH" "$METRICS_PATH"
 import json
-import sys
 from pathlib import Path
-info_path = Path(sys.argv[1])
+info_path, bundle_path, bundle_sha, run_dir, summary_path, metrics_path = [Path(arg) if i!=1 else arg for i, arg in enumerate(__import__('sys').argv[1:7])]
 data = {
-    "bundle_zip": sys.argv[2],
-    "bundle_sha256": sys.argv[3],
-    "bundle_dir": sys.argv[4],
-    "summary_path": sys.argv[5],
-    "metrics_path": sys.argv[6],
+    "bundle_zip": bundle_path,
+    "bundle_sha256": bundle_sha,
+    "bundle_dir": run_dir,
+    "summary_path": summary_path,
+    "metrics_path": metrics_path,
 }
-info_path.write_text(json.dumps(data, indent=2), encoding='utf-8')
+info_path.write_text(json.dumps({k: str(v) if isinstance(v, Path) else v for k, v in data.items()}, indent=2), encoding='utf-8')
 PY
 python3 - <<'PY' "$SCORECARD" "$BUNDLE_ZIP" "$BUNDLE_SHA" "$START" "$FINISH"
 import json

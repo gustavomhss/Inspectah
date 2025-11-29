@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Literal, Optional
 
-from .query_types import InfoType, QueryType
+from .query_types import InfoType, LegacyQueryType, QueryType
 
 SourceType = Literal["precos_api_simples", "noticias_rss_simplificado", "outros"]
 QueryStatus = Literal["ok", "dados_insuficientes", "erro", "fora_de_escopo"]
@@ -31,8 +31,8 @@ class Source:
     id: str
     name: str
     type: SourceType
+    config: SourceConfig
     info_type: InfoType = "fora_de_escopo"
-    config: SourceConfig = field(default_factory=lambda: SourceConfig(url_base=""))
     is_active: bool = True
     status: SourceStatus = field(default_factory=SourceStatus)
 
@@ -86,10 +86,11 @@ class QueryLog:
 @dataclass
 class ParsedQuery:
     raw_query: str
-    query_type: QueryType
+    query_type: LegacyQueryType
     info_type: InfoType
     entities: Dict[str, Any]
     filters: Dict[str, Any]
+    detailed_type: QueryType
 
 
 @dataclass

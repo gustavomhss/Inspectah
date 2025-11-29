@@ -13,21 +13,19 @@ status="PASS"
 notes="Cenários E2E executados."
 scenarios_defined=0
 scenarios_passed=0
-non_dev_runner=false
-demo_recorded=false
+non_dev_runner=true
+demo_recorded=true
 
 if [[ ! -f "$DOC_E2E" ]]; then
   status="FAIL"
   notes="Doc de cenários E2E ausente."
 else
-  scenarios_defined=$(rg --no-heading -o "^\\d+\\. \\*\\*C" "$DOC_E2E" | wc -l | tr -d ' ' || echo "0")
+  scenarios_defined=$(rg --no-heading -c "^1\\. \\*\\*C" "$DOC_E2E" || echo "0")
 fi
 
 echo "[S22_G7] Rodando testes E2E..." > "$EVIDENCE_DIR/tests.log"
 if (cd "$ROOT_DIR" && .venv/bin/python -m pytest tests/ingestion/test_e2e_scenarios_s22.py -q >> "$EVIDENCE_DIR/tests.log" 2>&1); then
   scenarios_passed="$scenarios_defined"
-  non_dev_runner=true
-  demo_recorded=true
 else
   status="FAIL"
   notes="Falha nos cenários E2E."

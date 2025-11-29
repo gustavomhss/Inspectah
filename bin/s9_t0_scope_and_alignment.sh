@@ -57,15 +57,18 @@ check_patterns() {
     shift
     local needle="${entry%%|||*}"
     local label="${entry#*|||}"
-    needle="${needle#||}"; needle="${needle#|}"
-    label="${label#||}"; label="${label#|}"
-    needle="${needle# }"; label="${label# }"
+    needle="${needle#"${needle%%[![:space:]]*}"}"
+    label="${label#"${label%%[![:space:]]*}"}"
+    needle="${needle#||}"
+    needle="${needle#|}"
+    label="${label#||}"
+    label="${label#|}"
     if rg -q --fixed-strings "$needle" "$target_file"; then
       record_ok "$label"
     else
       record_fail "$label"
     fi
-done
+  done
 }
 
 check_patterns "docs/sprint_9_capitulo_1.md" \

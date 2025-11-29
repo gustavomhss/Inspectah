@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from dataclasses import asdict, is_dataclass
 from datetime import datetime
-from typing import Optional
+from typing import Any, Optional
 
 try:  # pragma: no cover
-    from fastapi import APIRouter, Depends, HTTPException, Query, status
+    from fastapi import APIRouter, Body, Depends, HTTPException, Query, status
 except ModuleNotFoundError:  # pragma: no cover
     APIRouter = None  # type: ignore[misc]
     Depends = None  # type: ignore[misc]
@@ -72,31 +72,17 @@ if APIRouter is not None:  # pragma: no cover
         return ModelCatalogSchema.model_validate(catalog)
 
     # Flow endpoints
-    @router.get("/flow", response_model=list[AgentFlowLayerRead])
+    @router.get("/flow")
     def get_flow(repo: AgentsRepository = Depends(get_repo)):
-        flow = service.get_flow(repo)
-        return [AgentFlowLayerRead.model_validate(_to_dict(layer)) for layer in flow]
+        return service.get_flow(repo)
 
-    @router.put("/flow", response_model=list[AgentFlowLayerRead])
-    def set_flow(payload: list[AgentFlowLayerCreate], repo: AgentsRepository = Depends(get_repo)):
-        layers: list = []
-        for item in payload:
-            layers.append(
-                AgentFlowLayer(
-                    id=item.id or _gen_id("layer"),
-                    name=item.name,
-                    description=item.description,
-                    layer_type=item.layer_type,
-                    layer_index=item.layer_index,
-                    agent_ids=item.agent_ids,
-                    mediator_agent_id=item.mediator_agent_id,
-                )
-            )
+    @router.put("/flow")
+    def set_flow(payload: Any = Body(...), repo: AgentsRepository = Depends(get_repo)):
+        flow_payload = payload if isinstance(payload, list) else []
         try:
-            saved = service.set_flow(repo, layers)
+            return service.save_flow(flow_payload, repo)
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc))
-        return [AgentFlowLayerRead.model_validate(_to_dict(layer)) for layer in saved]
 
     @router.post("", response_model=AgentProfileRead, status_code=status.HTTP_201_CREATED)
     def create_agent(payload: AgentProfileCreate, repo: AgentsRepository = Depends(get_repo)):

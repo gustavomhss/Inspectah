@@ -1,1 +1,1 @@
-"""Pacote de testes da Truth-DB Sprint 10."""
+# Sprint 10 Truth-DB tests package.

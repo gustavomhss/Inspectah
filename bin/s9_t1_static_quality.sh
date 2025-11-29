@@ -4,32 +4,29 @@ set -euo pipefail
 ROOT_DIR="$(git rev-parse --show-toplevel)"
 cd "$ROOT_DIR"
 export NET=0
+export ROOT_DIR
 
 EVIDENCE_DIR="$ROOT_DIR/out/evidence/S9_T1_static"
 SCORECARDS_DIR="$ROOT_DIR/out/scorecards"
 SUMMARY_FILE="$EVIDENCE_DIR/summary.json"
 MANIFEST_FILE="$EVIDENCE_DIR/MANIFEST.json"
 SCORECARD_FILE="$SCORECARDS_DIR/S9_T1_static_quality.json"
-TOOLS_FILE="$EVIDENCE_DIR/tools.txt"
 TIMESTAMP="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 
 mkdir -p "$EVIDENCE_DIR" "$SCORECARDS_DIR"
-STATUS="PASS"
->"$TOOLS_FILE"
 
-record_tool() {
-  echo "$1::$2::$3" >>"$TOOLS_FILE"
-}
+STATUS="PASS"
+TOOLS=()
 
 run_step() {
   local name="$1"
   shift
   local log_file="$EVIDENCE_DIR/${name// /_}.log"
   if "$@" >"$log_file" 2>&1; then
-    record_tool "$name" "PASS" "$log_file"
+    TOOLS+=("$name::PASS::$log_file")
   else
     STATUS="FAIL"
-    record_tool "$name" "FAIL" "$log_file"
+    TOOLS+=("$name::FAIL::$log_file")
   fi
 }
 
@@ -39,13 +36,13 @@ run_step "compile_tests_s9" python3 -m compileall tests/s9_t2_unit_contracts tes
 TODO_LOG="$EVIDENCE_DIR/todo_scan.log"
 if rg --no-ignore -n "TODO|FIXME" app/core app/user app/gpt_client tests/s9_t2_unit_contracts tests/s9_t3_property >"$TODO_LOG" 2>&1; then
   STATUS="FAIL"
-  record_tool "todo_scan" "FAIL" "$TODO_LOG"
+  TOOLS+=("todo_scan::FAIL::$TODO_LOG")
 else
-  record_tool "todo_scan" "PASS" "$TODO_LOG"
+  TOOLS+=("todo_scan::PASS::$TODO_LOG")
 fi
 
 SECRET_LOG="$EVIDENCE_DIR/secret_scan.log"
-if ROOT_DIR="$ROOT_DIR" python3 - "$ROOT_DIR" >"$SECRET_LOG" 2>&1 <<'PY2'
+if python3 - "$ROOT_DIR" >"$SECRET_LOG" 2>&1 <<'PY'
 import os
 import re
 from pathlib import Path
@@ -69,29 +66,38 @@ if issues:
     print("Potential secrets found", issues)
     raise SystemExit(1)
 print("Secret scan completed with no findings.")
-PY2
+PY
 then
-  record_tool "secret_scan" "PASS" "$SECRET_LOG"
+  TOOLS+=("secret_scan::PASS::$SECRET_LOG")
 else
   STATUS="FAIL"
-  record_tool "secret_scan" "FAIL" "$SECRET_LOG"
+  TOOLS+=("secret_scan::FAIL::$SECRET_LOG")
 fi
 
-python3 - "$SUMMARY_FILE" "$SCORECARD_FILE" "$MANIFEST_FILE" "$TOOLS_FILE" "$STATUS" "$TIMESTAMP" <<'PY3'
-import json
-from pathlib import Path
-import sys
+TOOLS_ENV="$(IFS=';;'; printf "%s" "${TOOLS[*]}")"
 
-summary_path = Path(sys.argv[1])
-scorecard_path = Path(sys.argv[2])
-manifest_path = Path(sys.argv[3])
-tools_file = Path(sys.argv[4])
-status = sys.argv[5]
-timestamp = sys.argv[6]
+SUMMARY_FILE="$SUMMARY_FILE" \
+SCORECARD_FILE="$SCORECARD_FILE" \
+MANIFEST_FILE="$MANIFEST_FILE" \
+STATUS="$STATUS" \
+TIMESTAMP="$TIMESTAMP" \
+TOOLS="$TOOLS_ENV" \
+python3 - <<'PY'
+import json
+import os
+from pathlib import Path
+
+summary_path = Path(os.environ["SUMMARY_FILE"])
+scorecard_path = Path(os.environ["SCORECARD_FILE"])
+manifest_path = Path(os.environ["MANIFEST_FILE"])
+status = os.environ["STATUS"]
+timestamp = os.environ["TIMESTAMP"]
 
 tools = []
-for line in tools_file.read_text().splitlines():
-    name, tool_status, log = line.split("::", 2)
+for entry in os.environ.get("TOOLS", "").split(";;"):
+    if not entry:
+        continue
+    name, tool_status, log = entry.split("::", 2)
     log_path = Path(log)
     output_tail = ""
     if log_path.exists():
@@ -117,10 +123,13 @@ scorecard = {
     "gate": "S9_T1_static_quality",
     "status": status,
     "timestamp": timestamp,
-    "details": {"tools_run": len(tools), "notes": "Compile + scans executados"},
+    "details": {
+        "tools_run": len(tools),
+        "notes": "Compile + scans executados",
+    },
 }
 scorecard_path.write_text(json.dumps(scorecard, indent=2, ensure_ascii=False), encoding="utf-8")
-PY3
+PY
 
 if [[ "$STATUS" != "PASS" ]]; then
   exit 1

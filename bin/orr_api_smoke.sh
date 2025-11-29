@@ -17,12 +17,12 @@ import time
 evid_dir = Path(sys.argv[1])
 log_file = Path(sys.argv[2])
 root = Path(sys.argv[3])
-module_path = root / "scripts/api_server.py"
+module_path = root / "scripts" / "api_server.py"
 spec = importlib.util.spec_from_file_location("inspectah_api_server", module_path)
 api_server = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(api_server)  # type: ignore
 
-fields_payload = json.loads((root / "tests/fixtures/unit/field_designer/example_fields.json").read_text(encoding="utf-8"))
+fields_payload = json.loads((root / "tests" / "fixtures" / "unit" / "field_designer" / "example_fields.json").read_text(encoding="utf-8"))
 report = api_server.run_smoke_sequence(fields_payload)
 report["captured_at"] = time.time()
 (evid_dir / "api_smoke.json").write_text(json.dumps(report, indent=2), encoding="utf-8")

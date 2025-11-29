@@ -13,6 +13,8 @@ SCORECARD_PATH="$SCORECARD_DIR/S13_G2_cases_timeline_multi.json"
 
 mkdir -p "$SCORECARD_DIR" "$EVIDENCE_DIR"
 
+export PYTHONPATH="$ROOT_DIR"
+
 python3 - <<'PY' "$SCORECARD_PATH" "$EVIDENCE_DIR"
 import json
 import sys

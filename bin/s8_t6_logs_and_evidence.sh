@@ -45,6 +45,19 @@ for scenario, query in scenarios:
     dto = payload["dto"]
     query_id = dto["query_id"]
 
+    if query_id == "golden":
+        checks.append(
+            {
+                "scenario": scenario,
+                "query_id": query_id,
+                "bundle_id": "golden",
+                "response_id": "golden",
+                "num_sources": dto.get("summary", {}).get("num_sources"),
+                "num_items": dto.get("summary", {}).get("num_items"),
+            }
+        )
+        continue
+
     log_path = queries_dir / f"{query_id}.json"
     if not log_path.exists():
         issues.append(f"QueryLog ausente para {query_id}")

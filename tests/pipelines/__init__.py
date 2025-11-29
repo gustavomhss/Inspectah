@@ -1,1 +1,1 @@
-"""Sprint 10 pipeline tests."""
+# Sprint 10 pipeline tests.

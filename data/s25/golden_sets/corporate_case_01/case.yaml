@@ -1,0 +1,13 @@
+case_id: corporate_case_01
+domain: corporate
+title: "Corporativo: Caso 01"
+entities:
+  - ent_corp_001
+claims:
+  - id: corp-claim-1
+    description: "Empresa anunciou fusão com concorrente."
+    entities: [ent_corp_001]
+    sources: ["release_empresa", "mercado_financeiro"]
+    expected_state: UNDER_REVIEW
+tags: ["corporate"]
+expected_behaviour: "Pipeline standard com prudência moderada."

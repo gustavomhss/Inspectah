@@ -32,7 +32,7 @@ RC2=$?
 RC=$((RC | RC2))
 set -e
 FINISH=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-python3 - <<'PY' "$LOG" "$MANIFEST" "$SCORECARD" "$START" "$FINISH" "$RC"
+python3 - <<'PY2' "$LOG" "$MANIFEST" "$SCORECARD" "$START" "$FINISH" "$RC"
 import hashlib
 import json
 import sys
@@ -62,4 +62,4 @@ scorecard = {
 Path(scorecard_path).write_text(json.dumps(scorecard, indent=2))
 if not passed:
     sys.exit(1)
-PY
+PY2

@@ -46,7 +46,7 @@ if [[ "$status" == "PASS" ]]; then
   fi
 fi
 
-"$PYTHON_BIN" - "$SCORECARD" "$status" "$QUERY_RESULTS" <<'PY'
+"$PYTHON_BIN" - <<'PY' "$SCORECARD" "$status" "$QUERY_RESULTS"
 import json, sys
 scorecard_path, status, results_path = sys.argv[1:4]
 try:

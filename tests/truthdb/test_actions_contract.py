@@ -34,8 +34,7 @@ def test_validate_action_payload_invalid_state():
         "numero_versao": 1,
         "descricao": "desc",
         "estado": "estado_invalido",
-        "evidencias": ["fonte"],
-        "hash_conteudo": "hash",
+        "evidencias": ["fonte"]
     }
     result = actions_contract.validate_action_payload("criar_versao_fato", payload)
     assert not result.is_valid

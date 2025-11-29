@@ -9,13 +9,13 @@ from inspectah.truthdb.state_machine import (
 )
 
 
-def test_default_machine_matches_config():
+def test_yaml_and_default_machine_match():
     spec = load_state_machine_spec(Path("config/s10_state_machine.yml"))
     sm = StateMachine()
     validate_state_machine_alignment(sm, spec)
 
 
-def test_valid_transitions_pass():
+def test_valid_transitions_are_allowed():
     sm = StateMachine()
     sm.validate_transition(FactState.PLANEJADO, FactState.CONFIRMADO)
     sm.validate_transition(FactState.CONFIRMADO, FactState.CONCLUIDO)
@@ -31,11 +31,10 @@ def test_invalid_transitions_raise():
             sm.validate_transition(origin, target)
         except InvalidStateTransition:
             continue
-        raise AssertionError(f"Transição {origin.value}->{target.value} deveria falhar")
+        raise AssertionError(f"{origin.value}->{target.value} deveria ser proibida")
 
 
-def test_invalid_transition_ratio_is_perfect():
+def test_invalid_transition_ratio_is_one():
     sm = StateMachine()
     value = sm.invalid_transition_rejection_ratio()
-    if abs(value - 1.0) > 1e-6:
-        raise AssertionError(f"Esperado 1.0, obtido {value}")
+    assert abs(value - 1.0) < 1e-6

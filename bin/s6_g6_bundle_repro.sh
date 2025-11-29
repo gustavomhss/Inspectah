@@ -23,7 +23,7 @@ if ! "$REPO_ROOT/bin/inspectah_s6_verify_bundle.sh" | tee "$VERIFY_LOG"; then
   status="FAIL"
 fi
 
-"$PYTHON_BIN" - "$SCORECARD" "$status" "$BUILD_LOG" "$VERIFY_LOG" <<'PY'
+"$PYTHON_BIN" - <<'PY' "$SCORECARD" "$status" "$BUILD_LOG" "$VERIFY_LOG"
 import json, sys
 scorecard_path, status, build_log, verify_log = sys.argv[1:5]
 try:
@@ -42,7 +42,7 @@ json.dump({
         "bundle_path": build.get('tar_path'),
         "verify": verify,
     },
-}, open(scorecard_path, "w", encoding='utf-8'), indent=2)
+}, open(scorecard_path, "w", encoding="utf-8"), indent=2)
 PY
 
 if [[ "$status" != "PASS" ]]; then

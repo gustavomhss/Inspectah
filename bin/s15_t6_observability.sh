@@ -8,7 +8,7 @@ SCORECARD_PATH="$SCORECARD_DIR/S15_T6_observability.json"
 
 mkdir -p "$SCORECARD_DIR" "$EVIDENCE_DIR"
 
-PYTHONPATH="$ROOT_DIR" python3 - <<'PY' "$EVIDENCE_DIR" "$SCORECARD_PATH"
+python3 - <<'PY' "$EVIDENCE_DIR" "$SCORECARD_PATH"
 import json
 import sys
 from datetime import datetime, timezone

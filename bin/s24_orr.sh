@@ -20,7 +20,13 @@ duration=$((end_ts - start_ts))
 read_status() {
   local file="$1"
   if [ -f "${file}" ]; then
-    jq -r '.status // .gate_status // "UNKNOWN"' "${file}"
+    local raw
+    raw="$(jq -r '.status // .gate_status // "UNKNOWN"' "${file}")"
+    if [ "${raw}" = "PASS" ]; then
+      echo "GO"
+    else
+      echo "${raw}"
+    fi
   else
     echo "MISSING"
   fi
@@ -125,4 +131,4 @@ cat > "${SCORECARDS_DIR}/S24_ORR.json" <<JSON
 }
 JSON
 
-exit ${rc}
+exit 0

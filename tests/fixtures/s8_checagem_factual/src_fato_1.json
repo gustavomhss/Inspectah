@@ -1,7 +1,23 @@
 {
   "source_id": "src_fato_1",
   "items": [
-    {"id": "fato1_item_001", "pessoa": "João Mendes", "caso": "Operação Horizonte", "status": "confirmado", "info_type": "fato", "descricao": "Decisão de segunda instância confirmou condenação.", "coletado_em": "2025-05-01T08:00:00Z"},
-    {"id": "fato1_item_002", "pessoa": "João Mendes", "caso": "Operação Horizonte", "status": "confirmado", "info_type": "fato", "descricao": "Sentença mantém pena original.", "coletado_em": "2025-05-02T08:00:00Z"}
+    {
+      "id": "fato1_item_001",
+      "pessoa": "João Mendes",
+      "caso": "Operação Horizonte",
+      "status": "confirmado",
+      "info_type": "fato",
+      "descricao": "Decisão de segunda instância confirmou condenação.",
+      "coletado_em": "2025-05-01T08:00:00Z"
+    },
+    {
+      "id": "fato1_item_002",
+      "pessoa": "João Mendes",
+      "caso": "Operação Horizonte",
+      "status": "confirmado",
+      "info_type": "fato",
+      "descricao": "Sentença mantém pena original.",
+      "coletado_em": "2025-05-02T08:00:00Z"
+    }
   ]
 }

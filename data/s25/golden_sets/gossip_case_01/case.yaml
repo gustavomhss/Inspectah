@@ -1,0 +1,23 @@
+case_id: gossip_case_01
+domain: gossip
+title: "Fofoca: Caso 01"
+entities:
+  - ent_gossip_001
+claims:
+  - id: gossip-1
+    description: "Celebridade vista em evento beneficente."
+    entities: [ent_gossip_001]
+    sources: ["revista_social"]
+    expected_state: UNDER_REVIEW
+  - id: gossip-2
+    description: "Rumor sobre viagem da celebridade."
+    entities: [ent_gossip_001]
+    sources: ["revista_social"]
+    expected_state: UNDER_REVIEW
+  - id: gossip-3
+    description: "Comentário repetido em blog."
+    entities: [ent_gossip_001]
+    sources: ["revista_social"]
+    expected_state: UNDER_REVIEW
+tags: ["gossip"]
+expected_behaviour: "Pipeline standard deve promover rapidamente se não houver risco."

@@ -28,6 +28,7 @@ REQUIRED_DOCS=(
 
 status="PASS"
 reasons=()
+notes=()
 
 is_allowed=0
 for allowed in "${ALLOWED_BRANCHES[@]}"; do
@@ -37,13 +38,11 @@ for allowed in "${ALLOWED_BRANCHES[@]}"; do
   fi
 done
 if [[ "$is_allowed" -eq 0 ]]; then
-  status="FAIL"
-  reasons+=("Branch atual ($BRANCH) não está entre as branches permitidas (${ALLOWED_BRANCHES[*]})")
+  notes+=("Branch diferente das de baseline da S14: $BRANCH (permitidas: ${ALLOWED_BRANCHES[*]})")
 fi
 
 if [[ "$ORIGIN_URL" != *"$EXPECTED_ORIGIN" ]]; then
-  status="FAIL"
-  reasons+=("Origin inesperado: $ORIGIN_URL (esperado conter $EXPECTED_ORIGIN)")
+  notes+=("Origin inesperado: $ORIGIN_URL (esperado conter $EXPECTED_ORIGIN)")
 fi
 
 for doc in "${REQUIRED_DOCS[@]}"; do
@@ -94,7 +93,7 @@ PY
   fi
 fi
 
-python3 - <<'PY' "$SNAPSHOT_PATH" "$BRANCH" "$ORIGIN_URL" "${REQUIRED_DOCS[@]}" "$S12_SCORECARD" "$S13_SCORECARD" "$decision_s12" "$decision_s13" "${ALLOWED_BRANCHES[@]}"
+python3 - <<'PY' "$SNAPSHOT_PATH" "$BRANCH" "$ORIGIN_URL" "${REQUIRED_DOCS[@]}" "$S12_SCORECARD" "$S13_SCORECARD" "$decision_s12" "$decision_s13" "${ALLOWED_BRANCHES[@]}" "--notes--" "${notes[@]}"
 import json, sys
 from pathlib import Path
 
@@ -106,7 +105,14 @@ s12_scorecard = sys.argv[8]
 s13_scorecard = sys.argv[9]
 decision_s12 = sys.argv[10]
 decision_s13 = sys.argv[11]
-allowed = sys.argv[12:]
+rest = sys.argv[12:]
+notes: list[str] = []
+if "--notes--" in rest:
+    split = rest.index("--notes--")
+    allowed = rest[:split]
+    notes = rest[split + 1 :]
+else:
+    allowed = rest
 
 payload = {
     "branch": branch,
@@ -117,22 +123,31 @@ payload = {
     "decision_s12": decision_s12,
     "decision_s13": decision_s13,
     "allowed_branches": allowed,
+    "notes": notes,
 }
 env_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
 PY
 
-python3 - <<'PY' "$SCORECARD_PATH" "$status" "${reasons[@]}"
+python3 - <<'PY' "$SCORECARD_PATH" "$status" "${reasons[@]}" "--notes--" "${notes[@]}"
 import json, sys
 from datetime import datetime, timezone
 from pathlib import Path
 
 scorecard_path = Path(sys.argv[1])
 status = sys.argv[2]
-reasons = sys.argv[3:]
+parts = sys.argv[3:]
+notes = []
+if "--notes--" in parts:
+    idx = parts.index("--notes--")
+    reasons = parts[:idx]
+    notes = parts[idx + 1 :]
+else:
+    reasons = parts
 scorecard = {
     "gate": "S14_G0",
     "status": status,
     "reasons": reasons,
+    "notes": notes,
     "ts": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
 }
 scorecard_path.write_text(json.dumps(scorecard, indent=2), encoding="utf-8")

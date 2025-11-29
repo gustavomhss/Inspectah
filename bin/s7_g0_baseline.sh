@@ -35,14 +35,12 @@ summary_path = Path(sys.argv[2])
 s6_scorecard_path = Path(sys.argv[3])
 doc_paths: List[Path] = [Path(p) for p in sys.argv[4:]]
 
-
 def describe(path: Path) -> dict:
     info = {"path": str(path), "exists": path.exists(), "sha256": None}
     if path.exists():
         data = path.read_bytes()
         info["sha256"] = hashlib.sha256(data).hexdigest()
     return info
-
 
 docs_info = [describe(path) for path in doc_paths]
 missing_docs = [d["path"] for d in docs_info if not d["exists"]]

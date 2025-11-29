@@ -17,7 +17,7 @@ git_branch="$(git -C "$ROOT_DIR" rev-parse --abbrev-ref HEAD)"
 status="PASS"
 test_status="PASS"
 audit_status="PASS"
-future_status="PASS"
+future_ready_status="PASS"
 
 set +e
 python3 "$ROOT_DIR/bin/s5_pytest_shim.py" \
@@ -30,23 +30,21 @@ if [[ $shim_exit -ne 0 ]]; then
   status="FAIL"
 fi
 
-python3 "$ROOT_DIR/scripts/truthdb_export_demo.py" >"$EVIDENCE_DIR/exports.log" 2>&1
-
 readarray -t SUMMARY_VALUES < <(python3 - <<'PY' "$REPORT_FILE"
 import json
 import sys
 from pathlib import Path
 from inspectah.pipelines import s10_domain_a_obras, s10_domain_b_precos
 from inspectah.truthdb.engine import TruthDBEngine
-from inspectah.truthdb import exports
+from inspectah.truthdb import exports as exports_module
 
 engine = TruthDBEngine()
 s10_domain_a_obras.build_domain_a_truthdb(engine=engine)
 s10_domain_b_precos.build_domain_b_truthdb(engine=engine)
 
 fact_ids = ["obra_123_prazo", "preco_media_sp_julho"]
-fact_exports = exports.export_facts(engine.truthdb, fact_ids)
-metrics = exports.build_export_metrics(fact_exports)
+fact_exports = exports_module.export_facts(engine.truthdb, fact_ids)
+metrics = exports_module.build_export_metrics(fact_exports)
 
 report = {
     "fact_exports": fact_exports,
@@ -83,10 +81,11 @@ else:
     print("FAIL")
 PY
 )
-future_status="$future_check"
-if [[ "$future_status" == "FAIL" ]]; then
+
+future_ready_status="$future_check"
+if [[ "$future_ready_status" == "FAIL" ]]; then
   status="FAIL"
-elif [[ "$future_status" == "WARN" && "$status" != "FAIL" ]]; then
+elif [[ "$future_ready_status" == "WARN" && "$status" != "FAIL" ]]; then
   status="WARN"
 fi
 
@@ -115,7 +114,7 @@ cat >"$SCORECARD" <<JSON
     {
       "id": "future-ready",
       "description": "future_ready_completeness",
-      "status": "$future_status",
+      "status": "$future_ready_status",
       "details": "valor=$future_ratio"
     }
   ],

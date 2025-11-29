@@ -9,6 +9,9 @@ import AdminOverviewPage from '../modules/admin/pages/AdminOverviewPage';
 import AdminSourceDetailPage from '../modules/admin/pages/AdminSourceDetailPage';
 import AdminSourcesPage from '../modules/admin/pages/AdminSourcesPage';
 import AdminSourceFormPage from '../modules/admin/pages/AdminSourceFormPage';
+import TruthConsolePage from '../modules/console/pages/TruthConsolePage';
+import AgentStudioPage from '../modules/console/pages/AgentStudioPage';
+import IncidentConsolePage from '../modules/console/pages/IncidentConsolePage';
 import IngestionListPage from '../modules/ingestion/pages/IngestionListPage';
 import IngestionSourceDetailPage from '../modules/ingestion/pages/IngestionSourceDetailPage';
 import AgentsListPage from '../modules/agents/pages/AgentsListPage';
@@ -51,6 +54,9 @@ export function AppRoutes() {
         <Route path="/admin/agents/:agentId/committees" element={<AgentCommitteesPage />} />
         <Route path="/admin/agents/model-policy" element={<ModelPolicyPage />} />
         <Route path="/admin/agents/flow" element={<AgentsFlowPage />} />
+        <Route path="/admin/console/truth" element={<TruthConsolePage />} />
+        <Route path="/admin/console/agents" element={<AgentStudioPage />} />
+        <Route path="/admin/console/incidents" element={<IncidentConsolePage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

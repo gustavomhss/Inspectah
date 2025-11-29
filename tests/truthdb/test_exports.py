@@ -1,5 +1,5 @@
 from inspectah.pipelines import s10_domain_a_obras, s10_domain_b_precos
-import inspectah.truthdb.exports as exports
+from inspectah.truthdb import exports
 from inspectah.truthdb.engine import TruthDBEngine
 
 
@@ -10,17 +10,17 @@ def _build_truthdb():
     return engine.truthdb
 
 
-def test_export_truthdb_contains_sections():
+def test_export_truthdb_contains_core_entities():
     truthdb = _build_truthdb()
     data = exports.export_truthdb(truthdb)
     assert "blocos" in data and "fatos" in data
 
 
-def test_export_metrics_pass():
+def test_export_metrics_are_full_pass():
     truthdb = _build_truthdb()
     fact_ids = ["obra_123_prazo", "preco_media_sp_julho"]
-    data = exports.export_facts(truthdb, fact_ids)
-    assert set(data.keys()) == set(fact_ids)
-    metrics = exports.build_export_metrics(data)
+    facts = exports.export_facts(truthdb, fact_ids)
+    assert set(facts.keys()) == set(fact_ids)
+    metrics = exports.build_export_metrics(facts)
     assert metrics["audit_trace_completeness"] == 1.0
     assert metrics["future_ready_completeness"] == 1.0

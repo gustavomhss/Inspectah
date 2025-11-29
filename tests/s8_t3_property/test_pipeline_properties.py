@@ -28,13 +28,12 @@ def _mock_gpt(monkeypatch):
         }
         limitations = []
         if query_type == "fora_de_escopo":
-            answer_text = "Pergunta fora do escopo"
+            answer_text = "Pergunta fora do escopo suportado."
         elif summary["num_items"] == 0:
-            answer_text = "Dados insuficientes"
+            answer_text = "Dados insuficientes para decisão."
         else:
-            answer_text = "Resposta mock segura"
-        confidence_level = "low" if summary["num_sources"] < 2 else "high"
-        confidence = {"level": confidence_level, "reasons": ["mock"]}
+            answer_text = "Resposta mock segura."
+        confidence = {"level": "low" if summary["num_sources"] < 2 else "high", "reasons": ["mock"]}
         return GptAnswer(
             answer_text=answer_text,
             summary_structured=summary,
@@ -95,7 +94,7 @@ def test_pipeline_flags_low_confidence_for_single_low_source():
 
     assert response.status == "ok"
     assert response.confidence.get("level") == "low"
-    assert response.summary.get("num_sources") == 1
+    assert response.summary["num_sources"] == 1
 
 
 def test_pipeline_out_of_scope_query():

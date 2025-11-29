@@ -4,8 +4,8 @@ from datetime import datetime
 from typing import Dict, List
 
 from . import storage
-from .models import EvidenceBundle, EvidenceItemRef, Item, ParsedQuery, Source
-from .query_types import normalize_query_type, scenario_from_info_type, to_legacy_query_type
+from .models import EvidenceBundle, EvidenceItemRef, Item, ParsedQuery
+from .query_types import scenario_from_info_type
 
 MAX_ITEMS_PER_SOURCE = 10
 
@@ -15,7 +15,6 @@ def build_evidence_bundle(parsed: ParsedQuery, items: List[Item]) -> EvidenceBun
     items_by_source: Dict[str, List[EvidenceItemRef]] = {}
     manifest_paths: Dict[str, str] = {}
     sources_meta: Dict[str, Dict[str, object]] = {}
-    source_cache: Dict[str, Source] = {}
 
     for item in items:
         refs = items_by_source.setdefault(item.source_id, [])
@@ -31,21 +30,10 @@ def build_evidence_bundle(parsed: ParsedQuery, items: List[Item]) -> EvidenceBun
         meta_entry = sources_meta.setdefault(item.source_id, {"items": 0})
         meta_entry["items"] = meta_entry.get("items", 0) + 1
         meta_entry["last_item_at"] = item.created_at.isoformat()
-        if "reliability" not in meta_entry:
-            source_obj = source_cache.get(item.source_id)
-            if source_obj is None:
-                source_obj = storage.get_source(item.source_id)
-                if source_obj is not None:
-                    source_cache[item.source_id] = source_obj
-            reliability = "desconhecida"
-            if source_obj is not None:
-                reliability = source_obj.config.params.get("confiabilidade", reliability)
-            meta_entry["reliability"] = reliability
 
-    canonical_type = normalize_query_type(parsed.query_type)
     bundle = EvidenceBundle(
         id=bundle_id,
-        query_type=canonical_type,
+        query_type=parsed.detailed_type,
         info_type=parsed.info_type,
         query_filters=parsed.filters,
         items_by_source=items_by_source,
@@ -56,8 +44,6 @@ def build_evidence_bundle(parsed: ParsedQuery, items: List[Item]) -> EvidenceBun
             "num_items": sum(len(refs) for refs in items_by_source.values()),
             "scenario_tag": scenario_from_info_type(parsed.info_type),
             "info_type": parsed.info_type,
-            "legacy_type": to_legacy_query_type(canonical_type),
-            "query_type": canonical_type,
         },
         sources_meta=sources_meta,
     )

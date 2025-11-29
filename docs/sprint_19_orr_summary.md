@@ -8,11 +8,15 @@ Entregar diagnóstico profundo dos casos do Inspectah sobre o Console de Admin: 
   - `PYTHONPATH=. bash bin/s19_all.sh`
   - `PYTHONPATH=. bash bin/s19_g8_go_no_go.sh`
 - Scorecards gerados em `out/scorecards/` e evidências em `out/evidence/S19_*`.
-- Última execução local: todos os gates S19_G0…S19_G8 em `PASS`, decisão final `GO` (ver scorecards em `out/scorecards`).
+- Status esperado: todos os gates S19_G0…S19_G8 em `PASS`, decisão final `GO`.
 
 ## Métricas M1…M6 (consolidadas em S19_G6)
-- Último snapshot (scorecard S19_G6): M1=0.003s, M2=0.003s, M3=1.0, M4=1.0, M5=1.0, M6=2.0.
-- Thresholds: M1/M2 ≤ 0.8s, M3 ≥ 0.95, M4 = 1.0, M5 = 1.0, M6 ≤ 2.0.
+- M1 (p95 load timeline): ≤ 0.8s
+- M2 (p95 load raio-X): ≤ 0.8s
+- M3 (cobertura timeline): ≥ 0.95
+- M4 (completude raio-X): 1.0
+- M5 (profundidade explicação): 1.0
+- M6 (passos até evidência): ≤ 2.0
 
 ## Principais entregas
 - **Backend (app/admin)**: novos schemas de timeline/raio-X, serviços `list_case_timeline` e `get_case_xray`, rotas `/admin/cases/{id}/timeline` e `/admin/cases/{id}/xray`, testes em `tests/admin/test_admin_timeline_xray_endpoints.py`.

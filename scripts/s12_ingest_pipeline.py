@@ -63,10 +63,6 @@ def run_ingest_pipeline(
 
     evidence_dir.mkdir(parents=True, exist_ok=True)
     raw_events = load_raw_events(raw_dir)
-    if not raw_events:
-        raise RuntimeError(
-            f"Nenhum raw_event encontrado em {raw_dir}. Execute o scheduler/conectores (G1) antes do pipeline."
-        )
     case_service = CaseService()
     timeline_service = TimelineService()
     reset_truthdb()

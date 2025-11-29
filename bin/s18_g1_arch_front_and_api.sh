@@ -14,9 +14,9 @@ BACK_FILES=(
   "$ROOT_DIR/app/admin/service.py"
 )
 FRONT_FILES=(
-  "$ROOT_DIR/frontend/inspectah-ui/src/pages/admin/AdminOverviewPage.tsx"
-  "$ROOT_DIR/frontend/inspectah-ui/src/api/admin/index.ts"
-  "$ROOT_DIR/frontend/inspectah-ui/src/components/admin/HealthSummaryCards.tsx"
+  "$ROOT_DIR/frontend/inspectah-ui/src/modules/admin/pages/AdminOverviewPage.tsx"
+  "$ROOT_DIR/frontend/inspectah-ui/src/modules/admin/api/index.ts"
+  "$ROOT_DIR/frontend/inspectah-ui/src/modules/admin/components/HealthSummaryCards.tsx"
 )
 
 missing=0

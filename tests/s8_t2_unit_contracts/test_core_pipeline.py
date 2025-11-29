@@ -9,6 +9,7 @@ from app.core.evidence_bundle_builder import build_evidence_bundle
 from app.core.models import Item, Source, SourceConfig, SourceStatus
 from app.core.pipeline import run_pipeline
 from app.core.query_parser import parse_query
+from app.gpt_client.client import GptAnswer
 
 
 @pytest.fixture(autouse=True)
@@ -16,6 +17,37 @@ def _sandbox_storage(tmp_path, monkeypatch):
     data_dir = tmp_path / "evidence"
     monkeypatch.setenv("INSPECTAH_DATA_DIR", str(data_dir))
     return data_dir
+
+
+@pytest.fixture(autouse=True)
+def _mock_gpt(monkeypatch):
+    def fake_run_query(bundle, user_query, query_type):
+        meta = bundle.meta
+        summary = {
+            "query_type": query_type,
+            "num_sources": meta.get("num_sources", len(bundle.items_by_source)),
+            "num_items": meta.get("num_items", 0),
+        }
+        limitations = []
+        if query_type == "fora_de_escopo":
+            answer_text = "Pergunta fora do escopo suportado."
+            limitations.append("fora de escopo")
+        elif summary["num_items"] == 0:
+            answer_text = "Dados insuficientes."
+        else:
+            answer_text = "Resposta mock consolidada."
+            if query_type == "agregacao_simples":
+                summary["main_value"] = 11
+        confidence = {"level": "medium", "reasons": ["mock"]}
+        return GptAnswer(
+            answer_text=answer_text,
+            summary_structured=summary,
+            confidence_flags=confidence,
+            limitations=limitations,
+            prompt_used={},
+        )
+
+    monkeypatch.setattr("app.core.pipeline.gpt_run_query", fake_run_query)
 
 
 def _make_source(source_id: str, source_type: str = "precos_api_simples", reliability: str = "alta") -> Source:
@@ -68,7 +100,7 @@ def test_save_and_get_source_roundtrip():
 
 def test_list_items_by_filter_returns_items_from_multiple_sources():
     _seed_price_sources()
-    filters = {"produto": "arroz", "cidade": "São Paulo", "source_types": ["precos_api_simples"]}
+    filters = {"produto": "arroz", "cidade": "sao paulo", "source_types": ["precos_api_simples"]}
     items = storage.list_items_by_filter(filters)
     assert len(items) == 2
     assert {item.source_id for item in items} == {"src_preco_1", "src_preco_2"}
@@ -80,9 +112,11 @@ def test_parse_query_detects_all_main_types():
     fact = parse_query("Político João Silva foi condenado no caso Lava Jato?")
     out = parse_query("Quem vai ganhar a eleição ano que vem?")
 
-    assert agg.query_type == "agregacao_simples"
+    # Após a S9, preço médio passou a ter tipo específico (preco_medio),
+    # e checagem factual usa o tipo detalhado.
+    assert agg.query_type == "preco_medio"
     assert comp.query_type == "comparacao_simples"
-    assert fact.query_type == "checagem_factual_simples"
+    assert fact.query_type == "checagem_factual"
     assert out.query_type == "fora_de_escopo"
 
 
@@ -103,7 +137,7 @@ def test_pipeline_run_pipeline_persists_querylog():
 
     assert response.status == "ok"
     assert response.evidence_bundle_id is not None
-    assert response.summary.get("num_sources") == 2
+    assert response.summary["sources_count"] == 2
     log = storage.load_query_log(response.query_id)
     assert log is not None
     assert log.evidence_bundle_id == response.evidence_bundle_id

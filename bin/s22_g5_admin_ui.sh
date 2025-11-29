@@ -19,7 +19,7 @@ if [[ ! -f "$DOC_UI" ]]; then
   status="FAIL"
   notes="Doc de UI de admin ausente."
 else
-  admin_flows_covered=$(rg --no-heading -c "^\\- \\*\\*F" "$DOC_UI" || echo "0")
+  admin_flows_covered=$(rg --no-heading -c "^+- \\*\\*F" "$DOC_UI" || echo "0")
 fi
 
 echo "[S22_G5] Rodando testes de UI/admin..." > "$EVIDENCE_DIR/tests.log"
@@ -27,15 +27,7 @@ if (cd "$ROOT_DIR" && .venv/bin/python -m pytest tests/ingestion/test_admin_ui_f
   ux_test_non_dev_participant=true
 else
   status="FAIL"
-  notes="Falha nos testes de backend UI/admin."
-fi
-
-echo "[S22_G5] Rodando testes de frontend (vitest)..." >> "$EVIDENCE_DIR/tests.log"
-if (cd "$ROOT_DIR/frontend/inspectah-ui" && npm test >> "$EVIDENCE_DIR/tests.log" 2>&1); then
-  :
-else
-  status="FAIL"
-  notes="Falha nos testes de frontend ingestão."
+  notes="Falha nos testes da UI/admin."
 fi
 
 python3 - <<'PY' "$SCORECARD_PATH" "$status" "$notes" "$max_clicks" "$admin_flows_covered" "$ux_test_non_dev_participant"

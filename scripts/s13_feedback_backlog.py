@@ -9,10 +9,9 @@ from typing import Dict, List
 from scripts.s12_feedback_service import DEFAULT_FEEDBACK_SERVICE, VALID_STATUSES
 
 DOC_PATH = Path("docs/sprint_13_cenarios_feedback.md")
-DEFAULT_EVIDENCE_DIR = Path("out/evidence/S13_G6")
-SCENARIOS_RESULTS = "feedback_scenarios_results.json"
-BACKLOG_FILE = "backlog_s14_seed.json"
-LOG_FILE = "feedback_log.txt"
+EVIDENCE_DIR = Path("out/evidence/S13_G6")
+SCENARIOS_PATH = EVIDENCE_DIR / "feedback_scenarios_results.json"
+BACKLOG_PATH = EVIDENCE_DIR / "backlog_s14_seed.json"
 BEGIN_MARKER = "<!-- S13_FEEDBACK_SCENARIOS:BEGIN -->"
 END_MARKER = "<!-- S13_FEEDBACK_SCENARIOS:END -->"
 
@@ -35,7 +34,7 @@ def _load_scenarios() -> List[Dict[str, object]]:
         raise FeedbackScenarioError("Bloco JSON com cenários não encontrado")
     try:
         scenarios = json.loads(match.group(1))
-    except json.JSONDecodeError as exc:  # pragma: no cover - validação de arquivo
+    except json.JSONDecodeError as exc:
         raise FeedbackScenarioError(f"Cenários inválidos: {exc}") from exc
     if not isinstance(scenarios, list) or not scenarios:
         raise FeedbackScenarioError("Lista de cenários vazia ou inválida")
@@ -47,7 +46,7 @@ def _reset_store() -> None:
 
 
 def run_feedback_backlog(evidence_dir: Path | None = None) -> Dict[str, object]:
-    evidence_dir = evidence_dir or DEFAULT_EVIDENCE_DIR
+    evidence_dir = evidence_dir or EVIDENCE_DIR
     evidence_dir.mkdir(parents=True, exist_ok=True)
     scenarios = _load_scenarios()
 
@@ -57,7 +56,6 @@ def run_feedback_backlog(evidence_dir: Path | None = None) -> Dict[str, object]:
     per_domain: Dict[str, Dict[str, int]] = {}
     scenario_results: List[Dict[str, object]] = []
     success_count = 0
-    log_lines: List[str] = []
 
     for scenario in scenarios:
         scenario_id = str(scenario.get("scenario_id"))
@@ -72,7 +70,7 @@ def run_feedback_backlog(evidence_dir: Path | None = None) -> Dict[str, object]:
             success = result["success"]
             reason = result.get("reason")
             details = result.get("details", {})
-        except Exception as exc:  # pragma: no cover - proteção adicional
+        except Exception as exc:  # pragma: no cover
             success = False
             reason = str(exc)
             details = {}
@@ -90,7 +88,6 @@ def run_feedback_backlog(evidence_dir: Path | None = None) -> Dict[str, object]:
                 "details": details,
             }
         )
-        log_lines.append(f"[{scenario_id}] {operation} -> {'PASS' if success else 'FAIL'} {reason or ''}".strip())
 
     total = len(scenarios)
     success_rate = success_count / total if total else 1.0
@@ -99,8 +96,7 @@ def run_feedback_backlog(evidence_dir: Path | None = None) -> Dict[str, object]:
         for domain, stats in per_domain.items()
     }
 
-    scenarios_path = evidence_dir / SCENARIOS_RESULTS
-    scenarios_path.write_text(
+    SCENARIOS_PATH.write_text(
         json.dumps(
             {
                 "scenarios": scenario_results,
@@ -114,13 +110,13 @@ def run_feedback_backlog(evidence_dir: Path | None = None) -> Dict[str, object]:
     )
 
     backlog = [entry.to_dict() for entry in service.list_feedbacks(status="todos")]
-    (evidence_dir / BACKLOG_FILE).write_text(json.dumps(backlog, indent=2, ensure_ascii=False), encoding="utf-8")
-    (evidence_dir / LOG_FILE).write_text("\n".join(log_lines) + "\n", encoding="utf-8")
+    BACKLOG_PATH.write_text(json.dumps(backlog, indent=2, ensure_ascii=False), encoding="utf-8")
 
     return {
         "feedback_delivery_ratio": round(success_rate, 3),
         "per_domain_feedback_ratio": {k: round(v, 3) for k, v in per_domain_ratio.items()},
         "scenarios": scenario_results,
+        "backlog_path": str(BACKLOG_PATH),
     }
 
 
@@ -135,33 +131,15 @@ def _execute_scenario(
         feedback = service.create_feedback_for_case(
             case_id,
             mensagem=str(payload.get("mensagem", "Feedback automático da S13")),
-            autor=str(payload.get("origem", "s13_g6")),
+            autor=str(payload.get("origem", "g6")),
         )
         expected_status = expected.get("status")
         success = expected_status is None or feedback.status == expected_status
         reason = None if success else f"Status esperado {expected_status}, obtido {feedback.status}"
         return {"success": success, "reason": reason, "details": {"feedback_id": feedback.id_feedback}}
-    if operation == "create_and_list":
-        feedback = service.create_feedback_for_case(
-            case_id,
-            mensagem=str(payload.get("mensagem", "Feedback automático da S13")),
-            autor=str(payload.get("origem", "s13_g6")),
-        )
-        listed = any(entry.id_feedback == feedback.id_feedback for entry in service.list_feedbacks(status="todos"))
-        list_expected = expected.get("list_contains", True)
-        success = listed == bool(list_expected)
-        reason = None if success else "Feedback não encontrado na listagem"
-        return {
-            "success": success,
-            "reason": reason,
-            "details": {"feedback_id": feedback.id_feedback, "listed": listed},
-        }
     if operation == "create_then_update":
-        feedback = service.create_feedback_for_case(
-            case_id,
-            mensagem=str(payload.get("mensagem", "Feedback automático da S13")),
-            autor=str(payload.get("origem", "s13_g6")),
-        )
+        mensagem = str(payload.get("mensagem", "Feedback automático da S13"))
+        feedback = service.create_feedback_for_case(case_id, mensagem=mensagem, autor=str(payload.get("origem", "g6")))
         update_to = str(payload.get("novo_status", "em_analise"))
         if update_to not in VALID_STATUSES:
             raise FeedbackScenarioError(f"Status inválido no cenário: {update_to}")
@@ -177,10 +155,4 @@ def _execute_scenario(
     raise FeedbackScenarioError(f"Operação desconhecida no cenário: {operation}")
 
 
-def main() -> None:
-    report = run_feedback_backlog()
-    print(json.dumps(report, indent=2, ensure_ascii=False))
-
-
-if __name__ == "__main__":  # pragma: no cover
-    main()
+__all__ = ["run_feedback_backlog"]

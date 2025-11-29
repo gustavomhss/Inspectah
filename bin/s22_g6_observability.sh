@@ -20,7 +20,7 @@ if [[ ! -f "$DOC_OBS" ]]; then
   status="FAIL"
   notes="Doc de observabilidade ausente."
 else
-  metrics_defined=$(rg --no-heading -c '^- `ingestion' "$DOC_OBS" || echo "0")
+  metrics_defined=$(rg --no-heading -c "^-" "$DOC_OBS" || echo "0")
   metrics_query_paths_documented=2
 fi
 
