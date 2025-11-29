@@ -36,7 +36,7 @@ export function useAgents(filters: Filters = {}) {
     } finally {
       setLoading(false);
     }
-  }, [token, logEvent, filters]);
+  }, [token, logEvent, filters.layer, filters.role, filters.status]);
 
   useEffect(() => {
     void load();
