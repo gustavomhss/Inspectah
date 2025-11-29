@@ -25,16 +25,19 @@ SCENARIO_SPECS: Dict[str, Dict[str, Any]] = {
         "info_type": "C1_preco_medio",
         "fixture_dir": FIXTURE_ROOT / "s9_preco_medio",
         "min_sources": 2,
+        "max_sources": 3,
     },
     "C2": {
         "info_type": "C2_comparacao_simples",
         "fixture_dir": FIXTURE_ROOT / "s9_comparacao",
         "min_sources": 2,
+        "max_sources": 3,
     },
     "C3": {
         "info_type": "C3_checagem_factual",
         "fixture_dir": FIXTURE_ROOT / "s9_checagem_factual",
         "min_sources": 2,
+        "max_sources": 3,
     },
 }
 INFO_TYPE_TO_SCENARIO = {spec["info_type"]: scenario for scenario, spec in SCENARIO_SPECS.items()}
@@ -176,9 +179,15 @@ def prepare_scenario_sources(scenario_id: str) -> List[str]:
     fixture_dir: Path = spec["fixture_dir"]
     info_type: InfoType = spec["info_type"]  # type: ignore[assignment]
     min_sources = spec["min_sources"]
+    max_sources = spec.get("max_sources", 2)
+    candidates = sorted(fixture_dir.glob("*.json"))
+    total_available = min(len(candidates), max_sources)
+    if min_sources > total_available:
+        metrics_s9.record_error("admin", "prepare_scenario_insufficient_sources")
+        raise RuntimeError(f"Scenario {scenario_id} não possui fixtures suficientes (precisa de {min_sources}, disponíveis {total_available})")
 
     prepared: List[str] = []
-    for fixture_path in sorted(fixture_dir.glob("*.json")):
+    for fixture_path in candidates:
         meta, items = _load_fixture_payload(fixture_path)
         request = SourceCreateRequest(
             id=meta["id"],
@@ -197,12 +206,12 @@ def prepare_scenario_sources(scenario_id: str) -> List[str]:
         source = create_or_update_source(request)
         _ingest_items(source.id, items)
         prepared.append(source.id)
-        if len(prepared) >= min_sources:
+        if len(prepared) >= max_sources:
             break
 
     if len(prepared) < min_sources:
         metrics_s9.record_error("admin", "prepare_scenario_insufficient_sources")
-        raise RuntimeError(f"Scenario {scenario_id} não possui fixtures suficientes (precisa de {min_sources})")
+        raise RuntimeError(f"Scenario {scenario_id} não possui fixtures suficientes (precisa de {min_sources}, carregados {len(prepared)})")
     metrics_s9.record_admin_action("prepare_scenario", info_type=info_type, scenario_id=scenario_id)
     return prepared
 
