@@ -79,7 +79,10 @@ if APIRouter is not None:  # pragma: no cover
     @router.put("/flow")
     def set_flow(payload: Any = Body(...), repo: AgentsRepository = Depends(get_repo)):
         flow_payload = payload if isinstance(payload, list) else []
-        return service.save_flow(flow_payload, repo)
+        try:
+            return service.save_flow(flow_payload, repo)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc))
 
     @router.post("", response_model=AgentProfileRead, status_code=status.HTTP_201_CREATED)
     def create_agent(payload: AgentProfileCreate, repo: AgentsRepository = Depends(get_repo)):

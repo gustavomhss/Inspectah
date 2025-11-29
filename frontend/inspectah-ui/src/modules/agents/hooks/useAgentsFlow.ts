@@ -196,12 +196,12 @@ function normalizeFlow(data: unknown): EditableLayer[] {
 }
 
 function ensureFixedLayers(layers: EditableLayer[]): EditableLayer[] {
-  const findByType = (type: FlowLayerType) => layers.find((l) => l.layer_type === type);
+  const findLayerByType = (type: FlowLayerType) => layers.find((l) => l.layer_type === type);
 
-  const interpretation = findByType('interpretation_layer') || buildDefaultLayer('interpretation_layer', 1);
-  const classification = findByType('classification_layer') || buildDefaultLayer('classification_layer', 2);
-  const decision = findByType('decision_maker_layer') || buildDefaultLayer('decision_maker_layer', layers.length + 1);
-  const librarian = findByType('librarian_layer') || buildDefaultLayer('librarian_layer', layers.length + 2);
+  const interpretation = findLayerByType('interpretation_layer') || buildDefaultLayer('interpretation_layer', 1);
+  const classification = findLayerByType('classification_layer') || buildDefaultLayer('classification_layer', 2);
+  const decision = findLayerByType('decision_maker_layer') || buildDefaultLayer('decision_maker_layer', layers.length + 1);
+  const librarian = findLayerByType('librarian_layer') || buildDefaultLayer('librarian_layer', layers.length + 2);
 
   const intermediates = layers.filter((l) => l.layer_type === 'intermediate_layer');
   return [interpretation, classification, ...intermediates, decision, librarian];

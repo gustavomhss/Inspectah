@@ -16,6 +16,7 @@ from app.agents.models import (
     AgentRun,
     AgentRunStatus,
     AgentStatus,
+    FlowLayerType,
     CommitteePolicy,
     ModelUpgradePolicy,
 )
@@ -50,11 +51,14 @@ def save_flow(flow: Any, repo: Optional[AgentsRepository] = None) -> List[Any]:
     _ = repo
     try:
         FLOW_PATH.parent.mkdir(parents=True, exist_ok=True)
+        _validate_flow(flow)
         if not isinstance(flow, list):
             flow = []
         FLOW_PATH.write_text(json.dumps(flow, ensure_ascii=False, indent=2), encoding="utf-8")
         return flow
-    except Exception:
+    except Exception as exc:
+        if isinstance(exc, ValueError):
+            raise
         return []
 
 
@@ -224,3 +228,35 @@ def _validate_committee(repo: AgentsRepository, committee: AgentCommittee) -> No
     for agent_id in committee.primary_agents + [committee.mediator_agent]:
         if not repo.get_agent(agent_id):
             raise ValueError(f"Agente {agent_id} não encontrado")
+
+
+def _validate_flow(flow: Any) -> None:
+    if not isinstance(flow, list) or not flow:
+        raise ValueError("Fluxo de agentes deve ser uma lista não vazia")
+
+    required_layers = {
+        FlowLayerType.INTERPRETATION.value,
+        FlowLayerType.CLASSIFICATION.value,
+        FlowLayerType.INTERMEDIATE.value,
+        FlowLayerType.DECISION_MAKER.value,
+        FlowLayerType.LIBRARIAN.value,
+    }
+    seen_layers = set()
+    for entry in flow:
+        if not isinstance(entry, dict):
+            raise ValueError("Cada camada do fluxo deve ser um objeto")
+        layer_type = entry.get("layer_type")
+        agent_ids = entry.get("agent_ids") or []
+        mediator = entry.get("mediator_agent_id")
+        if layer_type not in required_layers:
+            raise ValueError(f"Camada inválida no fluxo: {layer_type}")
+        if layer_type in seen_layers:
+            raise ValueError(f"Camada duplicada no fluxo: {layer_type}")
+        seen_layers.add(layer_type)
+        if len(agent_ids) < 3:
+            raise ValueError(f"Camada {layer_type} deve ter pelo menos 3 agentes")
+        if mediator not in agent_ids:
+            raise ValueError(f"Mediador deve fazer parte dos agentes da camada {layer_type}")
+    if not required_layers.issubset(seen_layers):
+        missing = required_layers - seen_layers
+        raise ValueError(f"Fluxo incompleto; faltam camadas: {sorted(missing)}")

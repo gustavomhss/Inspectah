@@ -18,6 +18,7 @@ class AgentRole(str, Enum):
     ANALYST = "analyst"
     DEBUNKER = "debunker"
     DECISION_MAKER = "decision_maker"
+    MEDIATOR = "mediator"
     LIBRARIAN = "librarian"
 
 
