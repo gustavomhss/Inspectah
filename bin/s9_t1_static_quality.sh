@@ -4,6 +4,7 @@ set -euo pipefail
 ROOT_DIR="$(git rev-parse --show-toplevel)"
 cd "$ROOT_DIR"
 export NET=0
+export ROOT_DIR
 
 EVIDENCE_DIR="$ROOT_DIR/out/evidence/S9_T1_static"
 SCORECARDS_DIR="$ROOT_DIR/out/scorecards"
@@ -73,12 +74,15 @@ else
   TOOLS+=("secret_scan::FAIL::$SECRET_LOG")
 fi
 
-env SUMMARY_FILE="$SUMMARY_FILE" \\
-    SCORECARD_FILE="$SCORECARD_FILE" \\
-    MANIFEST_FILE="$MANIFEST_FILE" \\
-    TOOLS_FILE="$TOOLS_FILE" \\
-    STATUS="$STATUS" \\
-    TIMESTAMP="$TIMESTAMP" python3 - <<'PY'
+TOOLS_ENV="$(IFS=';;'; printf "%s" "${TOOLS[*]}")"
+
+SUMMARY_FILE="$SUMMARY_FILE" \
+SCORECARD_FILE="$SCORECARD_FILE" \
+MANIFEST_FILE="$MANIFEST_FILE" \
+STATUS="$STATUS" \
+TIMESTAMP="$TIMESTAMP" \
+TOOLS="$TOOLS_ENV" \
+python3 - <<'PY'
 import json
 import os
 from pathlib import Path
@@ -125,9 +129,7 @@ scorecard = {
     },
 }
 scorecard_path.write_text(json.dumps(scorecard, indent=2, ensure_ascii=False), encoding="utf-8")
-PY <<'ENV'
-$(printf "TOOLS=%s" "$(IFS=';;'; echo "${TOOLS[*]}")")
-ENV
+PY
 
 if [[ "$STATUS" != "PASS" ]]; then
   exit 1
