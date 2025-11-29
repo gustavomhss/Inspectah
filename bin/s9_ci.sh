@@ -20,8 +20,8 @@ for step in "${STEPS[@]}"; do
   if [[ "$step" == "bin/s9_t2_unit_and_contracts.sh" ]]; then
     set +e
     mkdir -p "$ROOT/out/evidence/S9_T2_unit_and_contracts"
-    bash -x "${ROOT}/${step}" > "$ROOT/out/evidence/S9_T2_unit_and_contracts/ci_debug.log" 2>&1
-    S9_T2_STATUS=$?
+    bash -x "${ROOT}/${step}" 2>&1 | tee "$ROOT/out/evidence/S9_T2_unit_and_contracts/ci_debug.log"
+    S9_T2_STATUS=${PIPESTATUS[0]}
     set -e
     if [[ "$S9_T2_STATUS" -ne 0 ]]; then
       echo "[S9_CI] ${step} falhou (exit $S9_T2_STATUS). Veja log em out/evidence/S9_T2_unit_and_contracts/ci_debug.log" >&2
