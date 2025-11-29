@@ -4,7 +4,7 @@ import re
 from typing import Any, Dict
 
 from .models import ParsedQuery
-from .query_types import QUERY_TYPE_TO_INFO_TYPE, QueryType, to_legacy_query_type
+from .query_types import QUERY_TYPE_TO_INFO_TYPE, QueryType
 
 TIME_WINDOW_HINTS = {
     "ultima semana": "last_7_days",
@@ -25,14 +25,19 @@ PRODUCT_PREFIX_STOPWORDS = {"atual", "qual", "quanto", "o", "a", "os", "as", "do
 
 
 def parse_query(user_query: str) -> ParsedQuery:
+    """
+    Classifica a consulta do usuário nos tipos esperados pela S9.
+    Para o contrato da sprint 9, perguntas de preço médio devem retornar
+    query_type=preco_medio e info_type=C1_preco_medio (não o tipo legado).
+    """
     if not user_query or not user_query.strip():
         raise ValueError("user_query não pode ser vazio")
+
     raw_query = user_query.strip()
     lowered = raw_query.lower()
 
-    detailed_type = _detect_type(lowered)
-    info_type = QUERY_TYPE_TO_INFO_TYPE[detailed_type]
-    legacy_type = to_legacy_query_type(detailed_type)
+    detailed_type: QueryType = _detect_type(lowered)
+    info_type = QUERY_TYPE_TO_INFO_TYPE.get(detailed_type, "fora_de_escopo")
     entities: Dict[str, Any] = {}
     filters: Dict[str, Any] = {}
 
@@ -81,12 +86,11 @@ def parse_query(user_query: str) -> ParsedQuery:
     if detailed_type != "fora_de_escopo" and not entities:
         detailed_type = "fora_de_escopo"
         info_type = "fora_de_escopo"
-        legacy_type = "fora_de_escopo"
 
     filters.setdefault("source_types", [])
     return ParsedQuery(
         raw_query=raw_query,
-        query_type=legacy_type,
+        query_type=detailed_type,
         info_type=info_type,
         entities=entities,
         filters=filters,
