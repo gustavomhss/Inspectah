@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import json
 import uuid
 from datetime import datetime
-from typing import Dict, List, Optional
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 from app.agents.models import (
     AgentCommittee,
@@ -19,9 +21,41 @@ from app.agents.models import (
 )
 from app.agents.repository import AgentsRepository
 
+FLOW_PATH = Path("out/runtime/console_agents_flow.json")
+
 
 def _gen_id(prefix: str) -> str:
     return f"{prefix}_{uuid.uuid4().hex[:10]}"
+
+
+def get_flow(repo: Optional[AgentsRepository] = None) -> List[Any]:
+    """Weak, file-based flow shared between admin and console."""
+    _ = repo
+    try:
+        if not FLOW_PATH.exists():
+            return []
+        text = FLOW_PATH.read_text(encoding="utf-8")
+        if not text.strip():
+            return []
+        data = json.loads(text)
+        if isinstance(data, list):
+            return data
+        return []
+    except Exception:
+        return []
+
+
+def save_flow(flow: Any, repo: Optional[AgentsRepository] = None) -> List[Any]:
+    """Persists the agents flow to the shared file and returns a list."""
+    _ = repo
+    try:
+        FLOW_PATH.parent.mkdir(parents=True, exist_ok=True)
+        if not isinstance(flow, list):
+            flow = []
+        FLOW_PATH.write_text(json.dumps(flow, ensure_ascii=False, indent=2), encoding="utf-8")
+        return flow
+    except Exception:
+        return []
 
 
 def create_agent_profile(repo: Optional[AgentsRepository], payload: AgentProfile) -> AgentProfile:

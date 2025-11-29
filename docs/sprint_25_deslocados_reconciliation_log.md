@@ -15,6 +15,7 @@
 - Console frontend: `useAgentsFlow` normaliza payload fraco/[] e sempre constrói camadas fixas para evitar quebra da UI quando o arquivo não existe ou tem formato livre.
 - Console/admin UI: expostos endpoints mínimos de admin (`/admin/health`, `/admin/cases`, `/admin/cases/{id}`, timeline/xray) para alinhar com o frontend e remover 404/Not Found.
 - Frontend dev proxy ajustado em `frontend/inspectah-ui/vite.config.ts` para encaminhar `/api` e `/admin` ao backend (`http://127.0.0.1:8000`), eliminando loops/timeouts por 404 no dev server.
+- Admin agents flow: `app.agents.service` agora expõe helpers fracos `get_flow`/`save_flow` usando `out/runtime/console_agents_flow.json`, e `/admin/agents/flow` passou a usar esses helpers, compartilhando o mesmo arquivo do console e evitando AttributeError/500.
 
 ## Sanidade executada
 - `pytest tests/api/test_console_agents_flow.py` — OK

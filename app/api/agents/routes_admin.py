@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from dataclasses import asdict, is_dataclass
 from datetime import datetime
-from typing import Optional
+from typing import Any, Optional
 
 try:  # pragma: no cover
-    from fastapi import APIRouter, Depends, HTTPException, Query, status
+    from fastapi import APIRouter, Body, Depends, HTTPException, Query, status
 except ModuleNotFoundError:  # pragma: no cover
     APIRouter = None  # type: ignore[misc]
     Depends = None  # type: ignore[misc]
@@ -74,15 +74,12 @@ if APIRouter is not None:  # pragma: no cover
     # Flow endpoints
     @router.get("/flow")
     def get_flow(repo: AgentsRepository = Depends(get_repo)):
-        flow = service.get_flow(repo)
-        return flow
+        return service.get_flow(repo)
 
     @router.put("/flow")
-    def set_flow(payload: list[AgentFlowLayerCreate] | list[dict[str, object]], repo: AgentsRepository = Depends(get_repo)):
-        try:
-            return service.save_flow(payload, repo)
-        except Exception as exc:  # pragma: no cover - defensive
-            raise HTTPException(status_code=500, detail=str(exc))
+    def set_flow(payload: Any = Body(...), repo: AgentsRepository = Depends(get_repo)):
+        flow_payload = payload if isinstance(payload, list) else []
+        return service.save_flow(flow_payload, repo)
 
     @router.post("", response_model=AgentProfileRead, status_code=status.HTTP_201_CREATED)
     def create_agent(payload: AgentProfileCreate, repo: AgentsRepository = Depends(get_repo)):
