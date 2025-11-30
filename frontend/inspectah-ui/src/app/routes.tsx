@@ -20,6 +20,10 @@ import CaseTimelinePage from '../modules/cases/pages/CaseTimelinePage';
 import CaseXrayPage from '../modules/cases/pages/CaseXrayPage';
 import ConsultPage from '../modules/consult/pages/ConsultPage';
 import { SourceEditPage, SourcesListPage } from '../features/sources';
+import SourcesLayout from '../features/sources/pages/SourcesLayout';
+import SourcesIngestionPage from '../features/sources/pages/SourcesIngestionPage';
+import SourcesDebunkerPage from '../features/sources/pages/SourcesDebunkerPage';
+import SourcesNotFoundPage from '../features/sources/pages/SourcesNotFoundPage';
 
 export function AppRoutes() {
   return (
@@ -52,32 +56,15 @@ export function AppRoutes() {
         <Route path="/admin/console/truth" element={<TruthConsolePage />} />
         <Route path="/admin/console/agents" element={<AgentStudioPage />} />
         <Route path="/admin/console/incidents" element={<IncidentConsolePage />} />
+        <Route path="/admin/sources" element={<SourcesLayout />}>
+          <Route index element={<SourcesListPage />} />
+          <Route path="new" element={<SourceEditPage />} />
+          <Route path=":sourceId" element={<SourceEditPage />} />
+          <Route path="ingestao" element={<SourcesIngestionPage />} />
+          <Route path="debunker" element={<SourcesDebunkerPage />} />
+          <Route path="*" element={<SourcesNotFoundPage />} />
+        </Route>
       </Route>
-
-      <Route
-        path="/admin/sources"
-        element={
-          <AuthGuard>
-            <SourcesListPage />
-          </AuthGuard>
-        }
-      />
-      <Route
-        path="/admin/sources/new"
-        element={
-          <AuthGuard>
-            <SourceEditPage />
-          </AuthGuard>
-        }
-      />
-      <Route
-        path="/admin/sources/:sourceId"
-        element={
-          <AuthGuard>
-            <SourceEditPage />
-          </AuthGuard>
-        }
-      />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

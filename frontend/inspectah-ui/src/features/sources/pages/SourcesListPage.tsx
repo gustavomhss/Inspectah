@@ -1,16 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AdminContent, AdminHeader, AdminShell, AdminSidebar, Banner, Button, Input } from '@/ui/admin';
+import { AdminContent, AdminHeader, Banner, Button, Input } from '@/ui/admin';
 import { SourceForm, type SourceFormValues } from '../components/SourceForm';
 import { SourcesTable } from '../components/SourcesTable';
 import type { Source } from '../types/Source';
 import { createSource, listSources } from '../api/sourcesApi';
-
-const sidebarNav = [
-  { label: 'Fontes', to: '/admin/sources', active: true },
-  { label: 'Ingestão', to: '/admin/ingestion' },
-  { label: 'Debunker', to: '/admin/debunker' },
-];
 
 export function SourcesListPage() {
   const navigate = useNavigate();
@@ -60,23 +54,21 @@ export function SourcesListPage() {
     [sources, search],
   );
 
-  const header = (
-    <AdminHeader
-      title="Console de Fontes v2"
-      subtitle="Lista, filtros básicos e ações primárias apoiadas no Design System Admin v1."
-      actions={
-        <div className="flex gap-2">
-          <Button variant="secondary" onClick={() => loadSources()} disabled={loading}>
-            {loading ? 'Atualizando...' : 'Atualizar'}
-          </Button>
-          <Button onClick={() => navigate('/admin/sources/new')}>Novo cadastro</Button>
-        </div>
-      }
-    />
-  );
-
   return (
-    <AdminShell sidebar={<AdminSidebar title="Consoles" navItems={sidebarNav} />} header={header}>
+    <div className="flex flex-col gap-6">
+      <AdminHeader
+        title="Fontes"
+        subtitle="Cadastre, edite e acompanhe o estado operacional das fontes de informação."
+        actions={
+          <div className="flex gap-2">
+            <Button variant="secondary" onClick={() => loadSources()} disabled={loading}>
+              {loading ? 'Atualizando...' : 'Atualizar'}
+            </Button>
+            <Button onClick={() => navigate('/admin/sources/new')}>Novo cadastro</Button>
+          </div>
+        }
+      />
+
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1fr_360px]">
         <AdminContent>
           {error && (
@@ -84,9 +76,9 @@ export function SourcesListPage() {
               <Banner tone="danger" title="Falha ao carregar fontes" description={error} />
             </div>
           )}
-          <div className="mb-4 flex items-center gap-3">
+          <div className="mb-4 flex flex-wrap gap-3">
             <Input
-              placeholder="Filtrar por nome ou tipo"
+              placeholder="Filtrar por nome, tipo ou categoria"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               className="max-w-sm"
@@ -124,7 +116,7 @@ export function SourcesListPage() {
           </AdminContent>
         </div>
       </div>
-    </AdminShell>
+    </div>
   );
 }
 

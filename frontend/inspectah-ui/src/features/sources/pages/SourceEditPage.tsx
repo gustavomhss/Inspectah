@@ -1,16 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { AdminContent, AdminHeader, AdminShell, AdminSidebar, Banner, Button } from '@/ui/admin';
+import { AdminContent, AdminHeader, Banner, Button } from '@/ui/admin';
 import { SourceForm, type SourceFormValues } from '../components/SourceForm';
 import { SourceStatusBadge } from '../components/SourceStatusBadge';
 import type { Source } from '../types/Source';
 import { activateSource, archiveSource, createSource, deactivateSource, getSourceById, updateSource } from '../api/sourcesApi';
-
-const sidebarNav = [
-  { label: 'Fontes', to: '/admin/sources', active: true },
-  { label: 'Ingestão', to: '/admin/ingestion' },
-  { label: 'Debunker', to: '/admin/debunker' },
-];
 
 export function SourceEditPage() {
   const navigate = useNavigate();
@@ -125,13 +119,14 @@ export function SourceEditPage() {
   );
 
   return (
-    <AdminShell sidebar={<AdminSidebar title="Consoles" navItems={sidebarNav} />} header={header}>
+    <div className="flex flex-col gap-6">
+      {header}
       <AdminContent maxWidth={960}>
         <div className="mb-4">
           <Banner
             tone="info"
             title="Console de Fontes v2 — edição"
-            description="Atualize dados de fonte, acompanhe estado operacional e mantenha o contrato alinhado ao backend."
+            description="Atualize dados da fonte, acompanhe estado operacional e mantenha o contrato alinhado ao backend."
           />
         </div>
         {error && <Banner tone="danger" title="Erro" description={error} />}
@@ -150,7 +145,7 @@ export function SourceEditPage() {
           </>
         )}
       </AdminContent>
-    </AdminShell>
+    </div>
   );
 }
 

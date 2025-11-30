@@ -74,7 +74,7 @@ describe('Console de Fontes v2', () => {
 
     await screen.findByText('Fonte A');
 
-    const searchInput = screen.getByPlaceholderText(/Filtrar por nome ou tipo/i);
+    const searchInput = screen.getByPlaceholderText(/Filtrar por nome, tipo ou categoria/i);
     await userEvent.clear(searchInput);
     await userEvent.type(searchInput, 'finance');
 
