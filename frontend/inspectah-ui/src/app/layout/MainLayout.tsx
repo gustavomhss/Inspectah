@@ -1,9 +1,11 @@
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../providers/AuthProvider';
 
 function MainLayout() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, logout } = useAuth();
+  const isSourcesConsole = location.pathname.startsWith('/admin/sources');
   const navLinkClass = ({ isActive }: { isActive: boolean }) =>
     `rounded-full px-4 py-2 text-sm font-semibold transition ${
       isActive ? 'bg-white/20 text-white' : 'text-slate-200 hover:bg-white/10'
@@ -42,7 +44,9 @@ function MainLayout() {
           </p>
         </div>
       </header>
-      <main className="mx-auto flex max-w-5xl flex-col gap-6 px-4 pb-12 pt-6 md:px-8">
+      <main
+        className={`${isSourcesConsole ? 'w-full px-0' : 'mx-auto max-w-5xl px-4 md:px-8'} flex flex-col gap-6 pb-12 pt-6`}
+      >
         <section className="rounded-2xl border border-white/5 bg-white/5 p-6 shadow-card">
           <div className="flex flex-col gap-3">
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-sky-300">Navegação principal</p>

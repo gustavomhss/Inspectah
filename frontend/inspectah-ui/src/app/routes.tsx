@@ -6,9 +6,6 @@ import LoginPage from '../modules/admin/pages/LoginPage';
 import AdminCasesPage from '../modules/admin/pages/AdminCasesPage';
 import AdminCaseDetailPage from '../modules/admin/pages/AdminCaseDetailPage';
 import AdminOverviewPage from '../modules/admin/pages/AdminOverviewPage';
-import AdminSourceDetailPage from '../modules/admin/pages/AdminSourceDetailPage';
-import AdminSourcesPage from '../modules/admin/pages/AdminSourcesPage';
-import AdminSourceFormPage from '../modules/admin/pages/AdminSourceFormPage';
 import TruthConsolePage from '../modules/console/pages/TruthConsolePage';
 import AgentStudioPage from '../modules/console/pages/AgentStudioPage';
 import IncidentConsolePage from '../modules/console/pages/IncidentConsolePage';
@@ -22,6 +19,11 @@ import AgentsFlowPage from '../modules/agents/pages/AgentsFlowPage';
 import CaseTimelinePage from '../modules/cases/pages/CaseTimelinePage';
 import CaseXrayPage from '../modules/cases/pages/CaseXrayPage';
 import ConsultPage from '../modules/consult/pages/ConsultPage';
+import { SourceEditPage, SourcesListPage } from '../features/sources';
+import SourcesLayout from '../features/sources/pages/SourcesLayout';
+import SourcesIngestionPage from '../features/sources/pages/SourcesIngestionPage';
+import SourcesDebunkerPage from '../features/sources/pages/SourcesDebunkerPage';
+import SourcesNotFoundPage from '../features/sources/pages/SourcesNotFoundPage';
 
 export function AppRoutes() {
   return (
@@ -40,9 +42,6 @@ export function AppRoutes() {
         }
       >
         <Route path="/admin" element={<AdminOverviewPage />} />
-        <Route path="/admin/sources" element={<AdminSourcesPage />} />
-        <Route path="/admin/sources/new" element={<AdminSourceFormPage />} />
-        <Route path="/admin/sources/:sourceId" element={<AdminSourceDetailPage />} />
         <Route path="/admin/cases" element={<AdminCasesPage />} />
         <Route path="/admin/cases/:caseId" element={<AdminCaseDetailPage />} />
         <Route path="/admin/cases/:caseId/timeline" element={<CaseTimelinePage />} />
@@ -57,6 +56,14 @@ export function AppRoutes() {
         <Route path="/admin/console/truth" element={<TruthConsolePage />} />
         <Route path="/admin/console/agents" element={<AgentStudioPage />} />
         <Route path="/admin/console/incidents" element={<IncidentConsolePage />} />
+        <Route path="/admin/sources" element={<SourcesLayout />}>
+          <Route index element={<SourcesListPage />} />
+          <Route path="new" element={<SourceEditPage />} />
+          <Route path=":sourceId" element={<SourceEditPage />} />
+          <Route path="ingestao" element={<SourcesIngestionPage />} />
+          <Route path="debunker" element={<SourcesDebunkerPage />} />
+          <Route path="*" element={<SourcesNotFoundPage />} />
+        </Route>
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />
