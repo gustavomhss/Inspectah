@@ -134,7 +134,7 @@ Assim, qualquer pessoa pode reconstituir a narrativa:
 ## Nota rápida (wrap W3)
 
 - Gates G0–G3 executados e verdes; fluxos de fontes cobertos por testes RTL/MSW sem warnings.  
-- Learnings preliminares: (1) design system admin v1 sustentável para novos consoles; (2) avisos de act exigem disciplina de testes integrada a MSW/RTL; (3) alinhamento front/back de fontes ficou mais claro ao usar os endpoints reais.  
+- Learnings preliminares: (1) design system admin v1 sustentável para novos consoles; (2) avisos de act exigem disciplina de testes integrada a MSW/RTL; (3) QA manual ajudou a expor desalinhamento front/back (slug/id) e a necessidade de priorizar o router correto de fontes.  
 - Dívidas registráveis para Bloco 6.2: expandir cobertura de bordas/validações das fontes, escrever runbook operacional e gerar bundle final (G5/G6).
 
 ## 5. Síntese do Capítulo 6

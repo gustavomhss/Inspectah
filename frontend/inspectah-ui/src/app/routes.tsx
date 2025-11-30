@@ -38,9 +38,6 @@ export function AppRoutes() {
         }
       >
         <Route path="/admin" element={<AdminOverviewPage />} />
-        <Route path="/admin/sources" element={<SourcesListPage />} />
-        <Route path="/admin/sources/new" element={<SourceEditPage />} />
-        <Route path="/admin/sources/:sourceId" element={<SourceEditPage />} />
         <Route path="/admin/cases" element={<AdminCasesPage />} />
         <Route path="/admin/cases/:caseId" element={<AdminCaseDetailPage />} />
         <Route path="/admin/cases/:caseId/timeline" element={<CaseTimelinePage />} />
@@ -56,6 +53,31 @@ export function AppRoutes() {
         <Route path="/admin/console/agents" element={<AgentStudioPage />} />
         <Route path="/admin/console/incidents" element={<IncidentConsolePage />} />
       </Route>
+
+      <Route
+        path="/admin/sources"
+        element={
+          <AuthGuard>
+            <SourcesListPage />
+          </AuthGuard>
+        }
+      />
+      <Route
+        path="/admin/sources/new"
+        element={
+          <AuthGuard>
+            <SourceEditPage />
+          </AuthGuard>
+        }
+      />
+      <Route
+        path="/admin/sources/:sourceId"
+        element={
+          <AuthGuard>
+            <SourceEditPage />
+          </AuthGuard>
+        }
+      />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
