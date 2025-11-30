@@ -46,6 +46,14 @@ const buildSource = (overrides: Record<string, unknown> = {}) => ({
   state: 'PROPOSED',
   description: '',
   endpoint: 'https://api.fonte-a',
+  health_status: 'OK',
+  health_reason: 'Última execução bem-sucedida',
+  last_run_status: 'SUCCESS',
+  last_run_finished_at: '2024-01-01T00:00:00Z',
+  last_run_latency_ms: 1200,
+  last_run_items: 10,
+  failure_streak: 0,
+  recent_items_count: 10,
   ...overrides,
 });
 
@@ -57,8 +65,8 @@ describe('Console de Fontes v2', () => {
           ctx.status(200),
           ctx.json({
             sources: [
-              buildSource({ id: 'src-1', name: 'Fonte A', category: 'gov', state: 'ACTIVE' }),
-              buildSource({ id: 'src-2', name: 'Fonte B', category: 'finance', state: 'PROPOSED' }),
+              buildSource({ id: 'src-1', name: 'Fonte A', category: 'gov', state: 'ACTIVE', health_status: 'OK' }),
+              buildSource({ id: 'src-2', name: 'Fonte B', category: 'finance', state: 'PROPOSED', health_status: 'DEGRADED' }),
             ],
           }),
         ),
@@ -80,6 +88,11 @@ describe('Console de Fontes v2', () => {
 
     expect(screen.queryByText('Fonte A')).not.toBeInTheDocument();
     expect(screen.getByText('Fonte B')).toBeInTheDocument();
+
+    const healthSelect = screen.getByLabelText(/saúde/i);
+    await userEvent.selectOptions(healthSelect, 'DEGRADED');
+    expect(screen.queryByText('Fonte A')).not.toBeInTheDocument();
+    expect(screen.getByText('Fonte B')).toBeInTheDocument();
   });
 
   it('cria fonte nova e exibe mensagem de sucesso', async () => {
@@ -88,7 +101,9 @@ describe('Console de Fontes v2', () => {
         const body = await req.json();
         return res(ctx.status(201), ctx.json({ source: { ...body, id: 'src-99', state: body.state || 'PROPOSED' } }));
       }),
-      rest.get(`${BASE_URL}/admin/sources/src-99`, (_req, res, ctx) => res(ctx.status(200), ctx.json({ source: buildSource({ id: 'src-99' }) }))),
+      rest.get(`${BASE_URL}/admin/sources/src-99`, (_req, res, ctx) =>
+        res(ctx.status(200), ctx.json({ source: buildSource({ id: 'src-99', state: 'PROPOSED' }) })),
+      ),
     );
 
     renderWithProviders(
@@ -103,18 +118,20 @@ describe('Console de Fontes v2', () => {
     await userEvent.type(screen.getByLabelText(/Slug/i), 'fonte-nova');
     await userEvent.type(screen.getByLabelText(/Categoria/i), 'gov');
     await userEvent.type(screen.getByLabelText(/Endpoint/i), 'https://nova');
+    await userEvent.type(screen.getByLabelText(/Temas/i), 'politica');
 
     await userEvent.click(screen.getByRole('button', { name: /Salvar/i }));
 
     await screen.findByText(/Fonte criada com sucesso/i);
   });
 
-  it('altera o estado de uma fonte existente', async () => {
+  it('altera estado e aciona ingestão manual', async () => {
     server.use(
       rest.get(`${BASE_URL}/admin/sources/src-1`, (_req, res, ctx) => res(ctx.status(200), ctx.json({ source: buildSource() }))),
       rest.post(`${BASE_URL}/admin/sources/src-1/status`, (_req, res, ctx) =>
         res(ctx.status(200), ctx.json({ source: buildSource({ state: 'ACTIVE' }) })),
       ),
+      rest.post(`${BASE_URL}/admin/sources/src-1/ingestion/run`, (_req, res, ctx) => res(ctx.status(200), ctx.json({ run_id: 'run-1', status: 'RUNNING' }))),
     );
 
     renderWithProviders(
@@ -129,14 +146,16 @@ describe('Console de Fontes v2', () => {
     await userEvent.click(screen.getByRole('button', { name: /Ativar/i }));
 
     await screen.findByText(/Ativa/i);
+
+    await userEvent.click(screen.getByRole('button', { name: /Executar ingestão/i }));
+    await screen.findByText(/Ingestão manual disparada/i);
   });
 
-  it('mostra erro quando atualização falha', async () => {
+  it('mostra erro quando ação falha', async () => {
     server.use(
       rest.get(`${BASE_URL}/admin/sources/src-err`, (_req, res, ctx) => res(ctx.status(200), ctx.json({ source: buildSource({ id: 'src-err' }) }))),
-      rest.post(`${BASE_URL}/admin/sources/src-err/status`, (_req, res, ctx) =>
-        res(ctx.status(500), ctx.json({ detail: 'Falha de backend' })),
-      ),
+      rest.post(`${BASE_URL}/admin/sources/src-err/status`, (_req, res, ctx) => res(ctx.status(200), ctx.json({ source: buildSource({ state: 'ACTIVE' }) }))),
+      rest.post(`${BASE_URL}/admin/sources/src-err/ingestion/pause`, (_req, res, ctx) => res(ctx.status(500), ctx.json({ detail: 'Falha de backend' }))),
     );
 
     renderWithProviders(
@@ -148,7 +167,7 @@ describe('Console de Fontes v2', () => {
 
     await screen.findByText(/Proposta/i);
 
-    await userEvent.click(screen.getByRole('button', { name: /Ativar/i }));
+    await userEvent.click(screen.getByRole('button', { name: /Pausar ingestão/i }));
 
     await screen.findByText(/Falha de backend/i);
   });

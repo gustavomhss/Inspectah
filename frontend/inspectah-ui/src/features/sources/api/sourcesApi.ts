@@ -22,6 +22,7 @@ function buildQuery(filters?: SourceFilters): string {
   if (filters?.type) params.set('type', filters.type);
   if (filters?.category) params.set('category', filters.category);
   if (filters?.state) params.set('state', filters.state);
+  if (filters?.health_status) params.set('health_status', filters.health_status);
   return params.toString() ? `?${params.toString()}` : '';
 }
 
@@ -45,6 +46,7 @@ export async function createSource(payload: SourcePayload): Promise<Source> {
     endpoint: undefined,
     themes: payload.themes ?? [],
     info_types: payload.info_types ?? [],
+    refresh_interval: payload.refresh_interval ?? null,
   };
 
   const response = await httpClient<{ source: Source }>(endpoints.admin.sources, {
@@ -85,4 +87,16 @@ export async function deactivateSource(id: string): Promise<Source> {
 
 export async function archiveSource(id: string): Promise<Source> {
   return changeSourceState(id, 'DISABLED_PERM', 'Arquivamento via Console de Fontes');
+}
+
+export async function triggerManualRun(id: string): Promise<{ run_id: string; status: string }> {
+  return httpClient<{ run_id: string; status: string }>(`${endpoints.admin.sourceDetail(id)}/ingestion/run`, { method: 'POST' });
+}
+
+export async function pauseIngestion(id: string): Promise<void> {
+  await httpClient(`${endpoints.admin.sourceDetail(id)}/ingestion/pause`, { method: 'POST' });
+}
+
+export async function resumeIngestion(id: string): Promise<void> {
+  await httpClient(`${endpoints.admin.sourceDetail(id)}/ingestion/resume`, { method: 'POST' });
 }

@@ -11,10 +11,13 @@ from typing import Dict, List, Optional, Tuple
 
 from .models import Source, SourceHealthCheck, SourceHealthStatus, SourceState
 from app.ingestion.repository import IngestionRepository
-from app.ingestion.models import IngestionMode
+from app.ingestion.models import IngestionMode, IngestionStatus
 from .status import assert_valid_transition
 from .schemas import SourceCreate, SourceFilter, SourceRead, SourceUpdate
 from .validators import validate_source_config, validate_source_payload
+from .audit import record_admin_action
+import importlib
+sources_schema = importlib.import_module("migrations.versions.0002_s21_sources_schema")
 
 DB_ENV = "INSPECTAH_S21_DB_PATH"
 DEFAULT_DB = Path("out/databases/s21_sources.sqlite")
@@ -59,12 +62,10 @@ def _deserialize(value: Optional[str], default):
 
 
 def _ensure_schema(conn: sqlite3.Connection) -> None:
-    cursor = conn.execute(
-        "SELECT name FROM sqlite_master WHERE type='table' AND name='sources'"
-    )
+    cursor = conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='sources'")
     exists = cursor.fetchone()
     if not exists:
-        return
+        sources_schema.apply_migration(_db_path())
     info = conn.execute("PRAGMA table_info('sources')").fetchall()
     columns = {row[1] for row in info}
     if "refresh_interval" not in columns:
@@ -284,6 +285,7 @@ def create_source(payload: SourceCreate) -> Source:
         conn.commit()
     result = get_source_detail(source_id)
     assert result is not None
+    record_admin_action("create_source", source_id, payload.created_by, {"slug": payload.slug or source_id, "type": payload.type})
     return result
 
 
@@ -361,6 +363,7 @@ def update_source(source_id: str, payload: SourceUpdate) -> Optional[Source]:
     with get_connection() as conn:
         _update_source_record(conn, source)
         conn.commit()
+    record_admin_action("update_source", source_id, payload.updated_by, {"fields": list(payload.model_dump(exclude_none=True).keys())})
     return get_source_detail(source_id)
 
 
@@ -386,6 +389,7 @@ def change_source_state(source_id: str, target_state: SourceState, reason: str, 
     with get_connection() as conn:
         _apply_state_transition(conn, source, target_state, reason, changed_by)
         conn.commit()
+    record_admin_action("change_source_state", source_id, changed_by, {"target_state": target_state.value, "reason": reason})
     return get_source_detail(source_id)
 
 
@@ -457,13 +461,21 @@ def list_state_history(source_id: str) -> List[Dict]:
 def enrich_source_read(source: Source) -> SourceRead:
     with get_connection() as conn:
         last_health = _fetch_latest_health(conn, source.id)
+    health = _compute_health_from_runs(source.id)
     return SourceRead(
         **source.__dict__,
         last_health_status=last_health.status.value if last_health else None,
         last_health_error=last_health.error if last_health else None,
         last_health_at=last_health.checked_at if last_health else None,
-        recent_items_count=0,
+        recent_items_count=health["recent_items_count"],
         ingestion_mode=_get_ingestion_mode(source.id),
+        health_status=health["status"],
+        health_reason=health["reason"],
+        last_run_status=health["last_run_status"],
+        last_run_finished_at=health["last_run_finished_at"],
+        last_run_latency_ms=health["last_run_latency_ms"],
+        last_run_items=health["last_run_items"],
+        failure_streak=health["failure_streak"],
     )
 
 
@@ -475,3 +487,58 @@ def _get_ingestion_mode(source_id: str) -> str:
     except Exception:
         return IngestionMode.MANUAL_ONLY.value
     return IngestionMode.MANUAL_ONLY.value
+
+
+def _compute_health_from_runs(source_id: str) -> Dict[str, Optional[object]]:
+    repo = IngestionRepository()
+    runs = repo.list_runs_by_source(source_id, limit=5)
+    if not runs:
+        return {
+            "status": SourceHealthStatus.DEGRADED.value,
+            "reason": "Sem execuções recentes",
+            "last_run_status": None,
+            "last_run_finished_at": None,
+            "last_run_latency_ms": None,
+            "last_run_items": None,
+            "failure_streak": 0,
+            "recent_items_count": 0,
+        }
+    last = runs[0]
+    success_count = sum(1 for r in runs if r.status == IngestionStatus.SUCCESS)
+    fail_count = sum(1 for r in runs if r.status in {IngestionStatus.FAIL, IngestionStatus.PARTIAL_SUCCESS})
+    latency_ms = _run_latency_ms(last)
+    items_total = sum(r.items_processed for r in runs if r.items_processed is not None)
+    status = SourceHealthStatus.OK
+    reason = "Última execução bem-sucedida"
+    if last.status in {IngestionStatus.FAIL, IngestionStatus.PARTIAL_SUCCESS}:
+        status = SourceHealthStatus.FAIL if last.status == IngestionStatus.FAIL else SourceHealthStatus.DEGRADED
+        reason = last.error_message or "Falha recente de ingestão"
+    elif fail_count > 0:
+        status = SourceHealthStatus.DEGRADED
+        reason = "Falhas recentes detectadas"
+    if latency_ms is not None and latency_ms > 120000:
+        status = SourceHealthStatus.DEGRADED
+        reason = "Latência elevada na última execução"
+    failure_streak = 0
+    for run in runs:
+        if run.status in {IngestionStatus.FAIL, IngestionStatus.PARTIAL_SUCCESS}:
+            failure_streak += 1
+        else:
+            break
+    return {
+        "status": status.value,
+        "reason": reason,
+        "last_run_status": last.status.value,
+        "last_run_finished_at": last.finished_at or last.started_at,
+        "last_run_latency_ms": latency_ms,
+        "last_run_items": last.items_processed,
+        "failure_streak": failure_streak,
+        "recent_items_count": items_total,
+    }
+
+
+def _run_latency_ms(run) -> Optional[int]:
+    if not run.started_at or not run.finished_at:
+        return None
+    delta = run.finished_at - run.started_at
+    return int(delta.total_seconds() * 1000)

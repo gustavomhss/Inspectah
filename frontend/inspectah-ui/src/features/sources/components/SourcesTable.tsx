@@ -1,6 +1,7 @@
 import { Badge, Banner, Button, Table } from '@/ui/admin';
 import type { Source } from '../types/Source';
 import { SourceStatusBadge } from './SourceStatusBadge';
+import { SourceHealthBadge } from './SourceHealthBadge';
 
 interface SourcesTableProps {
   sources: Source[];
@@ -12,7 +13,7 @@ export function SourcesTable({ sources, onSelect }: SourcesTableProps) {
 
   return (
     <Table
-      headers={['Fonte', 'Tipo', 'Estado', 'Endpoint', 'Ações']}
+      headers={['Fonte', 'Tipo', 'Estado', 'Saúde', 'Último run', 'Ações']}
       isEmpty={isEmpty}
       emptyState={
         <div className="flex flex-col gap-2">
@@ -33,8 +34,19 @@ export function SourcesTable({ sources, onSelect }: SourcesTableProps) {
             <SourceStatusBadge status={source.state} />
           </td>
           <td className="px-4 py-3">
+            <div className="flex flex-col gap-1">
+              <SourceHealthBadge status={source.health_status || (source as Source & { last_health_status?: string }).last_health_status} />
+              {source.health_reason && <div className="text-[11px] text-slate-400">{source.health_reason}</div>}
+            </div>
+          </td>
+          <td className="px-4 py-3">
             <div className="text-xs text-slate-300">{source.endpoint || source.url_base || '—'}</div>
             {source.category && <div className="text-[11px] uppercase text-slate-500">{source.category}</div>}
+            {source.last_run_status && (
+              <div className="text-[11px] text-slate-400">
+                {source.last_run_status} — {source.last_run_items ?? 0} itens — {source.last_run_latency_ms ?? 0} ms
+              </div>
+            )}
           </td>
           <td className="px-4 py-3">
             <div className="flex gap-2">

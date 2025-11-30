@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AdminContent, AdminHeader, Banner, Button, Input } from '@/ui/admin';
+import { AdminContent, AdminHeader, Banner, Button, Input, Select } from '@/ui/admin';
 import { SourceForm, type SourceFormValues } from '../components/SourceForm';
 import { SourcesTable } from '../components/SourcesTable';
-import type { Source } from '../types/Source';
+import type { Source, SourceFilters, SourceHealth, SourceStatus } from '../types/Source';
 import { createSource, listSources } from '../api/sourcesApi';
 
 export function SourcesListPage() {
@@ -12,6 +12,7 @@ export function SourcesListPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
+  const [filters, setFilters] = useState<SourceFilters>({});
   const [sources, setSources] = useState<Source[]>([]);
   const [draft, setDraft] = useState<SourceFormValues>({
     slug: '',
@@ -27,7 +28,7 @@ export function SourcesListPage() {
     setLoading(true);
     setError(null);
     try {
-      const data = await listSources();
+      const data = await listSources(filters);
       setSources(data);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro ao carregar fontes';
@@ -35,7 +36,7 @@ export function SourcesListPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [filters]);
 
   useEffect(() => {
     void loadSources();
@@ -45,13 +46,19 @@ export function SourcesListPage() {
     () =>
       sources.filter((source) => {
         const term = search.toLowerCase();
+        if (filters.health_status && (source.health_status || 'unknown') !== filters.health_status) {
+          return false;
+        }
+        if (filters.state && source.state !== filters.state) {
+          return false;
+        }
         return (
           source.name.toLowerCase().includes(term) ||
           source.type.toLowerCase().includes(term) ||
           (source.category || '').toLowerCase().includes(term)
         );
       }),
-    [sources, search],
+    [sources, search, filters.health_status, filters.state],
   );
 
   return (
@@ -76,13 +83,40 @@ export function SourcesListPage() {
               <Banner tone="danger" title="Falha ao carregar fontes" description={error} />
             </div>
           )}
-          <div className="mb-4 flex flex-wrap gap-3">
+          <div className="mb-4 flex flex-wrap gap-3 items-end">
             <Input
               placeholder="Filtrar por nome, tipo ou categoria"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               className="max-w-sm"
             />
+            <Select
+              aria-label="Estado"
+              value={filters.state ?? ''}
+              onChange={(event) => setFilters((curr) => ({ ...curr, state: (event.target.value || undefined) as SourceStatus | undefined }))}
+            >
+              <option value="">Estado</option>
+              <option value="PROPOSED">Proposta</option>
+              <option value="TESTING">Em teste</option>
+              <option value="ACTIVE">Ativa</option>
+              <option value="UNDER_REVIEW">Em revisão</option>
+              <option value="SUSPECT">Suspeita</option>
+              <option value="DISABLED_TEMP">Pausada</option>
+              <option value="DISABLED_PERM">Arquivada</option>
+            </Select>
+            <Select
+              aria-label="Saúde"
+              value={filters.health_status ?? ''}
+              onChange={(event) =>
+                setFilters((curr) => ({ ...curr, health_status: (event.target.value || undefined) as SourceHealth | undefined }))
+              }
+            >
+              <option value="">Saúde</option>
+              <option value="OK">Saudável</option>
+              <option value="DEGRADED">Degradada</option>
+              <option value="FAIL">Quebrada</option>
+              <option value="unknown">Desconhecida</option>
+            </Select>
           </div>
           <SourcesTable
             sources={filtered}
