@@ -20,6 +20,7 @@
 ## Evidências principais
 - Execução manual validada: `/admin/sources` (Fontes/Ingestão/Debunker) com layout coeso e navegação intacta; `/admin/agents` e fluxo sem logs ou requests em loop.
 - Evidências formais nos scorecards dos gates em `out/scorecards/S26_G*.json`.
+- Bundle de evidências S26: `out/bundles/inspectah_s26_evidence_bundle.zip` (inclui scorecards G0–G3, logs dos gates em `out/evidence/S26_*` e manifesto `bundle_manifest.json`).
 
 ## Fonte primária detalhada
 - Documentação completa do Capítulo 4: `Programa 1/Epico 26/Sprint 26/Capitulo 4/Capitulo 4.md`
