@@ -121,6 +121,13 @@ class SourceRead(SourceBase):
     last_health_at: Optional[datetime] = None
     recent_items_count: int = 0
     ingestion_mode: Optional[str] = None
+    health_status: Optional[str] = None
+    health_reason: Optional[str] = None
+    last_run_status: Optional[str] = None
+    last_run_finished_at: Optional[datetime] = None
+    last_run_latency_ms: Optional[int] = None
+    last_run_items: Optional[int] = None
+    failure_streak: int = 0
 
 
 class SourceFilter(BaseModel):

@@ -10,6 +10,9 @@ export interface SourceFormValues {
   description?: string;
   endpoint?: string;
   state?: SourceStatus;
+  themes?: string[];
+  info_types?: string[];
+  refresh_interval?: number | null;
 }
 
 interface SourceFormProps {
@@ -27,6 +30,9 @@ const defaultValues: SourceFormValues = {
   description: '',
   endpoint: '',
   state: 'PROPOSED',
+  themes: [],
+  info_types: [],
+  refresh_interval: 1440,
 };
 
 const sourceTypes = [
@@ -63,6 +69,13 @@ export function SourceForm({ initialValues, submitting = false, showStateField =
     setValues((current) => {
       if (key === 'name' && (!current.slug || current.slug === slugify(current.name))) {
         return { ...current, name: value, slug: slugify(value) };
+      }
+      if (key === 'themes' || key === 'info_types') {
+        return { ...current, [key]: value.split(',').map((item) => item.trim()).filter(Boolean) };
+      }
+      if (key === 'refresh_interval') {
+        const numeric = value ? Number(value) : null;
+        return { ...current, refresh_interval: Number.isNaN(numeric) ? null : numeric };
       }
       return { ...current, [key]: value };
     });
@@ -141,6 +154,36 @@ export function SourceForm({ initialValues, submitting = false, showStateField =
           value={values.endpoint}
           onChange={handleChange('endpoint')}
           placeholder="https://api.exemplo.com/fontes"
+        />
+      </FormField>
+
+      <FormField label="Temas" description="Lista separada por vírgula">
+        <Input
+          name="themes"
+          value={(values.themes || []).join(', ')}
+          onChange={handleChange('themes')}
+          placeholder="politica, economia, clima"
+        />
+      </FormField>
+
+      <FormField label="Tipos de informação" description="Lista separada por vírgula">
+        <Input
+          name="info_types"
+          value={(values.info_types || []).join(', ')}
+          onChange={handleChange('info_types')}
+          placeholder="noticia, dado_estruturado"
+        />
+      </FormField>
+
+      <FormField label="Intervalo de atualização (min)" description="Mínimo 15, máximo 10080 (7 dias)">
+        <Input
+          name="refresh_interval"
+          type="number"
+          min={15}
+          max={10080}
+          value={values.refresh_interval ?? ''}
+          onChange={handleChange('refresh_interval')}
+          placeholder="1440"
         />
       </FormField>
 

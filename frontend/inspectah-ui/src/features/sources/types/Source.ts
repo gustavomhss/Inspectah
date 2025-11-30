@@ -1,6 +1,8 @@
-import type { AdminSource, AdminSourceDetail, AdminSourceState } from '@/core/api/api-types';
+import type { AdminSource, AdminSourceDetail, AdminSourceState, AdminSourceHealthStatus } from '@/core/api/api-types';
 
 export type SourceStatus = AdminSourceState;
+export type SourceHealth = AdminSourceHealthStatus | 'unknown';
+
 export type Source = AdminSourceDetail & {
   slug?: string;
   url_base?: string;
@@ -11,6 +13,15 @@ export type Source = AdminSourceDetail & {
   state_updated_at?: string;
   stateUpdatedAt?: string;
   state_reason?: string | null;
+  health_status?: SourceHealth | null;
+  health_reason?: string | null;
+  last_run_status?: string | null;
+  last_run_finished_at?: string | null;
+  last_run_latency_ms?: number | null;
+  last_run_items?: number | null;
+  failure_streak?: number;
+  recent_items_count?: number;
+  ingestion_mode?: string | null;
 };
 
 export interface SourcePayload {
@@ -25,12 +36,15 @@ export interface SourcePayload {
   info_types?: string[];
   refresh_interval?: number | null;
   url_base?: string;
+  auth_type?: string;
+  auth_config?: Record<string, unknown>;
 }
 
 export interface SourceFilters {
   type?: string;
   category?: string;
   state?: SourceStatus;
+  health_status?: SourceHealth;
   search?: string;
 }
 

@@ -12,6 +12,8 @@ from . import service
 from .healthcheck import run_healthcheck
 from .models import SourceState
 from .schemas import SourceCreate, SourceFilter, SourceRead, SourceUpdate
+from app.ingestion.models import IngestionTrigger, IngestionMode
+from app.ingestion import services as ingestion_services
 
 
 if APIRouter is not None:  # pragma: no cover
@@ -75,6 +77,21 @@ if APIRouter is not None:  # pragma: no cover
     @router.get("/{source_id}/healthchecks")
     def list_healthchecks(source_id: str):
         return {"healthchecks": [hc.__dict__ for hc in service.list_healthchecks(source_id)]}
+
+    @router.post("/{source_id}/ingestion/run")
+    def trigger_manual_run(source_id: str):
+        run = ingestion_services.start_ingestion_run(source_id, trigger=IngestionTrigger.MANUAL, trigger_origin="admin_ui")
+        return {"run_id": run.id, "status": run.status.value}
+
+    @router.post("/{source_id}/ingestion/pause")
+    def pause_ingestion(source_id: str):
+        config = ingestion_services.toggle_ingestion_mode(source_id, new_mode=IngestionMode.MANUAL_ONLY, enabled=False, updated_by="admin-ui")
+        return {"config": config.to_dict()}
+
+    @router.post("/{source_id}/ingestion/resume")
+    def resume_ingestion(source_id: str):
+        config = ingestion_services.toggle_ingestion_mode(source_id, new_mode=IngestionMode.AUTOMATIC, enabled=True, updated_by="admin-ui")
+        return {"config": config.to_dict()}
 
 else:  # pragma: no cover
     router = None
