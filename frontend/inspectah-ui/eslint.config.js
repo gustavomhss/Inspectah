@@ -36,6 +36,7 @@ export default [
         HTMLFormElement: 'readonly',
         HTMLElement: 'readonly',
         HTMLInputElement: 'readonly',
+        HTMLSelectElement: 'readonly',
         HTMLButtonElement: 'readonly',
         HTMLTableElement: 'readonly',
         describe: 'readonly',
