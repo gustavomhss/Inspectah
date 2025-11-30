@@ -13,6 +13,7 @@ interface Filters {
 export function useAgents(filters: Filters = {}) {
   const { token } = useAuth();
   const { logEvent } = useLogger();
+  const { layer, role, status } = filters;
   const [agents, setAgents] = useState<AgentProfile[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -21,13 +22,13 @@ export function useAgents(filters: Filters = {}) {
     setLoading(true);
     setError(null);
     try {
-      const data = await listAgents(token || undefined, filters);
+      const data = await listAgents(token || undefined, { layer, role, status });
       setAgents(data);
       logEvent('admin.agents_list_open', {
         count: data.length,
-        layer: filters.layer,
-        role: filters.role,
-        status: filters.status,
+        layer,
+        role,
+        status,
       });
     } catch (err) {
       const message = (err as Error).message;
@@ -36,7 +37,7 @@ export function useAgents(filters: Filters = {}) {
     } finally {
       setLoading(false);
     }
-  }, [token, logEvent, filters]);
+  }, [token, logEvent, layer, role, status]);
 
   useEffect(() => {
     void load();
