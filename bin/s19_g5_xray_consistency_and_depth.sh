@@ -25,6 +25,9 @@ fixtures_dir = Path(sys.argv[1])
 scorecard_path = Path(sys.argv[2])
 evidence_dir = Path(sys.argv[3])
 
+def _get(obj, key, default=None):
+    return obj.get(key, default) if isinstance(obj, dict) else default
+
 app = build_app()
 if app is None:
     raise SystemExit("[S19_G5] app não criada")
@@ -34,20 +37,55 @@ required_sections = ["summary", "debunker", "committees", "anchors", "evidences"
 results = {}
 
 for fixture_path in sorted(fixtures_dir.glob("xray_expected_*.json")):
-    expected = json.loads(fixture_path.read_text(encoding="utf-8"))
-    case_id = expected.get("case_id")
+    raw = json.loads(fixture_path.read_text(encoding="utf-8"))
+
+    if isinstance(raw, dict):
+        fixture_meta = raw
+    elif isinstance(raw, list):
+        if not raw:
+            raise ValueError(f"[S19_G5] Fixture {fixture_path} é uma lista vazia; não sei qual case_id usar")
+        first = raw[0]
+        if not isinstance(first, dict):
+            raise TypeError(f"[S19_G5] Fixture {fixture_path} é uma lista de {type(first)}, esperado dict")
+        fixture_meta = first
+    else:
+        raise TypeError(f"[S19_G5] Fixture {fixture_path} tem tipo inesperado: {type(raw)}")
+
+    case_id = fixture_meta.get("case_id")
+    if not case_id:
+        raise ValueError(f"[S19_G5] Fixture {fixture_path} não contém case_id reconhecível")
+
     resp = client.get(f"/admin/cases/{case_id}/xray")
-    payload = resp.json() if resp.content else {}
+    payload_raw = resp.json() if resp.content else {}
+    if isinstance(payload_raw, dict):
+        payload = payload_raw
+    elif isinstance(payload_raw, list) and payload_raw:
+        first_payload = payload_raw[0]
+        payload = first_payload if isinstance(first_payload, dict) else {}
+    else:
+        payload = {}
+    if not isinstance(payload, dict):
+        payload = {}
     (evidence_dir / f"xray_{fixture_path.stem}.json").write_text(
         json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8"
     )
-    xray = payload.get("xray", {})
-    sections_ok = [sec for sec in required_sections if xray.get(sec)]
+    xray_raw = _get(payload, "xray", {})
+    if isinstance(xray_raw, dict):
+        xray = xray_raw
+    elif isinstance(xray_raw, list) and xray_raw:
+        first_xray = xray_raw[0]
+        xray = first_xray if isinstance(first_xray, dict) else {}
+    else:
+        xray = {}
+    if not isinstance(xray, dict):
+        xray = {}
+
+    sections_ok = [sec for sec in required_sections if _get(xray, sec)]
     completeness = len(sections_ok) / len(required_sections)
     explanation_texts = [
-        str(xray.get("debunker", {}).get("explanation", "")),
-        str(xray.get("committees", {}).get("summary", "")),
-        str(xray.get("anchors", {}).get("summary", "")),
+        str(_get(_get(xray, "debunker", {}), "explanation", "")),
+        str(_get(_get(xray, "committees", {}), "summary", "")),
+        str(_get(_get(xray, "anchors", {}), "summary", "")),
     ]
     explanation_ok = all(len(text.strip()) >= 20 for text in explanation_texts)
     results[case_id] = {
