@@ -71,4 +71,3 @@ def test_create_and_update_schema(tmp_path: Path) -> None:
 
     loaded_latest = load_schema("news_core", registry_dir=tmp_path)
     assert loaded_latest.version == 2
-*** End Patch

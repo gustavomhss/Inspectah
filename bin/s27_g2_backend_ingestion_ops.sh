@@ -17,7 +17,7 @@ STATUS="GO"
 
 set +e
 cd "$ROOT_DIR"
-"$PYTHON_BIN" -m pytest tests/ingestion/test_service_contracts.py tests/ingestion/test_observability.py tests/ingestion/test_admin_ui_flows.py 2>&1 | tee "$LOG_PATH"
+"$PYTHON_BIN" -m pytest tests/ingestion/test_service_contracts.py tests/ingestion/test_observability.py tests/ingestion/test_admin_ui_flows.py tests/sources/test_routes_admin.py 2>&1 | tee "$LOG_PATH"
 EXIT_CODE=${PIPESTATUS[0]}
 set -e
 

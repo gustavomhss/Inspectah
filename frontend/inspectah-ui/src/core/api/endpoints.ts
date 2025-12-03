@@ -34,6 +34,9 @@ export const endpoints = {
       committeeDryRun: (committeeId: string) => `/api/console/agents/committees/${encodeURIComponent(committeeId)}/dry-run`,
       modelPolicy: '/api/console/agents/policies/model-upgrades',
       flow: '/api/console/agents/flow',
+      flowsAdmin: '/admin/agent-flows',
+      flowAdminDetail: (flowId: string) => `/admin/agent-flows/${encodeURIComponent(flowId)}`,
+      flowAdminByDomain: (domainKey: string) => `/admin/agent-flows/by-domain/${encodeURIComponent(domainKey)}`,
     },
   },
 };

@@ -105,12 +105,16 @@ export function SourceEditPage() {
     setError(null);
     setFeedback(null);
     const promise =
-      action === 'pause' ? pauseIngestion(sourceId) : action === 'resume' ? resumeIngestion(sourceId) : triggerManualRun(sourceId);
+      action === 'pause'
+        ? pauseIngestion(sourceId)
+        : action === 'resume'
+          ? resumeIngestion(sourceId)
+          : triggerManualRun(sourceId);
     promise
-      .then(() => {
+      .then((result) => {
         setFeedback(
           action === 'run'
-            ? 'Ingestão manual disparada.'
+            ? `Ingestão manual disparada. Status: ${'status' in result ? result.status : 'desconhecido'}.`
             : action === 'pause'
               ? 'Ingestão pausada.'
               : 'Ingestão retomada.',

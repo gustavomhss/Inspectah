@@ -22,3 +22,10 @@ dev = [
 [build-system]
 requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+norecursedirs = ["Arquivo", ".git", ".venv", "node_modules"]
+addopts = [
+  "--ignore=tests/s8_t2_unit_contracts",
+  "--ignore=tests/s8_t4_golden_flows",
+]

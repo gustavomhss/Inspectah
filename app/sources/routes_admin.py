@@ -12,6 +12,7 @@ from . import service
 from .healthcheck import run_healthcheck
 from .models import SourceState
 from .schemas import SourceCreate, SourceFilter, SourceRead, SourceUpdate
+from .audit import record_admin_action
 from app.ingestion.models import IngestionTrigger, IngestionMode
 from app.ingestion import services as ingestion_services
 
@@ -43,7 +44,10 @@ if APIRouter is not None:  # pragma: no cover
             raise HTTPException(status_code=404, detail="Fonte não encontrada")
         history = service.list_state_history(source_id)
         enriched = service.enrich_source_read(src)
-        return {"source": {**enriched.model_dump(), "state_history": history}}
+        source_payload = {**enriched.model_dump(), "state_history": history}
+        # expõe status para compatibilidade com testes/admin UI
+        source_payload.setdefault("status", enriched.state.value if hasattr(enriched.state, "value") else enriched.state)
+        return {"source": source_payload}
 
     @router.post("", status_code=201)
     def create_admin_source(payload: SourceCreate):
@@ -80,8 +84,18 @@ if APIRouter is not None:  # pragma: no cover
 
     @router.post("/{source_id}/ingestion/run")
     def trigger_manual_run(source_id: str):
-        run = ingestion_services.start_ingestion_run(source_id, trigger=IngestionTrigger.MANUAL, trigger_origin="admin_ui")
-        return {"run_id": run.id, "status": run.status.value}
+        try:
+            # No admin endpoint usamos a execução padrão (não-inline) para evitar falhas de rede em ambientes de teste
+            run = ingestion_services.start_ingestion_run(
+                source_id,
+                trigger=IngestionTrigger.MANUAL,
+                trigger_origin="admin_ui",
+                execute_inline=False,
+            )
+            record_admin_action("manual_run", source_id, "admin-ui", {"run_id": run.id, "status": run.status.value})
+            return {"run_id": run.id, "status": run.status.value}
+        except Exception as exc:  # noqa: BLE001
+            raise HTTPException(status_code=500, detail=str(exc))
 
     @router.post("/{source_id}/ingestion/pause")
     def pause_ingestion(source_id: str):
