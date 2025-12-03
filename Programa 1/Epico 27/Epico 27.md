@@ -11,6 +11,7 @@
 **Nome curto:** Fontes & Ingestão 2.0 em Operação  
 **Programa:** Programa 1 — Consolidação & Consoles Full (S26–S32)  
 **Status:** Em design (ajustar quando entrar em execução)  
+**Status atual:** **DONE (Sprint 27)** — console de fontes operável via UI, ingestão manual real, saúde calculada por métricas e auditoria de ações admin registrada como evidência.
 
 **Resumo em uma frase:**
 

@@ -12,6 +12,81 @@ from .schemas import SourceCreateRequest
 
 dashboard_router = APIRouter(prefix="/admin", tags=["admin-dashboard"])
 
+# Casos demo para atender endpoints de painel admin
+DEMO_CASES = {
+    "obra_publica:2025-123": {
+        "id": "obra_publica:2025-123",
+        "title": "Obra pública com indícios de superfaturamento",
+        "category": "obra_publica",
+        "status": "andamento",
+        "risk": "medio",
+        "updated_at": "",
+        "key_sources": [],
+        "description": "Caso demo para painel admin.",
+        "top_evidence": [],
+    },
+    "evento_climatico:inmet-2025-0901": {
+        "id": "evento_climatico:inmet-2025-0901",
+        "title": "Evento climático extremo",
+        "category": "evento_climatico",
+        "status": "monitoramento",
+        "risk": "alto",
+        "updated_at": "",
+        "key_sources": [],
+        "description": "Caso demo para painel admin.",
+        "top_evidence": [],
+    },
+}
+
+DEMO_TIMELINES = {
+    "obra_publica:2025-123": {
+        "case_id": "obra_publica:2025-123",
+        "events": [
+            {
+                "id": "ev-1",
+                "event_type": "ingestion",
+                "summary": "Ingestão inicial",
+                "timestamp": "2025-01-02T10:00:00Z",
+            },
+            {
+                "id": "ev-2",
+                "event_type": "truth_event",
+                "summary": "Primeiro evento de verdade",
+                "timestamp": "2025-01-03T12:00:00Z",
+            },
+        ],
+    }
+}
+
+DEMO_XRAYS = {
+    "evento_climatico:inmet-2025-0901": {
+        "case_id": "evento_climatico:inmet-2025-0901",
+        "title": "Evento climático extremo",
+        "category": "evento_climatico",
+        "status": "monitoramento",
+        "risk": "alto",
+        "summary": "Raio-X consolidado do caso demo.",
+        "debunker": {
+            "risk_level": "moderate",
+            "explanation": "Debunker identificou riscos e emitiu parecer inicial.",
+            "flags": ["analisar fontes adicionais"],
+            "last_evaluated_at": "2025-01-03T15:00:00Z",
+        },
+        "committees": [
+            {"name": "core_committee", "verdict": "convergent", "score": 0.92},
+        ],
+        "anchors": [
+            {"id": "anchor-1", "kind": "onchain", "status": "confirmed"},
+        ],
+        "evidences": {
+            "summary": "Principais evidências coletadas.",
+            "evidences": [
+                {"id": "evidence-1", "type": "document", "relevance": "high"},
+            ],
+        },
+    }
+}
+
 
 @dashboard_router.get("/health")
 def get_health() -> Dict[str, Any]:
@@ -33,49 +108,32 @@ def get_health() -> Dict[str, Any]:
 
 @dashboard_router.get("/cases")
 def list_cases() -> Dict[str, Any]:
-    """Lista casos/temas para o painel; devolve vazio por padrão."""
-    return {"cases": []}
+    """Lista casos/temas para o painel."""
+    return {"cases": list(DEMO_CASES.values())}
 
 
 @dashboard_router.get("/cases/{case_id}")
 def get_case(case_id: str) -> Dict[str, Any]:
-    """Detalhe mínimo para evitar 404 na UI."""
-    return {
-        "case": {
-            "id": case_id,
-            "title": "Caso não definido",
-            "category": "indefinido",
-            "status": "estavel",
-            "risk": "baixo",
-            "updated_at": "",
-            "key_sources": [],
-            "description": "Caso ainda não está configurado no backend.",
-            "top_evidence": [],
-        }
-    }
+    case = DEMO_CASES.get(case_id)
+    if not case:
+        raise HTTPException(status_code=404, detail="case not found")
+    return {"case": case}
 
 
 @dashboard_router.get("/cases/{case_id}/timeline")
 def get_case_timeline(case_id: str) -> Dict[str, Any]:
-    return {"timeline": {"case_id": case_id, "events": []}}
+    timeline = DEMO_TIMELINES.get(case_id)
+    if not timeline:
+        raise HTTPException(status_code=404, detail="case not found")
+    return {"timeline": timeline}
 
 
 @dashboard_router.get("/cases/{case_id}/xray")
 def get_case_xray(case_id: str) -> Dict[str, Any]:
-    return {
-        "xray": {
-            "case_id": case_id,
-            "title": "Caso não definido",
-            "category": "indefinido",
-            "status": "estavel",
-            "risk": "baixo",
-            "summary": "Raio-X não disponível para este caso.",
-            "debunker": {"risk_level": None, "explanation": "", "flags": [], "last_evaluated_at": None},
-            "committees": {"summary": "", "decisions": []},
-            "anchors": {"summary": "", "anchors": []},
-            "evidences": {"summary": "", "evidences": []},
-        }
-    }
+    xray = DEMO_XRAYS.get(case_id)
+    if not xray:
+        raise HTTPException(status_code=404, detail="case not found")
+    return {"xray": xray}
 
 
 # Admin de fontes (compatibilidade com UI atual)

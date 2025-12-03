@@ -71,6 +71,11 @@ Esse é o “estado base” reconhecido pelo produto: poucas fontes muito bem tr
 - **Backlog da Fase 2 estruturado:** itens de Sistema de Blocos, blockchain, reputação e contestação avançada mapeados para S15+ (G5).
 - **Observabilidade consolidada:** snapshot único de métricas S14 (G6/G7) e decisão GO formalizada (G8).
 
+#### Atualização pós-S27 (Sources & Ingestion Ops v2.0)
+- Console de fontes em modo operação completo: criar/editar/pausar/retomar/inspecionar via UI Admin v1.
+- Ingestão manual disparada pela UI roda o fluxo real de ingestão e atualiza saúde da fonte (status, latência, volume, failure_streak, janela recente).
+- Auditoria de ações admin (create/update/change_state/manual_run) registrada no Evidence Vault/log de auditoria.
+
 ---
 
 ### 2. Papéis, Workspaces e Limites Claros

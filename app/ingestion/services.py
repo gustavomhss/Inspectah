@@ -29,6 +29,7 @@ from app.ingestion.repository import IngestionRepository
 from app.ingestion import observability
 from app.sources.models import Source, SourceState
 from app.sources.service import get_source_detail
+from inspectah.watchers.rss import _fetch_feed as _fetch_rss_feed, _parse_rss as _parse_rss_feed
 
 logger = logging.getLogger(__name__)
 
@@ -80,11 +81,15 @@ def start_ingestion_run(
     observability.log_run_start(run)
 
     if execute_inline:
-        _log_run_event(run, "run_inline_started")
+        _log_run_event(run, "run_inline_started", {"note": "Execução inline real (rss) se suportada"})
         try:
-            # Para v0, executamos uma ingestão mínima inline. Futuro: mover para worker.
-            _mark_run_success(repo, run, items_processed=0, payload_ref=None)
-            _log_run_event(run, "run_inline_finished")
+            items_processed, payload_ref = _run_ingestion_inline(repo, run, source)
+            _mark_run_success(repo, run, items_processed=items_processed, payload_ref=payload_ref)
+            _log_run_event(
+                run,
+                "run_inline_finished",
+                {"items_processed": items_processed, "payload_ref": payload_ref},
+            )
         except Exception as exc:  # noqa: BLE001
             _mark_run_fail(repo, run, error_code="inline_error", error_message=str(exc))
             _log_run_event(run, "run_inline_failed", extra={"error": str(exc)})
@@ -118,6 +123,13 @@ def complete_ingestion_run(
     repo.update_run(run)
     repo.set_last_run(config.id, run.id)
     observability.log_run_end(run)
+    logger.info(
+        "[ingestion_run_success] run_id=%s source_id=%s items_processed=%s payload_ref=%s",
+        run.id,
+        run.source_id,
+        items_processed,
+        payload_ref,
+    )
     return run
 
 
@@ -150,6 +162,14 @@ def fail_ingestion_run(
     repo.update_run(run)
     repo.set_last_run(config.id, run.id)
     observability.log_run_end(run)
+    logger.warning(
+        "[ingestion_run_fail] run_id=%s source_id=%s items_processed=%s error_code=%s error_message=%s",
+        run.id,
+        run.source_id,
+        items_processed,
+        error_code,
+        error_message,
+    )
     return run
 
 
@@ -245,6 +265,43 @@ def _log_run_event(run: IngestionRun, event: str, extra: Optional[dict] = None) 
     logger.info("[ingestion_run] %s", payload)
 
 
+def _run_ingestion_inline(repo: IngestionRepository, run: IngestionRun, source: Source) -> tuple[int, Optional[str]]:
+    if source.format != "rss":
+        logger.info(
+            "[ingestion_inline_skip] run_id=%s source_id=%s reason=unsupported_format format=%s",
+            run.id,
+            run.source_id,
+            source.format,
+        )
+        return 0, None
+
+    logger.info(
+        "[ingestion_inline_fetch] run_id=%s source_id=%s endpoint=%s",
+        run.id,
+        run.source_id,
+        source.endpoint,
+    )
+    feed_bytes = _fetch_rss_feed(source.endpoint)
+    items = _parse_rss_feed(feed_bytes)
+    total = len(items)
+    if total == 0:
+        logger.warning(
+            "[ingestion_inline_no_items] run_id=%s source_id=%s endpoint=%s",
+            run.id,
+            run.source_id,
+            source.endpoint,
+        )
+    payload_ref = repo.save_raw_payload(run.id, run.source_id, items)
+    logger.info(
+        "[ingestion_inline_parsed] run_id=%s source_id=%s items=%s payload_ref=%s",
+        run.id,
+        run.source_id,
+        total,
+        payload_ref,
+    )
+    return total, payload_ref
+
+
 def _mark_run_success(repo: IngestionRepository, run: IngestionRun, *, items_processed: int, payload_ref: Optional[str]) -> IngestionRun:
     state_machine.apply_event(run, state_machine.IngestionEvent.COMPLETE)
     run.finished_at = datetime.utcnow()
@@ -253,6 +310,13 @@ def _mark_run_success(repo: IngestionRepository, run: IngestionRun, *, items_pro
     repo.update_run(run)
     repo.set_last_run(run.config_id, run.id)
     observability.log_run_end(run)
+    logger.info(
+        "[ingestion_run_success] run_id=%s source_id=%s items_processed=%s payload_ref=%s",
+        run.id,
+        run.source_id,
+        items_processed,
+        payload_ref,
+    )
     return run
 
 

@@ -10,8 +10,9 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
 from .models import Source, SourceHealthCheck, SourceHealthStatus, SourceState
+from .normalizer import is_lab_endpoint, normalize_source_model, normalize_source_payload
 from app.ingestion.repository import IngestionRepository
-from app.ingestion.models import IngestionMode, IngestionStatus
+from app.ingestion.models import IngestionConfig, IngestionMode, IngestionStatus, MIN_INTERVAL
 from .status import assert_valid_transition
 from .schemas import SourceCreate, SourceFilter, SourceRead, SourceUpdate
 from .validators import validate_source_config, validate_source_payload
@@ -101,6 +102,34 @@ def _normalize_refresh_interval(refresh_interval: Optional[int], source_type: st
     if value < MIN_REFRESH_INTERVAL or value > MAX_REFRESH_INTERVAL:
         raise ValueError("refresh_interval fora do intervalo permitido")
     return value
+
+
+def _ensure_lab_ingestion_config(source: Source, updated_by: str) -> None:
+    if not is_lab_endpoint(source.endpoint):
+        return
+    repo = IngestionRepository()
+    existing = repo.get_config(source.id)
+    mode = IngestionMode.MANUAL_ONLY
+    enabled = True
+    if existing:
+        existing.mode = mode
+        existing.enabled = enabled
+        existing.updated_by = updated_by
+        existing.updated_at = datetime.utcnow()
+        repo.save_config(existing)
+        return
+    cfg = IngestionConfig.create(
+        id=_generate_id("ingcfg"),
+        source_id=source.id,
+        source_state=source.state,
+        enabled=enabled,
+        mode=mode,
+        interval_minutes=source.refresh_interval if getattr(source, "refresh_interval", None) else MIN_INTERVAL,
+        max_attempts=3,
+        timeout_seconds=60,
+        created_by=updated_by,
+    )
+    repo.save_config(cfg)
 
 
 def _row_to_source(row: sqlite3.Row) -> Source:
@@ -222,6 +251,7 @@ def _insert_state_history(conn: sqlite3.Connection, source_id: str, from_state: 
 
 
 def create_source(payload: SourceCreate) -> Source:
+    payload = normalize_source_payload(payload)  # aplica regras de normalização antes de persistir
     validate_source_payload(payload)
     validate_source_config(payload.type, payload.model_dump())
     source_id = _generate_id("src")
@@ -283,10 +313,17 @@ def create_source(payload: SourceCreate) -> Source:
         )
         _insert_state_history(conn, source_id, None, SourceState.PROPOSED, "Fonte criada", payload.created_by)
         conn.commit()
-    result = get_source_detail(source_id)
-    assert result is not None
+    created = get_source_detail(source_id)
+    assert created is not None
+    normalized = normalize_source_model(created)
+    if normalized != created:
+        with get_connection() as conn:
+            _update_source_record(conn, normalized)
+            conn.commit()
+        created = get_source_detail(source_id) or normalized
+    _ensure_lab_ingestion_config(created, payload.created_by)
     record_admin_action("create_source", source_id, payload.created_by, {"slug": payload.slug or source_id, "type": payload.type})
-    return result
+    return created
 
 
 def _update_source_record(conn: sqlite3.Connection, source: Source) -> None:
@@ -341,6 +378,7 @@ def _update_source_record(conn: sqlite3.Connection, source: Source) -> None:
 
 
 def update_source(source_id: str, payload: SourceUpdate) -> Optional[Source]:
+    payload = normalize_source_payload(payload)
     existing = get_source_detail(source_id)
     if not existing:
         return None
@@ -359,10 +397,15 @@ def update_source(source_id: str, payload: SourceUpdate) -> Optional[Source]:
     validate_source_config(merged["type"], merged)
 
     source = Source(**merged)  # type: ignore[arg-type]
+    state_before = source.state
+    source = normalize_source_model(source)
+    if source.state != state_before:
+        source.state_updated_at = datetime.utcnow()
     # não muda estado diretamente aqui; usar change_source_state para transições
     with get_connection() as conn:
         _update_source_record(conn, source)
         conn.commit()
+    _ensure_lab_ingestion_config(source, payload.updated_by)
     record_admin_action("update_source", source_id, payload.updated_by, {"fields": list(payload.model_dump(exclude_none=True).keys())})
     return get_source_detail(source_id)
 

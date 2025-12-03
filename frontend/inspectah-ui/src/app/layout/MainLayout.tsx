@@ -63,8 +63,8 @@ function MainLayout() {
               <NavLink to="/admin/agents" className={navLinkClass}>
                 Agentes
               </NavLink>
-              <NavLink to="/admin/agents/flow" className={navLinkClass}>
-                Fluxo de agentes
+              <NavLink to="/admin/agent-flows" className={navLinkClass}>
+                Fluxos de agentes
               </NavLink>
               <NavLink to="/admin/agents/model-policy" className={navLinkClass}>
                 Política de modelos

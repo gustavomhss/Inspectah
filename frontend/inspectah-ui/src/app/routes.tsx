@@ -24,6 +24,7 @@ import SourcesLayout from '../features/sources/pages/SourcesLayout';
 import SourcesIngestionPage from '../features/sources/pages/SourcesIngestionPage';
 import SourcesDebunkerPage from '../features/sources/pages/SourcesDebunkerPage';
 import SourcesNotFoundPage from '../features/sources/pages/SourcesNotFoundPage';
+import AgentFlowsPage from '../features/agent-flows/AgentFlowsPage';
 
 export function AppRoutes() {
   return (
@@ -53,6 +54,7 @@ export function AppRoutes() {
         <Route path="/admin/agents/:agentId/committees" element={<AgentCommitteesPage />} />
         <Route path="/admin/agents/model-policy" element={<ModelPolicyPage />} />
         <Route path="/admin/agents/flow" element={<AgentsFlowPage />} />
+        <Route path="/admin/agent-flows" element={<AgentFlowsPage />} />
         <Route path="/admin/console/truth" element={<TruthConsolePage />} />
         <Route path="/admin/console/agents" element={<AgentStudioPage />} />
         <Route path="/admin/console/incidents" element={<IncidentConsolePage />} />
