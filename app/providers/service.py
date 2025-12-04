@@ -88,6 +88,13 @@ class ProviderService:
             rows = conn.execute("SELECT * FROM ingestion_profiles ORDER BY updated_at DESC").fetchall()
         return [_row_to_profile(r) for r in rows]
 
+    def list_profiles_by_provider(self, provider_id: str) -> List[IngestionProfile]:
+        with self._conn() as conn:
+            rows = conn.execute(
+                "SELECT * FROM ingestion_profiles WHERE provider_id=? ORDER BY updated_at DESC", (provider_id,)
+            ).fetchall()
+        return [_row_to_profile(r) for r in rows]
+
     def get_profile(self, profile_id: str) -> Optional[IngestionProfile]:
         with self._conn() as conn:
             row = conn.execute("SELECT * FROM ingestion_profiles WHERE id=?", (profile_id,)).fetchone()

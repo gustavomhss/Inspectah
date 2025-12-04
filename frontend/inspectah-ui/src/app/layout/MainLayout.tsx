@@ -57,6 +57,9 @@ function MainLayout() {
               <NavLink to="/admin/sources" className={navLinkClass}>
                 Fontes
               </NavLink>
+              <NavLink to="/admin/providers" className={navLinkClass}>
+                Providers v2
+              </NavLink>
               <NavLink to="/admin/ingestion" className={navLinkClass}>
                 Ingestão
               </NavLink>

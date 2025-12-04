@@ -106,7 +106,7 @@ def build_app():  # pragma: no cover
     if console_router is not None:
         app.include_router(console_router)
     if providers_router is not None:
-        app.include_router(providers_router, prefix="/api", tags=["providers"])
+        app.include_router(providers_router, tags=["providers"])
     if copiloto_fontes_router is not None:
         app.include_router(copiloto_fontes_router, prefix="/admin/copiloto-fontes", tags=["admin-copiloto-fontes"])
     if auth_router is not None:
