@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import runpy
 import sqlite3
 from contextlib import contextmanager
 from datetime import datetime
@@ -8,9 +9,14 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 from app.providers.models import IngestionProfile, ProfileKind, Provider, ProviderKind, ProviderStatus
-from migrations.versions import _0032_s31_providers as mig  # type: ignore
 
-DEFAULT_DB_PATH = mig.DEFAULT_DB_PATH
+ROOT = Path(__file__).resolve().parents[2]
+MIG_PATH = ROOT / "migrations" / "versions" / "0032_s31_providers.py"
+
+# Load migration module functions without relying on package imports
+_mig = runpy.run_path(str(MIG_PATH))
+apply_migration = _mig.get("apply_migration")  # type: ignore[assignment]
+DEFAULT_DB_PATH = Path(_mig.get("DEFAULT_DB_PATH", ROOT / "out/databases/s31_providers.sqlite"))
 
 
 def _deserialize(payload: Optional[str]):
@@ -29,7 +35,8 @@ class ProviderService:
     @contextmanager
     def _conn(self):
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
-        mig.apply_migration(self.db_path)
+        if apply_migration:
+            apply_migration(self.db_path)  # type: ignore[misc]
         conn = sqlite3.connect(self.db_path)
         conn.row_factory = sqlite3.Row
         try:
