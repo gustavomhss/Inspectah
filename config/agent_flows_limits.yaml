@@ -1,0 +1,5 @@
+# S31 — limites de operação para agent flows (baseline)
+max_rollbacks_per_hour: 2
+max_test_percentual: 20
+max_versions_to_keep: 10
+operation_timeout_seconds: 30

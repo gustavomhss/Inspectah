@@ -1,0 +1,3 @@
+{"item_id": "s30_news_001", "tipo_entrada": "noticia_texto", "payload": {"titulo": "Notícia 1", "conteudo": "Conteúdo de teste da notícia 1", "fonte": "Agencia X", "published_at": "2024-01-01T12:00:00Z"}}
+{"item_id": "s30_news_002", "tipo_entrada": "noticia_texto", "payload": {"titulo": "Notícia 2", "conteudo": "Conteúdo de teste da notícia 2", "fonte": "Portal Y", "published_at": "2024-01-02T12:00:00Z"}}
+{"item_id": "s30_news_003", "tipo_entrada": "noticia_texto", "payload": {"titulo": "Notícia 3", "conteudo": "Conteúdo de teste da notícia 3", "fonte": "Blog Z", "published_at": "2024-01-03T12:00:00Z"}}

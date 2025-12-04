@@ -1,0 +1,40 @@
+name: "[S30] Gates & Evidence"
+
+on:
+  workflow_dispatch:
+
+jobs:
+  s30-gates:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install deps
+        run: pip install prometheus-client pyyaml
+      - name: Run G0
+        run: bin/s30_g0_scope_and_alignment.sh
+      - name: Run G1
+        run: bin/s30_g1_flow_model_and_templates.sh
+      - name: Run G2
+        run: bin/s30_g2_flow_console_ops.sh
+      - name: Run G3
+        run: bin/s30_g3_flow_operations_safety.sh
+      - name: Run G4
+        run: bin/s30_g4_flow_observability.sh
+      - name: Run G5
+        run: bin/s30_g5_e2e_canonical_flow.sh
+      - name: Metrics summary
+        run: bin/s30_metrics_summary.sh
+      - name: Bundle evidence
+        run: bin/s30_bundle.sh
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: s30-evidence
+          path: |
+            out/scorecards
+            out/evidence
+            out/bundles
