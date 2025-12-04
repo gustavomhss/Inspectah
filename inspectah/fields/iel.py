@@ -85,6 +85,8 @@ class IELVisitor(ast.NodeVisitor):
         ast.Gt,
         ast.LtE,
         ast.GtE,
+        ast.Is,
+        ast.IsNot,
     }
 
     allowed_ops = {
@@ -105,6 +107,8 @@ class IELVisitor(ast.NodeVisitor):
         ast.Gt,
         ast.LtE,
         ast.GtE,
+        ast.Is,
+        ast.IsNot,
     }
 
     def __init__(self, allowed_names: List[str]) -> None:

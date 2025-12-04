@@ -173,11 +173,12 @@ def _next_version(schema_id: str, registry_dir: Optional[Path]) -> int:
     return int(manifest.get("latest_version", 0)) + 1
 
 
-def _validate_computed_fields(entries: List[ComputedFieldDefinition]) -> None:
+def _validate_computed_fields(entries: List[ComputedFieldDefinition], *, allowed_vars: Optional[List[str]] = None) -> None:
+    allowed = allowed_vars or []
     for entry in entries:
         if not entry.expression:
             raise ValueError(f"computed field {entry.name} must have expression")
-        validate_expression(entry.expression)
+        validate_expression(entry.expression, allowed_variables=allowed + [entry.name])
 
 
 def create_schema(
@@ -193,7 +194,8 @@ def create_schema(
     version = _next_version(schema_id, registry_dir)
     now = datetime.now(timezone.utc)
     computed = computed_fields or []
-    _validate_computed_fields(computed)
+    allowed_vars = [f.name for f in fields]
+    _validate_computed_fields(computed, allowed_vars=allowed_vars)
     schema = FieldSchema(
         schema_id=schema_id,
         version=version,
@@ -236,7 +238,8 @@ def update_schema(
     version = int(manifest["latest_version"]) + 1
     now = datetime.now(timezone.utc)
     computed = computed_fields or []
-    _validate_computed_fields(computed)
+    allowed_vars = [f.name for f in fields]
+    _validate_computed_fields(computed, allowed_vars=allowed_vars)
     schema = FieldSchema(
         schema_id=schema_id,
         version=version,
