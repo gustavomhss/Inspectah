@@ -1,0 +1,4 @@
+# S31 — flags de feature para agent flows governáveis
+s31_flow_versioning_enabled: true
+s31_flow_console_history_enabled: true
+s31_flow_rollout_test_enabled: true

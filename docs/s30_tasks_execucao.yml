@@ -1,0 +1,370 @@
+sprint: S30
+programa: 1
+epico: 28
+
+ace_resumo:
+  objetivo_sprint: >
+    Tornar o fluxo-pivô de notícias operável via Console: criado de template oficial,
+    estados fortes que governam roteamento, operações (criar/testar/promover/pausar/trocar agente/reprocessar)
+    feitas pelo console, rastreabilidade ponta a ponta e observabilidade mínima (métricas/logs + E2E).
+  leitura_minima_spec:
+    - "Programa 1/Epico 28/Sprint 30/Capitulo 1/Capitulo 1.md"
+    - "Programa 1/Epico 28/Sprint 30/Capitulo 2/Capitulo 2.md"
+    - "Programa 1/Epico 28/Sprint 30/Capitulo 4/Capitulo 4.md"
+  instrucoes_para_ace: >
+    Leia apenas os arquivos acima para entender o porquê, gates e execução.
+    Depois siga wave a wave usando apenas o contexto listado em cada wave/task abaixo.
+
+waves:
+  - id: W0
+    nome: Grounding e G0
+    descricao: Higiene de sprint, validação de docs Cap.1–3, scaffold de gate G0.
+    ace_context:
+      spec_refs:
+        - "Programa 1/Epico 28/Sprint 30/Capitulo 2/Bloco 1.md"
+        - "Programa 1/Epico 28/Sprint 30/Capitulo 4/Bloco 1.md"
+      resumo_para_ace: >
+        Garantir que a base documental está íntegra e G0 roda. Apenas varra docs de sprint
+        e implemente/verifique o script g0.
+      observacoes_execucao: >
+        Não há mudanças de código de domínio aqui; focar em varreduras e evidências de G0.
+
+  - id: W1
+    nome: Núcleo de Fluxos v1.5
+    descricao: Modelos/migrations/templates v1.5, serviço de fluxos, roteamento e engine base.
+    ace_context:
+      spec_refs:
+        - "Programa 1/Epico 28/Sprint 30/Capitulo 3/Capitulo 3.md"
+        - "Programa 1/Epico 28/Sprint 30/Capitulo 6/Bloco 2.md"
+      resumo_para_ace: >
+        Construa o domínio v1.5 (models + migrations), crie template canônico de notícias,
+        implemente service (create/set_state/replace/reprocess) e routing_policy + engine.
+        Foque em gates G1 e preparar terreno para G2/G3.
+      observacoes_execucao: >
+        Teste migrations em DB limpo e dump pós-S29; valide template sem loops.
+
+  - id: W2
+    nome: Console Operável
+    descricao: APIs do console + UI (lista/detalhe/criação/timeline) com testes.
+    ace_context:
+      spec_refs:
+        - "Programa 1/Epico 28/Sprint 30/Capitulo 3/Bloco 3.md"
+        - "Programa 1/Epico 28/Sprint 30/Capitulo 4/Bloco 2.md"
+      resumo_para_ace: >
+        Exponha o domínio via rotas /api/flows* e construa o módulo de UI de fluxos
+        (lista, detalhe, execuções, criação via template). Garanta testes API/front verdes.
+      observacoes_execucao: >
+        Reuse design system; valide estados do fluxo nos botões; alinhe contratos com schemas.
+
+  - id: W3
+    nome: Operações Seguras, Observabilidade e E2E
+    descricao: Limites e auditoria de operações, instrumentação, gates G3–G5, E2E e bundle/CI.
+    ace_context:
+      spec_refs:
+        - "Programa 1/Epico 28/Sprint 30/Capitulo 2/Bloco 3.md"
+        - "Programa 1/Epico 28/Sprint 30/Capitulo 4/Bloco 3.md"
+        - "Programa 1/Epico 28/Sprint 30/Capitulo 4/Bloco 4.md"
+      resumo_para_ace: >
+        Endureça operações (reprocesso com limites, FlowOperationLog), adicione instrumentação
+        de métricas/logs, escreva scripts G3–G5, prepare dataset E2E, metrics_summary, bundle e workflow de CI.
+      observacoes_execucao: >
+        Capture evidências em out/evidence/*; mantenha scripts idempotentes e scorecards verdes.
+
+tasks:
+  - id: S30-BE-001
+    wave: W1
+    area: backend
+    gate_relacionado: S30_G1
+    descricao: Ajustar modelos v1.5 de fluxos com estados/tipos/percentual_teste e FKs/índices mínimos.
+    arquivos_alvo:
+      - app/flows/models.py
+    criterios_aceite:
+      - Modelos sem TODO/FIXME, campos v1.5 presentes e compatíveis com S29.
+      - Linters/testes locais dos models passam.
+    ace_context:
+      spec_refs:
+        - "Programa 1/Epico 28/Sprint 30/Capitulo 3/Bloco 2.md"
+      resumo_para_ace: >
+        Só precisa do modelo descrito no Cap.3 Bloco 2. Garanta entidades v1.5 e relações corretas.
+
+  - id: S30-BE-002
+    wave: W1
+    area: backend
+    gate_relacionado: S30_G1
+    descricao: Criar migration principal v1.5 aplicável em DB limpo e dump pós-S29.
+    arquivos_alvo:
+      - migrations/versions/0030_s30_flow_model_v15.py
+    criterios_aceite:
+      - alembic upgrade head passa em DB limpo e dump pós-S29.
+      - Sem warnings críticos; versões numeradas corretamente.
+    ace_context:
+      spec_refs:
+        - "Programa 1/Epico 28/Sprint 30/Capitulo 3/Capitulo 3.md"
+      resumo_para_ace: >
+        Use filemap do Cap.3 para criar/alterar tabelas de fluxos/execuções/templates/logs.
+
+  - id: S30-BE-003
+    wave: W1
+    area: backend
+    gate_relacionado: S30_G1
+    descricao: Seed/validador do template Fluxo_Noticias_Geral_v1 com topologia canônica.
+    arquivos_alvo:
+      - migrations/versions/0031_s30_flow_templates_seed.py
+      - app/flows/service.py
+    criterios_aceite:
+      - Template ativo para tipo_entrada noticia_texto, sem loops proibidos.
+      - Validador/topologia retorna PASS no script de G1.
+    ace_context:
+      spec_refs:
+        - "Programa 1/Epico 28/Sprint 30/Capitulo 3/Bloco 2.md"
+      resumo_para_ace: >
+        Estrutura: interprete -> classificador -> analistas/debunkers -> decision maker.
+        Ajuste nomes conforme repositorio, mas mantenha ordem/roles.
+
+  - id: S30-BE-004
+    wave: W1
+    area: backend
+    gate_relacionado: S30_G1
+    descricao: Serviço de fluxos (create_from_template, set_state, replace_agent, reprocess_items, FlowOperationLog).
+    arquivos_alvo:
+      - app/flows/service.py
+    criterios_aceite:
+      - Happy paths e erros de transição/reprocesso retornam mensagens claras.
+      - FlowOperationLog persistido para operações críticas.
+    ace_context:
+      spec_refs:
+        - "Programa 1/Epico 28/Sprint 30/Capitulo 3/Bloco 2.md"
+        - "Programa 1/Epico 28/Sprint 30/Capitulo 5/Bloco 2.md"
+      resumo_para_ace: >
+        Use máquina de estados canônica do Cap.5 Bloco 2. Reprocesso precisa de limites (ver Cap.4).
+
+  - id: S30-BE-005
+    wave: W1
+    area: backend
+    gate_relacionado: S30_G2
+    descricao: Política de roteamento para noticia_texto (ativo único + percentual_teste + fallback).
+    arquivos_alvo:
+      - app/flows/routing_policy.py
+      - app/orchestration/dispatcher.py
+    criterios_aceite:
+      - Fluxo ativo recebe 100% do tráfego base; fluxo em teste recebe fração configurada.
+      - Ausência de ativo gera erro/fallback controlado com log.
+    ace_context:
+      spec_refs:
+        - "Programa 1/Epico 28/Sprint 30/Capitulo 3/Bloco 2.md"
+      resumo_para_ace: >
+        Implementar regra simples e auditável; logar decisões relevantes para inspeção.
+
+  - id: S30-BE-006
+    wave: W1
+    area: backend
+    gate_relacionado: S30_G3
+    descricao: Engine de execução de fluxo percorrendo steps, chamando agentes e registrando execuções/steps.
+    arquivos_alvo:
+      - app/flows/execution_engine.py
+    criterios_aceite:
+      - FlowExecution/FlowStepExecution criados em ordem; erros marcam status e não deixam zumbis.
+      - Hooks de instrumentação chamados (pré G4).
+    ace_context:
+      spec_refs:
+        - "Programa 1/Epico 28/Sprint 30/Capitulo 3/Bloco 2.md"
+      resumo_para_ace: >
+        Use a sequência de etapas do template; permita estratégia stop-on-error ou degradada conforme Cap.1/2.
+
+  - id: S30-API-001
+    wave: W2
+    area: backend
+    gate_relacionado: S30_G2
+    descricao: Schemas do console (list/detail/create/state/replace/reprocess/executions).
+    arquivos_alvo:
+      - app/flows/schemas.py
+    criterios_aceite:
+      - Schemas cobrem todas as rotas /api/flows*; validações coerentes com domínio.
+      - Sem TODO/FIXME; linters passam.
+    ace_context:
+      spec_refs:
+        - "Programa 1/Epico 28/Sprint 30/Capitulo 3/Bloco 2.md"
+      resumo_para_ace: >
+        Reuse campos descritos no Cap.3 Bloco 2; alinhe com service/routing.
+
+  - id: S30-API-002
+    wave: W2
+    area: backend
+    gate_relacionado: S30_G2
+    descricao: Rotas do console (/api/flows*) para listar/detalhar/criar/mudar estado/trocar agente/listar execuções/reprocessar.
+    arquivos_alvo:
+      - app/api/flow_console_routes.py
+    criterios_aceite:
+      - Happy paths retornam 2xx; erros de domínio retornam 4xx claros; autorizam por role.
+      - FlowOperationLog preenchido nas operações críticas.
+    ace_context:
+      spec_refs:
+        - "Programa 1/Epico 28/Sprint 30/Capitulo 3/Bloco 2.md"
+        - "Programa 1/Epico 28/Sprint 30/Capitulo 3/Bloco 3.md"
+      resumo_para_ace: >
+        Siga endpoints listados no Cap.3; use schemas de S30-API-001; não duplique lógica de domínio.
+
+  - id: S30-FE-001
+    wave: W2
+    area: frontend
+    gate_relacionado: S30_G2
+    descricao: Páginas/comp do Console de Fluxos (lista, detalhe, execuções, criação via template, badges/ops).
+    arquivos_alvo:
+      - frontend/inspectah-ui/src/features/flows/FlowsListPage.tsx
+      - frontend/inspectah-ui/src/features/flows/FlowDetailPage.tsx
+      - frontend/inspectah-ui/src/features/flows/FlowExecutionDetailDrawer.tsx
+      - frontend/inspectah-ui/src/features/flows/FlowCreateFromTemplateDialog.tsx
+      - frontend/inspectah-ui/src/features/flows/FlowStateBadge.tsx
+    criterios_aceite:
+      - Páginas renderizam com dados mock/real; ações chamam hooks; estados visuais corretos.
+      - Build/lint do frontend passa.
+    ace_context:
+      spec_refs:
+        - "Programa 1/Epico 28/Sprint 30/Capitulo 3/Bloco 3.md"
+      resumo_para_ace: >
+        Siga UX descrita no Cap.3 Bloco 3; mantenha cockpit simples e focado em operação.
+
+  - id: S30-FE-002
+    wave: W2
+    area: frontend
+    gate_relacionado: S30_G2
+    descricao: Hooks de API para fluxos (list/detail/executions/create/state/replace/reprocess).
+    arquivos_alvo:
+      - frontend/inspectah-ui/src/features/flows/api.ts
+    criterios_aceite:
+      - Hooks retornam loading/erro/data; payloads corretos; integrados às páginas.
+      - Tratamento de erros surfacing em toasts/mensagens.
+    ace_context:
+      spec_refs:
+        - "Programa 1/Epico 28/Sprint 30/Capitulo 3/Bloco 3.md"
+      resumo_para_ace: >
+        Alinhar com rotas de S30-API-002; não esconder erros de domínio.
+
+  - id: S30-FE-003
+    wave: W2
+    area: frontend
+    gate_relacionado: S30_G2
+    descricao: Testes de UI do console de fluxos (lista, detalhe, criação, timeline).
+    arquivos_alvo:
+      - frontend/inspectah-ui/src/features/flows/__tests__/flows_console.spec.tsx
+    criterios_aceite:
+      - Suite roda verde; cobre filtros, ações de estado, criação e timeline; sem snapshots quebrados.
+    ace_context:
+      spec_refs:
+        - "Programa 1/Epico 28/Sprint 30/Capitulo 3/Bloco 3.md"
+      resumo_para_ace: >
+        Foque em caminhos felizes e erros básicos; valide que botões certos aparecem por estado.
+
+  - id: S30-OBS-001
+    wave: W3
+    area: observability
+    gate_relacionado: S30_G4
+    descricao: Instrumentação de métricas/logs de fluxo com IDs de correlação.
+    arquivos_alvo:
+      - app/flows/instrumentation.py
+      - app/flows/execution_engine.py
+    criterios_aceite:
+      - Métricas inspectah_flow_* não nulas após execuções de teste.
+      - Logs estruturados incluem flow_id/exec_fluxo_id/exec_etapa_id/item_id/tipo_entrada/status.
+    ace_context:
+      spec_refs:
+        - "Programa 1/Epico 28/Sprint 30/Capitulo 3/Bloco 3.md"
+        - "Programa 1/Epico 28/Sprint 30/Capitulo 2/Bloco 3.md"
+      resumo_para_ace: >
+        Siga nomes/labels do Cap.2/3; garantir hooks no engine e validação no script G4.
+
+  - id: S30-OBS-002
+    wave: W3
+    area: observability
+    gate_relacionado: S30_G4
+    descricao: Documentar naming/labels e painel mínimo de métricas de fluxos.
+    arquivos_alvo:
+      - docs/telemetria_fluxos_s30.md
+    criterios_aceite:
+      - Lista de métricas/labels oficiais publicada; painel/snapshot exportado em evidência.
+    ace_context:
+      spec_refs:
+        - "Programa 1/Epico 28/Sprint 30/Capitulo 2/Bloco 3.md"
+      resumo_para_ace: >
+        Pequeno doc/painel para responder: execuções, taxa de erro, latência.
+
+  - id: S30-OPS-001
+    wave: W3
+    area: ops
+    gate_relacionado: S30_G0
+    descricao: Scripts de gates G0–G2 (escopo, modelo/templates, console ops).
+    arquivos_alvo:
+      - bin/s30_g0_scope_and_alignment.sh
+      - bin/s30_g1_flow_model_and_templates.sh
+      - bin/s30_g2_flow_console_ops.sh
+    criterios_aceite:
+      - Scripts idempotentes, exit 0 quando PASS, geram scorecards/evidências.
+    ace_context:
+      spec_refs:
+        - "Programa 1/Epico 28/Sprint 30/Capitulo 2/Bloco 2.md"
+      resumo_para_ace: >
+        Automatize verificações descritas em G0–G2; salve scorecards em out/scorecards.
+
+  - id: S30-OPS-002
+    wave: W3
+    area: ops
+    gate_relacionado: S30_G3
+    descricao: "Script de gate G3 (operações seguras: pausa/retomada/reprocesso limitado)."
+    arquivos_alvo:
+      - bin/s30_g3_flow_operations_safety.sh
+    criterios_aceite:
+      - Testes negativos/positivos de reprocesso e pausa/retomada com logs; scorecard PASS.
+    ace_context:
+      spec_refs:
+        - "Programa 1/Epico 28/Sprint 30/Capitulo 2/Bloco 2.md"
+      resumo_para_ace: >
+        Exercite limites de reprocesso, state transitions proibidas, e registre evidências.
+
+  - id: S30-OPS-003
+    wave: W3
+    area: ops
+    gate_relacionado: S30_G4
+    descricao: Script de gate G4 (observabilidade de fluxos).
+    arquivos_alvo:
+      - bin/s30_g4_flow_observability.sh
+    criterios_aceite:
+      - Script coleta métricas/logs e falha se ausentes; scorecard PASS.
+    ace_context:
+      spec_refs:
+        - "Programa 1/Epico 28/Sprint 30/Capitulo 2/Bloco 2.md"
+      resumo_para_ace: >
+        Rodar execuções de teste e verificar métricas/logs padrões; armazenar dumps.
+
+  - id: S30-OPS-004
+    wave: W3
+    area: ops
+    gate_relacionado: S30_G5
+    descricao: Cenário E2E de fluxo de notícias + script G5.
+    arquivos_alvo:
+      - bin/s30_g5_e2e_canonical_flow.sh
+      - data/s30_e2e_noticias_sinteticas.jsonl
+    criterios_aceite:
+      - Execução ingestão→fluxo→console→telemetria exit 0; evidências salvas.
+      - Scorecard G5 PASS.
+    ace_context:
+      spec_refs:
+        - "Programa 1/Epico 28/Sprint 30/Capitulo 4/Bloco 3.md"
+      resumo_para_ace: >
+        Use dataset sintético, valide execuções, capturas de console, métricas e logs.
+
+  - id: S30-OPS-005
+    wave: W3
+    area: ops
+    gate_relacionado: S30_G0
+    descricao: Metrics summary, bundle e workflow de CI (s30-gates).
+    arquivos_alvo:
+      - bin/s30_metrics_summary.sh
+      - bin/s30_bundle.sh
+      - .github/workflows/s30-gates.yml
+    criterios_aceite:
+      - S30_metrics_summary.json PASS; bundle zip contém scorecards+evidências+ORR summary; workflow publica artifact e falha em gates vermelhos.
+    ace_context:
+      spec_refs:
+        - "Programa 1/Epico 28/Sprint 30/Capitulo 4/Bloco 4.md"
+      resumo_para_ace: >
+        Automatize consolidação e empacotamento; CI deve rodar G0–G5, metrics_summary e bundle.
