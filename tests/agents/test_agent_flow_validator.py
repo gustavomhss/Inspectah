@@ -7,9 +7,9 @@ from app.agents.models import AgentRole
 
 def _base_steps():
     return [
-        AgentFlowStepIn(position=1, agent_role=AgentRole.INTERPRETER, params={"strict_mode": True, "agent_id": "ag_news_interp"}),
-        AgentFlowStepIn(position=2, agent_role=AgentRole.CLASSIFIER, params={"committee_id": "c1", "agent_id": "ag_news_classifier"}),
-        AgentFlowStepIn(position=3, agent_role=AgentRole.DECISION_MAKER, params={"threshold": 0.6, "agent_id": "ag_news_decider"}),
+        AgentFlowStepIn(position=1, agent_role=AgentRole.INTERPRETER, params={"strict_mode": True}),
+        AgentFlowStepIn(position=2, agent_role=AgentRole.CLASSIFIER, params={"committee_id": "c1"}),
+        AgentFlowStepIn(position=3, agent_role=AgentRole.DECISION_MAKER, params={"threshold": 0.6}),
     ]
 
 
@@ -79,16 +79,3 @@ def test_unknown_param_keys_blocked():
     )
     errors = validate_agent_flow(cfg)
     assert any("unsupported params keys" in err for err in errors)
-
-
-def test_agent_binding_params_allowed():
-    cfg = AgentFlowConfigIn(
-        domain_key="health_news",
-        steps=[
-            AgentFlowStepIn(position=1, agent_role=AgentRole.INTERPRETER, params={"agent_id": "ag1", "agent_label": "Interp AG"}),
-            AgentFlowStepIn(position=2, agent_role=AgentRole.CLASSIFIER, params={"agent_id": "ag2"}),
-            AgentFlowStepIn(position=3, agent_role=AgentRole.DECISION_MAKER, params={"threshold": 0.8, "agent_id": "ag3"}),
-        ],
-    )
-    errors = validate_agent_flow(cfg)
-    assert errors == []

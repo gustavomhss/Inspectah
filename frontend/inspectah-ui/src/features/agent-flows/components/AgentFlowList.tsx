@@ -39,9 +39,6 @@ export default function AgentFlowList({ flows, selectedId, onSelect, onCreateNew
               <div className="flex flex-col">
                 <span className="text-sm font-semibold text-white">{flow.domain_key}</span>
                 <span className="text-xs text-slate-300">{flow.name || 'Fluxo sem nome'}</span>
-                <span className="text-[11px] text-slate-400">
-                  {flow.steps.length ? summarizeAgents(flow) : 'Sem etapas vinculadas'}
-                </span>
               </div>
               <div className="flex items-center gap-2 text-xs text-slate-200">
                 <span
@@ -59,19 +56,4 @@ export default function AgentFlowList({ flows, selectedId, onSelect, onCreateNew
       </div>
     </div>
   );
-}
-
-function summarizeAgents(flow: AgentFlowConfig): string {
-  const labels = (flow.steps || [])
-    .map((s) => {
-      const params = s.params || {};
-      const agentLabel = (params as Record<string, unknown>).agent_label as string | undefined;
-      const agentId = (params as Record<string, unknown>).agent_id as string | undefined;
-      const roleLabel = s.agent_role.replace('_', ' ');
-      if (agentLabel) return `${roleLabel}: ${agentLabel}`;
-      if (agentId) return `${roleLabel}: ${agentId}`;
-      return `${roleLabel}: —`;
-    })
-    .slice(0, 3);
-  return labels.length ? labels.join(' · ') : 'Sem agentes vinculados';
 }

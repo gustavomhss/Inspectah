@@ -6,17 +6,7 @@ from app.agents.flows.schemas import AgentFlowConfigIn, AgentFlowConfigOut, Agen
 from app.agents.models import AgentRole
 
 # Permitted param keys to avoid "magic" knobs sneaking into the flow.
-# agent_id/agent_label allow binding a real agent to the step (UI selection).
-ALLOWED_PARAM_KEYS = {
-    "committee_id",
-    "strict_mode",
-    "threshold",
-    "max_depth",
-    "notes",
-    "allow_retry",
-    "agent_id",
-    "agent_label",
-}
+ALLOWED_PARAM_KEYS = {"committee_id", "strict_mode", "threshold", "max_depth", "notes", "allow_retry"}
 REQUIRED_ROLES = {AgentRole.INTERPRETER.value, AgentRole.CLASSIFIER.value, AgentRole.DECISION_MAKER.value}
 
 
