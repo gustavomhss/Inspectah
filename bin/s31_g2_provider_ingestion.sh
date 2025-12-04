@@ -9,16 +9,19 @@ LOG_PATH="$EVIDENCE_DIR/g2_provider_ingestion.log"
 
 mkdir -p "$SCORECARD_DIR" "$EVIDENCE_DIR"
 
-python3 - <<'PY' "$LOG_PATH"
+python3 - <<'PY' "$LOG_PATH" "$ROOT_DIR" "$EVIDENCE_DIR"
 import json
+import sys
 from pathlib import Path
 
 from app.ingestion.jobs.ingest_news import run as run_news
 from app.ingestion.jobs.ingest_social import run as run_social
 
-log_path = Path(__file__).resolve().parents[2] / "out/evidence/S31_G2_provider_ingestion/g2_provider_ingestion.log"
-news_summary = run_news()
-social_summary = run_social()
+log_path = Path(sys.argv[1])
+root_dir = Path(sys.argv[2])
+evidence_dir = Path(sys.argv[3])
+news_summary = run_news(evidence_dir=evidence_dir)
+social_summary = run_social(evidence_dir=evidence_dir)
 log_path.write_text(json.dumps({"news": news_summary, "social": social_summary}, indent=2, ensure_ascii=False), encoding="utf-8")
 PY
 
@@ -26,6 +29,7 @@ STATUS="GO"
 
 python3 - <<'PY' "$SCORECARD_PATH"
 import json
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
