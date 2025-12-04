@@ -103,6 +103,8 @@ class Source:
     last_conflict_at: Optional[datetime] = None
     evidence_refs: List[str] = field(default_factory=list)
     trust_severity: Optional[str] = None
+    provider_id: Optional[str] = None
+    profile_id: Optional[str] = None
 
     @classmethod
     def create(
