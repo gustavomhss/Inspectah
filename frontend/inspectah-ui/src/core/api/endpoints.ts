@@ -38,5 +38,11 @@ export const endpoints = {
       flowAdminDetail: (flowId: string) => `/admin/agent-flows/${encodeURIComponent(flowId)}`,
       flowAdminByDomain: (domainKey: string) => `/admin/agent-flows/by-domain/${encodeURIComponent(domainKey)}`,
     },
+    providers: {
+      list: '/api/providers',
+      detail: (providerId: string) => `/api/providers/${encodeURIComponent(providerId)}`,
+      profiles: '/api/providers/profiles',
+      profileDetail: (profileId: string) => `/api/providers/profiles/${encodeURIComponent(profileId)}`,
+    },
   },
 };
