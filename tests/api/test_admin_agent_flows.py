@@ -8,6 +8,7 @@ from fastapi.testclient import TestClient
 
 from app.api.admin_agent_flows_routes import router as flows_router, get_service as default_get_service
 from app.agents.flows.service import AgentFlowService
+from scripts.dev_seed_agent_flows import SEED_FLOWS, upsert_seed_flows
 
 
 def _service(tmp_path: Path) -> AgentFlowService:
@@ -34,9 +35,9 @@ def _payload():
         "change_reason": "initial setup",
         "created_by": "tester",
         "steps": [
-            {"position": 1, "agent_role": "interpreter", "params": {"strict_mode": True}},
-            {"position": 2, "agent_role": "classifier", "params": {"committee_id": "c1"}},
-            {"position": 3, "agent_role": "decision_maker", "params": {"threshold": 0.7}},
+            {"position": 1, "agent_role": "interpreter", "params": {"strict_mode": True, "agent_id": "ag_interp"}},
+            {"position": 2, "agent_role": "classifier", "params": {"committee_id": "c1", "agent_id": "ag_classifier"}},
+            {"position": 3, "agent_role": "decision_maker", "params": {"threshold": 0.7, "agent_id": "ag_decider"}},
         ],
     }
 
@@ -104,3 +105,16 @@ def test_domain_uniqueness(tmp_path: Path):
 
     res_dup = client.post("/admin/agent-flows", json=_payload())
     assert res_dup.status_code == 400
+
+
+def test_seed_flows_are_listed(tmp_path: Path):
+    service = _service(tmp_path)
+    upsert_seed_flows(service)
+    client = _app(service)
+
+    res = client.get("/admin/agent-flows")
+    assert res.status_code == 200
+    payloads = res.json()
+    assert len(payloads) == len(SEED_FLOWS)
+    returned_domains = {f["domain_key"] for f in payloads}
+    assert {seed.domain_key for seed in SEED_FLOWS}.issubset(returned_domains)

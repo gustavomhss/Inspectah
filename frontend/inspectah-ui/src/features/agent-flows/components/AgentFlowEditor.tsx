@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
+import type { AgentProfile } from '@/core/api/api-types';
+import { useAgents } from '@/modules/agents/hooks/useAgents';
 import type { AgentFlowConfigForm, AgentFlowStepForm, AgentRoleOption } from '../agentFlowsTypes';
 
 const ALLOWED_PARAM_KEYS: Record<string, { label: string; type: 'text' | 'number' | 'boolean' | 'textarea' }> = {
@@ -11,6 +13,7 @@ const ALLOWED_PARAM_KEYS: Record<string, { label: string; type: 'text' | 'number
 };
 
 const ROLE_OPTIONS: AgentRoleOption[] = ['interpreter', 'classifier', 'analyst', 'debunker', 'decision_maker', 'librarian'];
+const REQUIRED_ROLES: AgentRoleOption[] = ['interpreter', 'classifier', 'decision_maker'];
 
 interface Props {
   initialFlow: AgentFlowConfigForm;
@@ -27,6 +30,7 @@ export default function AgentFlowEditor({ initialFlow, onSave, saving, error, cl
   const nameId = 'flow-name-input';
   const descId = 'flow-desc-input';
   const reasonId = 'flow-reason-input';
+  const { agents, loading: loadingAgents, error: agentsError, reload: reloadAgents } = useAgents();
 
   useEffect(() => {
     setForm(initialFlow);
@@ -34,7 +38,36 @@ export default function AgentFlowEditor({ initialFlow, onSave, saving, error, cl
     clearError();
   }, [initialFlow, clearError]);
 
+  const agentOptions = useMemo(
+    () =>
+      (agents || []).map((a) => ({
+        id: a.id,
+        label: a.name,
+        role: a.role,
+      })),
+    [agents],
+  );
+
   const canSave = useMemo(() => form.domain_key.trim().length > 0 && form.steps.length > 0, [form]);
+
+  const validateForm = (): string[] => {
+    const validationErrors: string[] = [];
+    REQUIRED_ROLES.forEach((role) => {
+      if (!form.steps.some((s) => s.agent_role === role)) {
+        validationErrors.push(`Inclua um passo com o papel ${role}`);
+      }
+    });
+    form.steps.forEach((step) => {
+      const params = (step.params || {}) as Record<string, unknown>;
+      if (!params.agent_id) {
+        validationErrors.push(`Selecione um agente real para o passo #${step.position}`);
+      }
+    });
+    if (form.domain_key.trim().length === 0) {
+      validationErrors.push('Informe o domínio do fluxo');
+    }
+    return validationErrors;
+  };
 
   const handleAddStep = () => {
     const nextPosition = form.steps.length + 1;
@@ -81,6 +114,14 @@ export default function AgentFlowEditor({ initialFlow, onSave, saving, error, cl
     updateStep(position, { params });
   };
 
+  const handleAgentSelect = (step: AgentFlowStepForm, agentId: string) => {
+    const agent = (agents || []).find((a) => a.id === agentId);
+    const params = { ...(step.params || {}) };
+    params.agent_id = agentId || undefined;
+    params.agent_label = agent?.name || undefined;
+    updateStep(step.position, { params });
+  };
+
   const warnMissingDecision = useMemo(
     () => !form.steps.some((s) => s.agent_role === 'decision_maker'),
     [form.steps],
@@ -88,7 +129,9 @@ export default function AgentFlowEditor({ initialFlow, onSave, saving, error, cl
 
   const handleSubmit = async () => {
     clearError();
-    setErrors([]);
+    const validationErrors = validateForm();
+    setErrors(validationErrors);
+    if (validationErrors.length > 0) return;
     try {
       await onSave({ ...form, steps: renumber(form.steps) });
     } catch (err) {
@@ -103,6 +146,9 @@ export default function AgentFlowEditor({ initialFlow, onSave, saving, error, cl
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.24em] text-sky-300">Editor</p>
           <h3 className="text-lg font-semibold text-white">{form.id ? 'Editar fluxo' : 'Novo fluxo'}</h3>
+          <p className="text-xs text-slate-300">
+            Configure um fluxo linear de agentes para um domínio. Decision Maker sempre finaliza a cadeia.
+          </p>
         </div>
         <button
           type="button"
@@ -114,20 +160,22 @@ export default function AgentFlowEditor({ initialFlow, onSave, saving, error, cl
         </button>
       </div>
 
-      {(errors.length > 0 || error) && (
+      {(errors.length > 0 || error || agentsError) && (
         <div className="rounded-xl border border-amber-400/40 bg-amber-400/10 p-3 text-sm text-amber-100">
           <p className="font-semibold">Correções necessárias:</p>
           <ul className="list-disc pl-5">
-            {(errors.length ? errors : error?.split(';') || []).map((msg, idx) => (
-              <li key={idx}>{msg}</li>
-            ))}
+            {(errors.length ? errors : error?.split(';') || [])
+              .concat(agentsError ? [`Falha ao carregar agentes: ${agentsError}`] : [])
+              .map((msg, idx) => (
+                <li key={idx}>{msg}</li>
+              ))}
           </ul>
         </div>
       )}
 
       {warnMissingDecision ? (
         <div className="rounded-xl border border-sky-400/30 bg-sky-400/10 p-3 text-xs text-sky-100">
-          Adicione um passo com agente Decision Maker para manter a rastreabilidade do fluxo.
+          Adicione um passo com agente Decision Maker para manter a rastreabilidade e encerramento do fluxo.
         </div>
       ) : null}
 
@@ -136,6 +184,7 @@ export default function AgentFlowEditor({ initialFlow, onSave, saving, error, cl
           <label className="text-sm font-semibold text-white" htmlFor={domainId}>
             Domínio
           </label>
+          <p className="text-xs text-slate-400">Qual tipo de entrada este fluxo atende (ex.: noticia_texto, cases).</p>
           <input
             id={domainId}
             className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-sky-400"
@@ -148,6 +197,7 @@ export default function AgentFlowEditor({ initialFlow, onSave, saving, error, cl
           <label className="text-sm font-semibold text-white" htmlFor={nameId}>
             Nome do fluxo
           </label>
+          <p className="text-xs text-slate-400">Título amigável para operadores encontrarem na lista.</p>
           <input
             id={nameId}
             className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-sky-400"
@@ -160,6 +210,7 @@ export default function AgentFlowEditor({ initialFlow, onSave, saving, error, cl
           <label className="text-sm font-semibold text-white" htmlFor={descId}>
             Descrição
           </label>
+          <p className="text-xs text-slate-400">Explique objetivo, topologia (committee/router) e particularidades.</p>
           <textarea
             id={descId}
             className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-sky-400"
@@ -172,6 +223,7 @@ export default function AgentFlowEditor({ initialFlow, onSave, saving, error, cl
           <label className="text-sm font-semibold text-white" htmlFor={reasonId}>
             Motivo da alteração
           </label>
+          <p className="text-xs text-slate-400">Justificativa auditável (ex.: ativar teste A/B, trocar agente com falha).</p>
           <input
             id={reasonId}
             className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-sky-400"
@@ -199,14 +251,27 @@ export default function AgentFlowEditor({ initialFlow, onSave, saving, error, cl
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-sky-300">Passos</p>
             <h4 className="text-base font-semibold text-white">Sequência linear</h4>
+            <p className="text-xs text-slate-300">
+              Use ao menos interpreter, classifier e decision_maker. Committee/router cabem no params do classifier.
+            </p>
           </div>
-          <button
-            type="button"
-            onClick={handleAddStep}
-            className="rounded-full bg-white/10 px-3 py-1 text-sm font-semibold text-white transition hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300"
-          >
-            Adicionar passo
-          </button>
+          <div className="flex items-center gap-2">
+            {loadingAgents ? <span className="text-xs text-slate-300">Carregando agentes...</span> : null}
+            <button
+              type="button"
+              onClick={() => void reloadAgents()}
+              className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white transition hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300"
+            >
+              Recarregar agentes
+            </button>
+            <button
+              type="button"
+              onClick={handleAddStep}
+              className="rounded-full bg-white/10 px-3 py-1 text-sm font-semibold text-white transition hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300"
+            >
+              Adicionar passo
+            </button>
+          </div>
         </div>
         {form.steps.length === 0 ? (
           <div className="rounded-xl border border-white/5 bg-white/5 p-3 text-sm text-slate-200">
@@ -276,7 +341,19 @@ export default function AgentFlowEditor({ initialFlow, onSave, saving, error, cl
                     </button>
                   </div>
                 </div>
+
+                <AgentSelector
+                  step={step}
+                  options={agentOptions}
+                  loading={loadingAgents}
+                  onChange={(agentId) => handleAgentSelect(step, agentId)}
+                />
+
                 <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  <div className="sm:col-span-2 text-xs text-slate-300">
+                    Parâmetros opcionais por etapa. Use committee_id para comitês, threshold para decisão/roteamento e
+                    allow_retry/fail soft para fluxos tolerantes.
+                  </div>
                   {Object.entries(ALLOWED_PARAM_KEYS).map(([key, meta]) => {
                     const controlId = `${key}-${step.position}`;
                     return (
@@ -294,6 +371,54 @@ export default function AgentFlowEditor({ initialFlow, onSave, saving, error, cl
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function AgentSelector({
+  step,
+  options,
+  loading,
+  onChange,
+}: {
+  step: AgentFlowStepForm;
+  options: Array<{ id: string; label: string; role: AgentProfile['role'] }>;
+  loading: boolean;
+  onChange: (agentId: string) => void;
+}) {
+  const params = (step.params || {}) as Record<string, unknown>;
+  const selected = (params.agent_id as string) || '';
+  const matchesRole = options.filter((opt) => opt.role === step.agent_role);
+  const selectId = `agent-select-${step.position}`;
+  return (
+    <div className="mt-3 space-y-1">
+      <div className="flex items-center justify-between">
+        <label className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-200" htmlFor={selectId}>
+          Agente vinculado
+        </label>
+        {loading ? <span className="text-[11px] text-slate-400">Carregando...</span> : null}
+      </div>
+      <select
+        className="w-full rounded-lg border border-white/10 bg-slate-900 px-3 py-2 text-sm text-white focus:border-sky-400"
+        value={selected}
+        id={selectId}
+        onChange={(e) => onChange(e.target.value)}
+      >
+        <option value="">Selecione um agente com papel {step.agent_role}</option>
+        {matchesRole.map((opt) => (
+          <option key={opt.id} value={opt.id}>
+            {opt.label} ({opt.role})
+          </option>
+        ))}
+      </select>
+      {matchesRole.length === 0 && !loading ? (
+        <p className="text-xs text-amber-200">Nenhum agente com esse papel encontrado. Cadastre ou ajuste o papel.</p>
+      ) : null}
+      {params.agent_label ? (
+        <p className="text-[11px] text-slate-300">
+          Selecionado: {params.agent_label} {params.agent_id ? `(${params.agent_id})` : ''}
+        </p>
+      ) : null}
     </div>
   );
 }
