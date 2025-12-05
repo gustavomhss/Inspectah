@@ -1,0 +1,37 @@
+# S33 — Mapa de componentes monitorados
+# IDs alinhados com s33_scope_ops.md, s33_slos.md e observabilidade/UI.
+components:
+  - id: fonte_noticias_principal
+    tipo: fonte
+    criticidade: alta
+    descricao: Feed RSS notícias gerais
+    slos:
+      - s33_slo_recencia_fonte_noticias
+  - id: fonte_oficial_ibge
+    tipo: fonte
+    criticidade: alta
+    descricao: API IBGE séries econômicas
+    slos:
+      - s33_slo_recencia_fonte_ibge
+  - id: pipeline_noticias
+    tipo: pipeline
+    criticidade: alta
+    descricao: ingestão rss -> normalização -> dispatch agentes
+    slos:
+      - s33_slo_latencia_pipeline_noticias
+  - id: pipeline_ibge
+    tipo: pipeline
+    criticidade: media
+    descricao: coleta API IBGE -> normalização -> Truth-DB ingest
+    slos: []
+  - id: api_cockpit_ops
+    tipo: api
+    criticidade: alta
+    descricao: /api/ops/cockpit/* (overview, components, incidents, slos)
+    slos:
+      - s33_slo_disponibilidade_api_cockpit
+  - id: api_ingest_status
+    tipo: api
+    criticidade: media
+    descricao: /api/ingestion/status (fonte/pipeline state para cockpit)
+    slos: []

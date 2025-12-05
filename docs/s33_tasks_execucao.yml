@@ -1,0 +1,432 @@
+sprint: S33
+programa: 1
+epico: 28
+
+ace_resumo:
+  objetivo_sprint: >
+    Entregar o OracleOps Cockpit v1 e Fluxo de Incidentes v1: recorte operacional fechado, modelo de incidentes,
+    cockpit navegável, SLOs instrumentados, runbooks executáveis e ORR operacional com evidências (G0–G5 verdes).
+  leitura_minima_spec:
+    - Programa 1/Sprint 33/Capitulo 1/Capitulo 1.md
+    - Programa 1/Sprint 33/Capitulo 2/Capitulo 2.md
+    - Programa 1/Sprint 33/Capitulo 3/Capitulo 3.md
+    - Programa 1/Sprint 33/Capitulo 4/Capitulo 4.md
+  instrucoes_para_ace: >
+    Leia apenas os capítulos acima para entender objetivos, gates e filemap.
+    Trabalhe wave a wave usando só o ace_context da wave atual e das tasks dela.
+    Não invente SLOs ou componentes fora do recorte. Indicadores falsos são proibidos.
+
+waves:
+  - id: W0
+    nome: "Grounding & G0"
+    descricao: "Fechar recorte operacional e SLOs; mapa de componentes e script G0."
+    ace_context:
+      spec_refs:
+        - Programa 1/Sprint 33/Capitulo 2/Bloco 2.md
+        - Programa 1/Sprint 33/s33_scope_ops.md
+        - Programa 1/Sprint 33/s33_slos.md
+        - Programa 1/Sprint 33/s33_components_map.yaml
+      resumo_para_ace: >
+        Valide escopo (fontes/pipelines/APIs) e SLOs, garantindo IDs estáveis entre docs/mapa/observabilidade/UI.
+        Monte script G0 para gerar scorecard.
+      observacoes_execucao: >
+        Não codifique cockpit aqui. G0 precisa PASS antes de seguir.
+
+  - id: W1
+    nome: "Domínio de Incident (G1)"
+    descricao: "Modelar Incident (schema + API + invariantes) e testes de ciclo de vida."
+    ace_context:
+      spec_refs:
+        - Programa 1/Sprint 33/Capitulo 2/Bloco 2.md
+        - Programa 1/Sprint 33/Capitulo 3/Capitulo 3.md
+      resumo_para_ace: >
+        Crie modelo/migração Incident com estados/severidades, APIs básicas e testes de transição.
+        IDs de componentes devem alinhar com mapa G0.
+      observacoes_execucao: >
+        Falhas de invariantes são STOP. G1 deve gerar scorecard.
+
+  - id: W2
+    nome: "Cockpit v1 (G2)"
+    descricao: "OracleOps Cockpit v1 navegável (overview, fonte, pipeline, incidentes) com dados reais/fixtures."
+    ace_context:
+      spec_refs:
+        - Programa 1/Sprint 33/Capitulo 2/Bloco 3.md
+        - Programa 1/Sprint 33/Capitulo 3/Capitulo 3.md
+      resumo_para_ace: >
+        Implementar API/serviço de cockpit e UI com drill-down, estados honestos e links para dashboards.
+        Todos os componentes do recorte devem aparecer.
+      observacoes_execucao: >
+        Evite hardcode; use fixtures/métricas reais. G2 script deve validar recorte e 2xx.
+
+  - id: W3
+    nome: "SLOs & Observabilidade (G3)"
+    descricao: "Instrumentar SLOs do recorte com métricas/queries/alertas e refletir no cockpit."
+    ace_context:
+      spec_refs:
+        - Programa 1/Sprint 33/Capitulo 2/Bloco 3.md
+        - Programa 1/Sprint 33/s33_slos.md
+      resumo_para_ace: >
+        Para cada SLO da sprint, mapeie métrica/consulta/threshold, configure alertas e exponha estado no cockpit.
+        Prove com script G3 e evidências.
+      observacoes_execucao: >
+        Sem SLO sem métrica. Use configs versionadas (queries/alerts).
+
+  - id: W4
+    nome: "Runbooks & Evidência (G4)"
+    descricao: "Runbooks executáveis, links na UI e incidente end-to-end com bundle de evidência."
+    ace_context:
+      spec_refs:
+        - Programa 1/Sprint 33/Capitulo 2/Bloco 4.md
+        - Programa 1/Sprint 33/s33_incidents_lifecycle.md
+      resumo_para_ace: >
+        Escreva runbooks para cenários prioritários, ligue-os na UI, documente um incidente completo com timeline/logs/post-mortem.
+        Monte bundle e scorecard G4.
+      observacoes_execucao: >
+        Runbook deve ser seguível por não-autores. Indicadores decorativos são NO-GO.
+
+  - id: W5
+    nome: "ORR Operacional (G5)"
+    descricao: "Simular/rodar ORR integrando G0–G4, gerar scorecard final."
+    ace_context:
+      spec_refs:
+        - Programa 1/Sprint 33/Capitulo 2/Capitulo 2.md
+        - Programa 1/Sprint 33/Capitulo 4/Capitulo 4.md
+      resumo_para_ace: >
+        Conduza ORR operacional: usar cockpit e runbooks para inspecionar recorte, reagir a cenário e registrar evidências.
+        G5 deve consolidar estado final (PASS/WARN justificado).
+      observacoes_execucao: >
+        Registrar notas e evidências da sessão (out/evidence/S33_G5_orr/). Sem scorecard G5, sem GO.
+
+tasks:
+  - id: S33-DOC-000
+    wave: W0
+    area: docs
+    gate_relacionado: S33_G0
+    descricao: "Consolidar escopo ops (fontes/pipelines/APIs), SLOs e mapa de componentes com IDs estáveis."
+    arquivos_alvo:
+      - Programa 1/Sprint 33/s33_scope_ops.md
+      - Programa 1/Sprint 33/s33_slos.md
+      - Programa 1/Sprint 33/s33_components_map.yaml
+    criterios_aceite:
+      - "Recorte definido sem ambiguidades; IDs consistentes entre docs/mapa."
+      - "Cada SLO tem métrica base, janela e target definidos."
+    ace_context:
+      spec_refs:
+        - Programa 1/Sprint 33/Capitulo 2/Bloco 2.md
+      resumo_para_ace: >
+        Feche o recorte antes de codar. Garanta 1:1 entre escopo e mapa de componentes.
+
+  - id: S33-CI-001
+    wave: W0
+    area: ci/orr
+    gate_relacionado: S33_G0
+    descricao: "Script G0 para validar escopo/mapa/SLOs e gerar scorecard."
+    arquivos_alvo:
+      - bin/s33_g0_scope_and_baseline.sh
+      - out/scorecards/S33_G0_scope_and_baseline.json
+      - out/evidence/S33_G0_scope_and_baseline/
+    criterios_aceite:
+      - "Script roda fim-a-fim e marca PASS/WARN justificado."
+      - "Checagens de IDs/slo_mapping consistentes."
+    ace_context:
+      spec_refs:
+        - Programa 1/Sprint 33/Capitulo 2/Bloco 2.md
+      resumo_para_ace: >
+        Automatize verificação do recorte. Sem scorecard, sem avançar.
+
+  - id: S33-BE-010
+    wave: W1
+    area: backend
+    gate_relacionado: S33_G1
+    descricao: "Modelar Incident (schema/migração) com estados/severidades e vínculos a componentes/SLOs."
+    arquivos_alvo:
+      - app/ops/incidents/models.py
+      - migrations/versions/XXXX_s33_incidents.py
+      - Programa 1/Sprint 33/s33_components_map.yaml
+    criterios_aceite:
+      - "Migração aplica em banco de teste."
+      - "Enums de estado/severidade refletidos; FKs consistentes com mapa."
+    ace_context:
+      spec_refs:
+        - Programa 1/Sprint 33/Capitulo 2/Bloco 2.md
+      resumo_para_ace: >
+        Mantenha IDs alinhados ao mapa. Ciclo de vida codificado (transições válidas/invalidas).
+
+  - id: S33-QA-011
+    wave: W1
+    area: testes
+    gate_relacionado: S33_G1
+    descricao: "Testes de ciclo de vida de Incident (criação, transições válidas, invariantes de tempo/estado)."
+    arquivos_alvo:
+      - tests/ops/test_incidents_models.py
+      - tests/ops/test_incidents_api.py
+    criterios_aceite:
+      - "Transições inválidas falham; timestamps monotônicos; estados incompatíveis bloqueados."
+      - "Pytest verde."
+    ace_context:
+      spec_refs:
+        - Programa 1/Sprint 33/Capitulo 2/Bloco 2.md
+      resumo_para_ace: >
+        Cubra happy/negative. Esses testes alimentam G1.
+
+  - id: S33-BE-012
+    wave: W1
+    area: backend
+    gate_relacionado: S33_G1
+    descricao: "API mínima de Incident (CRUD + transições) alinhada ao modelo e mapa de componentes."
+    arquivos_alvo:
+      - app/api/ops_incidents_routes.py
+      - app/ops/incidents/service.py
+    criterios_aceite:
+      - "Endpoints retornam 2xx no fluxo válido, 4xx em transições inválidas."
+      - "Responses trazem IDs consistentes com mapa e SLOs."
+    ace_context:
+      spec_refs:
+        - Programa 1/Sprint 33/Capitulo 3/Capitulo 3.md
+      resumo_para_ace: >
+        Garanta coerência de IDs e validações. Integre com testes de W1.
+
+  - id: S33-CI-013
+    wave: W1
+    area: ci/orr
+    gate_relacionado: S33_G1
+    descricao: "Script G1 para migração+testes+sanity de API de Incident e scorecard."
+    arquivos_alvo:
+      - bin/s33_g1_incidents.sh
+      - out/scorecards/S33_G1_incidents.json
+      - out/evidence/S33_G1_incidents/
+    criterios_aceite:
+      - "Script roda fim-a-fim; scorecard lista invariantes checadas."
+      - "Falhas geram NO-GO claro."
+    ace_context:
+      spec_refs:
+        - Programa 1/Sprint 33/Capitulo 2/Bloco 2.md
+      resumo_para_ace: >
+        Automatize validação de domínio. Scorecard precisa refletir checks.
+
+  - id: S33-BE-020
+    wave: W2
+    area: backend
+    gate_relacionado: S33_G2
+    descricao: "API do OracleOps Cockpit (overview/detalhes/incident list) alinhada ao components_map e Incident."
+    arquivos_alvo:
+      - app/api/ops_cockpit_routes.py
+      - app/ops/cockpit/service.py
+    criterios_aceite:
+      - "Endpoints retornam componentes do recorte com estados coerentes."
+      - "IDs/names batem com mapa e Incident."
+    ace_context:
+      spec_refs:
+        - Programa 1/Sprint 33/Capitulo 2/Bloco 3.md
+      resumo_para_ace: >
+        Sem hardcode. Use dados reais/fixtures consistentes. Drill-down suportado.
+
+  - id: S33-FE-021
+    wave: W2
+    area: frontend
+    gate_relacionado: S33_G2
+    descricao: "UI Cockpit v1 (overview, fonte, pipeline, incidentes) com drill-down e links para dashboards."
+    arquivos_alvo:
+      - frontend/inspectah-ui/src/pages/ops/
+      - frontend/inspectah-ui/src/components/ops/
+    criterios_aceite:
+      - "Páginas rendem dados do recorte; navegação funciona; links externos válidos em ao menos 1 caso."
+    ace_context:
+      spec_refs:
+        - Programa 1/Sprint 33/Capitulo 2/Bloco 3.md
+      resumo_para_ace: >
+        UI deve refletir dados reais/fixtures e permitir chegar a incidentes e dashboards.
+
+  - id: S33-QA-022
+    wave: W2
+    area: testes
+    gate_relacionado: S33_G2
+    descricao: "Testes de cockpit (API/UI): componentes do recorte presentes, estados coerentes, drill-down funcional."
+    arquivos_alvo:
+      - tests/ops/test_cockpit_api.py
+      - tests/ops/test_cockpit_ui.ts
+    criterios_aceite:
+      - "Testes verdes cobrindo overview, detalhe de fonte/pipeline, incidentes."
+      - "Falhas de consistência/naming capturadas."
+    ace_context:
+      spec_refs:
+        - Programa 1/Sprint 33/Capitulo 2/Bloco 3.md
+      resumo_para_ace: >
+        Inclua fixtures e asserts de IDs/names conforme mapa. Evidencie links.
+
+  - id: S33-CI-023
+    wave: W2
+    area: ci/orr
+    gate_relacionado: S33_G2
+    descricao: "Script G2 para sanity de cockpit (API) e geração de scorecard."
+    arquivos_alvo:
+      - bin/s33_g2_cockpit.sh
+      - out/scorecards/S33_G2_cockpit.json
+      - out/evidence/S33_G2_cockpit/
+    criterios_aceite:
+      - "Endpoints principais respondem 2xx; componentes do recorte presentes."
+      - "Scorecard PASS/WARN com checklist de invariantes G2."
+    ace_context:
+      spec_refs:
+        - Programa 1/Sprint 33/Capitulo 2/Bloco 3.md
+      resumo_para_ace: >
+        Automatize conferência de recorte e estados básicos; gerar scorecard.
+
+  - id: S33-OBS-030
+    wave: W3
+    area: observabilidade
+    gate_relacionado: S33_G3
+    descricao: "Mapear SLOs para métricas/consultas/thresholds versionados e configurar alertas mínimos."
+    arquivos_alvo:
+      - Programa 1/Sprint 33/s33_slos.md
+      - observability/queries/s33/
+      - observability/alerts/s33/
+    criterios_aceite:
+      - "Cada SLO tem métrica/consulta e target; alerta configurado em ao menos 1 SLO por categoria."
+      - "Configs versionadas no repo."
+    ace_context:
+      spec_refs:
+        - Programa 1/Sprint 33/Capitulo 2/Bloco 3.md
+      resumo_para_ace: >
+        Sem SLO sem métrica. Checks devem ser reexecutáveis via script G3.
+
+  - id: S33-BE-031
+    wave: W3
+    area: backend
+    gate_relacionado: S33_G3
+    descricao: "Expor estado de SLO/alerta para o cockpit (agregação/cache) e refletir na UI."
+    arquivos_alvo:
+      - app/ops/cockpit/service.py
+      - app/api/ops_cockpit_routes.py
+    criterios_aceite:
+      - "Endpoints retornam slo_id/status alinhados às queries/alertas."
+      - "UI pode exibir estados sem consultas diretas à stack externa."
+    ace_context:
+      spec_refs:
+        - Programa 1/Sprint 33/Capitulo 3/Capitulo 3.md
+      resumo_para_ace: >
+        Integre dados de SLO ao cockpit de forma consistente e cacheável.
+
+  - id: S33-FE-032
+    wave: W3
+    area: frontend
+    gate_relacionado: S33_G3
+    descricao: "UI de SLOs/alertas (badges/links) por componente/pipeline no cockpit."
+    arquivos_alvo:
+      - frontend/inspectah-ui/src/components/ops/SloBadge.tsx
+      - frontend/inspectah-ui/src/pages/ops/
+    criterios_aceite:
+      - "SLOs exibidos com estado e link para dashboard/consulta."
+      - "IDs/names consistentes com s33_slos e mapa."
+    ace_context:
+      spec_refs:
+        - Programa 1/Sprint 33/Capitulo 2/Bloco 3.md
+      resumo_para_ace: >
+        Reuse padrões de UI; mostrar estado de SLO de forma clara para operador.
+
+  - id: S33-QA-033
+    wave: W3
+    area: testes
+    gate_relacionado: S33_G3
+    descricao: "Testes de SLOs/observabilidade (queries retornam dados, alertas configurados, cockpit reflete estado)."
+    arquivos_alvo:
+      - tests/ops/test_slos_queries.py
+      - tests/ops/test_cockpit_slos_ui.ts
+    criterios_aceite:
+      - "Testes verdes para pelo menos 1 SLO por categoria."
+      - "Falhas de mapeamento/alerta capturadas."
+    ace_context:
+      spec_refs:
+        - Programa 1/Sprint 33/Capitulo 2/Bloco 3.md
+      resumo_para_ace: >
+        Simule violações para validar alertas/estado no cockpit. Registre evidências.
+
+  - id: S33-CI-034
+    wave: W3
+    area: ci/orr
+    gate_relacionado: S33_G3
+    descricao: "Script G3 para validar SLOs (métricas/consultas/alertas) e gerar scorecard."
+    arquivos_alvo:
+      - bin/s33_g3_slos.sh
+      - out/scorecards/S33_G3_slos.json
+      - out/evidence/S33_G3_slos/
+    criterios_aceite:
+      - "Script checa presença de métricas/consultas/alertas e gera scorecard PASS/WARN."
+    ace_context:
+      spec_refs:
+        - Programa 1/Sprint 33/Capitulo 2/Bloco 3.md
+      resumo_para_ace: >
+        Automatize consultas/alertas mínimos. Salve evidências.
+
+  - id: S33-DOC-040
+    wave: W4
+    area: docs
+    gate_relacionado: S33_G4
+    descricao: "Criar runbooks executáveis para cenários prioritários e registrar learnings/fluxo de incidentes."
+    arquivos_alvo:
+      - docs/s33/runbooks/*.md
+      - Programa 1/Sprint 33/s33_incidents_lifecycle.md
+      - Programa 1/Sprint 33/s33_incidents_learnings.md
+    criterios_aceite:
+      - "Runbooks com contexto, passos de diagnóstico/mitigação e critérios de sucesso."
+      - "Aprendizados/ajustes registrados."
+    ace_context:
+      spec_refs:
+        - Programa 1/Sprint 33/Capitulo 2/Bloco 4.md
+      resumo_para_ace: >
+        Cobrir incidentes prioritários (fonte crítica, fila saturada, pipeline Truth-DB atrasado, API cockpit down).
+
+  - id: S33-FE-041
+    wave: W4
+    area: frontend
+    gate_relacionado: S33_G4
+    descricao: "Integrar links de runbook na UI (detalhe de componente/incidente) e garantir acesso rápido."
+    arquivos_alvo:
+      - frontend/inspectah-ui/src/pages/ops/
+      - frontend/inspectah-ui/src/components/ops/
+    criterios_aceite:
+      - "Botões/links para runbooks corretos funcionam."
+      - "Nomes/paths consistentes com arquivos em docs/s33/runbooks/."
+    ace_context:
+      spec_refs:
+        - Programa 1/Sprint 33/Capitulo 2/Bloco 4.md
+      resumo_para_ace: >
+        Permita abrir runbook direto do cockpit para cenários prioritários.
+
+  - id: S33-CI-042
+    wave: W4
+    area: ci/orr
+    gate_relacionado: S33_G4
+    descricao: "Montar bundle de incidente (real/simulado) com timeline/logs/dashboards/runbook e gerar scorecard G4."
+    arquivos_alvo:
+      - out/evidence/S33_G4_incidents/
+      - out/bundles/inspectah_s33_incidents_bundle.zip
+      - bin/s33_g4_runbooks.sh
+      - out/scorecards/S33_G4_runbooks.json
+    criterios_aceite:
+      - "Bundle contém timeline, logs, dashboards, referência ao SLO e runbook usado."
+      - "unzip -t passa; scorecard G4 PASS/WARN justificado."
+    ace_context:
+      spec_refs:
+        - Programa 1/Sprint 33/Capitulo 2/Bloco 4.md
+      resumo_para_ace: >
+        Selecione 1 incidente representativo e documente tudo; use script para checar integridade.
+
+  - id: S33-CI-050
+    wave: W5
+    area: ci/orr
+    gate_relacionado: S33_G5
+    descricao: "Script G5 para ORR operacional integrando G0–G4 e scorecard final."
+    arquivos_alvo:
+      - bin/s33_g5_orr.sh
+      - out/scorecards/S33_G5_orr.json
+      - out/evidence/S33_G5_orr/
+    criterios_aceite:
+      - "Sessão ORR executada (simulada ou real) usando cockpit/runbooks; scorecard G5 gerado."
+      - "Bloqueios críticos ausentes ou devidamente justificados."
+    ace_context:
+      spec_refs:
+        - Programa 1/Sprint 33/Capitulo 2/Capitulo 2.md
+        - Programa 1/Sprint 33/Capitulo 4/Capitulo 4.md
+      resumo_para_ace: >
+        Rodar ORR com alguém não autor do código; registrar notas e resultado final no scorecard.

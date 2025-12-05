@@ -75,6 +75,9 @@ function MainLayout() {
               <NavLink to="/admin/cases" className={navLinkClass}>
                 Casos/Temas
               </NavLink>
+              <NavLink to="/admin/ops/cockpit" className={navLinkClass}>
+                Ops Cockpit
+              </NavLink>
             </div>
           </div>
         </section>
