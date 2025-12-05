@@ -11,12 +11,14 @@ from app.flows.models import (
     FlowStepExecutionStatus,
     FlowStepType,
     FlowTemplate,
+    FlowVersion,
 )
 
 __all__ = [
     "Flow",
     "FlowStep",
     "FlowTemplate",
+    "FlowVersion",
     "FlowExecution",
     "FlowStepExecution",
     "FlowOperationLog",

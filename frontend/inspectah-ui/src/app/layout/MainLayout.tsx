@@ -6,6 +6,7 @@ function MainLayout() {
   const location = useLocation();
   const { user, logout } = useAuth();
   const isSourcesConsole = location.pathname.startsWith('/admin/sources');
+  const isFlowConsole = location.pathname.startsWith('/flows');
   const navLinkClass = ({ isActive }: { isActive: boolean }) =>
     `rounded-full px-4 py-2 text-sm font-semibold transition ${
       isActive ? 'bg-white/20 text-white' : 'text-slate-200 hover:bg-white/10'
@@ -19,7 +20,7 @@ function MainLayout() {
   return (
     <div className="min-h-screen bg-slate-900 text-slate-50">
       <header className="border-b border-white/5 bg-white/5 backdrop-blur">
-        <div className="mx-auto flex max-w-5xl flex-col gap-2 px-4 py-6 md:px-8">
+        <div className="mx-auto flex max-w-5xl flex-col gap-2 px-4 py-6 md:px-8 lg:max-w-6xl">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-sky-300">Inspectah — Área interna</p>
@@ -45,7 +46,9 @@ function MainLayout() {
         </div>
       </header>
       <main
-        className={`${isSourcesConsole ? 'w-full px-0' : 'mx-auto max-w-5xl px-4 md:px-8'} flex flex-col gap-6 pb-12 pt-6`}
+        className={`${
+          isSourcesConsole || isFlowConsole ? 'w-full px-4 md:px-6 lg:px-10' : 'mx-auto max-w-5xl px-4 md:px-8'
+        } flex flex-col gap-6 pb-12 pt-6`}
       >
         <section className="rounded-2xl border border-white/5 bg-white/5 p-6 shadow-card">
           <div className="flex flex-col gap-3">
@@ -65,6 +68,9 @@ function MainLayout() {
               </NavLink>
               <NavLink to="/admin/agents" className={navLinkClass}>
                 Agentes
+              </NavLink>
+              <NavLink to="/flows" className={navLinkClass}>
+                Fluxos
               </NavLink>
               <NavLink to="/admin/agent-flows" className={navLinkClass}>
                 Fluxos de agentes

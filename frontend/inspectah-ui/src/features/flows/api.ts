@@ -5,6 +5,8 @@ import type {
   FlowCreatePayload,
   FlowExecution,
   FlowExecutionDetail,
+  FlowOperation,
+  FlowVersion,
   FlowReplaceAgentPayload,
   FlowReprocessPayload,
   FlowTemplate,
@@ -19,6 +21,43 @@ export async function listFlows(): Promise<Flow[]> {
 export async function listFlowTemplates(): Promise<FlowTemplate[]> {
   const data = await httpClient<FlowTemplate[]>(endpoints.admin.flows.templates);
   return data || [];
+}
+
+export async function upsertFlowTemplate(payload: {
+  slug: string;
+  version: string;
+  domain: string;
+  entry_type: string;
+  description?: string;
+  limits?: Record<string, unknown>;
+  policies?: Record<string, unknown>[];
+  steps: Record<string, unknown>[];
+  metadata?: Record<string, unknown>;
+  id?: string;
+}): Promise<FlowTemplate> {
+  const data = await httpClient<FlowTemplate>(endpoints.admin.flows.templates, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+  return data;
+}
+
+export async function updateFlowTemplate(slug: string, payload: Partial<{
+  version: string;
+  domain: string;
+  entry_type: string;
+  description?: string;
+  limits?: Record<string, unknown>;
+  policies?: Record<string, unknown>[];
+  steps: Record<string, unknown>[];
+  metadata?: Record<string, unknown>;
+  id?: string;
+}>): Promise<FlowTemplate> {
+  const data = await httpClient<FlowTemplate>(endpoints.admin.flows.templateDetail(slug), {
+    method: 'PUT',
+    body: JSON.stringify({ slug, ...payload }),
+  });
+  return data;
 }
 
 export async function getFlow(flowId: string): Promise<Flow> {
@@ -65,4 +104,26 @@ export async function reprocessFlowItems(flowId: string, payload: FlowReprocessP
     method: 'POST',
     body: JSON.stringify(payload),
   });
+}
+
+export async function listFlowVersions(flowId: string): Promise<FlowVersion[]> {
+  return httpClient<FlowVersion[]>(endpoints.admin.flows.versions(flowId)) ?? [];
+}
+
+export async function rollbackFlowVersion(flowId: string, versionId: string): Promise<Flow> {
+  return httpClient<Flow>(endpoints.admin.flows.rollback(flowId, versionId), { method: 'POST' });
+}
+
+export async function listFlowOperations(flowId: string): Promise<FlowOperation[]> {
+  return httpClient<FlowOperation[]>(endpoints.admin.flows.operations(flowId)) ?? [];
+}
+
+export async function deleteFlow(flowId: string): Promise<void> {
+  await httpClient(endpoints.admin.flows.detail(flowId), { method: 'DELETE' });
+}
+
+export async function listOpsCockpitFlows() {
+  return httpClient<
+    { id: string; slug: string; domain?: string; flow_version_id?: string | null; slos?: { id: string; status?: string }[] }[]
+  >(endpoints.admin.opsCockpit.flows);
 }

@@ -1,0 +1,78 @@
+{
+  "id": "tpl_flow_news_v2",
+  "slug": "news_v2",
+  "version": "2",
+  "domain": "noticias",
+  "entry_type": "noticia_texto",
+  "description": "Fluxo governado de notícias (v2) com políticas e rollback seguro.",
+  "limits": {
+    "max_rollbacks_per_hour": 2,
+    "max_test_percentual": 20,
+    "max_versions_to_keep": 10,
+    "operation_timeout_seconds": 30
+  },
+  "policies": [
+    {
+      "id": "pol_news_source_trust",
+      "etapa": "interprete",
+      "enforcement": "block_on_violation",
+      "descricao": "Exigir fonte confiável e metadados mínimos antes de seguir."
+    },
+    {
+      "id": "pol_news_confidence_gate",
+      "etapa": "decision_maker",
+      "enforcement": "require_confidence",
+      "thresholds": {
+        "min_confidence": 0.6
+      }
+    }
+  ],
+  "steps": [
+    {
+      "ordem": 1,
+      "tipo_etapa": "interprete",
+      "agent_role": "news_interpreter",
+      "flags": {
+        "allow_test_mode": true
+      }
+    },
+    {
+      "ordem": 2,
+      "tipo_etapa": "classificador",
+      "agent_role": "news_classifier",
+      "config": {
+        "labels": ["noticia", "rumor", "irrelevante"]
+      }
+    },
+    {
+      "ordem": 3,
+      "tipo_etapa": "analista",
+      "agent_role": "news_analyst_primary"
+    },
+    {
+      "ordem": 4,
+      "tipo_etapa": "analista",
+      "agent_role": "news_analyst_secondary"
+    },
+    {
+      "ordem": 5,
+      "tipo_etapa": "debunker",
+      "agent_role": "news_debunker_primary"
+    },
+    {
+      "ordem": 6,
+      "tipo_etapa": "debunker",
+      "agent_role": "news_debunker_secondary"
+    },
+    {
+      "ordem": 7,
+      "tipo_etapa": "decision_maker",
+      "agent_role": "news_decision_maker"
+    }
+  ],
+  "metadata": {
+    "owner": "squad_fluxos",
+    "rollback_supported": true,
+    "governance": "s34"
+  }
+}

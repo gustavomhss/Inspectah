@@ -1,0 +1,59 @@
+{
+  "id": "tpl_flow_contestacao_v0",
+  "slug": "contestacao_v0",
+  "version": "0",
+  "domain": "contestacao",
+  "entry_type": "contestacao_texto",
+  "description": "Piloto contestação v0 com políticas mínimas e modo teste controlado.",
+  "limits": {
+    "max_rollbacks_per_hour": 2,
+    "max_test_percentual": 20,
+    "max_versions_to_keep": 10,
+    "operation_timeout_seconds": 30
+  },
+  "policies": [
+    {
+      "id": "pol_contestacao_origem_obrigatoria",
+      "etapa": "interprete",
+      "enforcement": "block_on_violation",
+      "descricao": "Exigir origem/cliente e payload estruturado antes de seguir."
+    },
+    {
+      "id": "pol_contestacao_protecao_dados",
+      "etapa": "debunker",
+      "enforcement": "block_on_violation",
+      "descricao": "Remover/mascarar dados sensíveis antes de enviar a decisão."
+    }
+  ],
+  "steps": [
+    {
+      "ordem": 1,
+      "tipo_etapa": "interprete",
+      "agent_role": "contestacao_interpreter",
+      "flags": {
+        "allow_test_mode": true
+      }
+    },
+    {
+      "ordem": 2,
+      "tipo_etapa": "analista",
+      "agent_role": "contestacao_analyst_primary"
+    },
+    {
+      "ordem": 3,
+      "tipo_etapa": "debunker",
+      "agent_role": "contestacao_debunker_primary"
+    },
+    {
+      "ordem": 4,
+      "tipo_etapa": "decision_maker",
+      "agent_role": "contestacao_decision_maker"
+    }
+  ],
+  "metadata": {
+    "owner": "squad_fluxos",
+    "rollback_supported": true,
+    "governance": "s34",
+    "piloto": true
+  }
+}

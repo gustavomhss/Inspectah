@@ -38,14 +38,39 @@ export const endpoints = {
       flowAdminDetail: (flowId: string) => `/admin/agent-flows/${encodeURIComponent(flowId)}`,
       flowAdminByDomain: (domainKey: string) => `/admin/agent-flows/by-domain/${encodeURIComponent(domainKey)}`,
     },
-  providers: {
-    list: '/api/providers',
-    detail: (providerId: string) => `/api/providers/${encodeURIComponent(providerId)}`,
-    profiles: '/api/providers/profiles',
-    profileDetail: (profileId: string) => `/api/providers/profiles/${encodeURIComponent(profileId)}`,
-    profileRuns: (profileId: string) => `/api/providers/profiles/${encodeURIComponent(profileId)}/runs`,
-    profileMetrics: (profileId: string) => `/api/providers/profiles/${encodeURIComponent(profileId)}/metrics`,
-    profileRunNow: (profileId: string) => `/api/providers/profiles/${encodeURIComponent(profileId)}/run-now`,
-  },
+    providers: {
+      list: '/api/providers',
+      detail: (providerId: string) => `/api/providers/${encodeURIComponent(providerId)}`,
+      profiles: '/api/providers/profiles',
+      profileDetail: (profileId: string) => `/api/providers/profiles/${encodeURIComponent(profileId)}`,
+      profileRuns: (profileId: string) => `/api/providers/profiles/${encodeURIComponent(profileId)}/runs`,
+      profileMetrics: (profileId: string) => `/api/providers/profiles/${encodeURIComponent(profileId)}/metrics`,
+      profileRunNow: (profileId: string) => `/api/providers/profiles/${encodeURIComponent(profileId)}/run-now`,
+    },
+    flows: {
+      list: '/api/flows',
+      templates: '/api/flows/templates',
+      templateDetail: (slug: string) => `/api/flows/templates/${encodeURIComponent(slug)}`,
+      detail: (flowId: string) => `/api/flows/${encodeURIComponent(flowId)}`,
+      createFromTemplate: '/api/flows/from_template',
+      updateState: (flowId: string) => `/api/flows/${encodeURIComponent(flowId)}/state`,
+      replaceAgent: (flowId: string) => `/api/flows/${encodeURIComponent(flowId)}/replace_agent`,
+      executions: (flowId: string) => `/api/flows/${encodeURIComponent(flowId)}/executions`,
+      executionDetail: (flowId: string, execId: string) =>
+        `/api/flows/${encodeURIComponent(flowId)}/executions/${encodeURIComponent(execId)}`,
+      reprocess: (flowId: string) => `/api/flows/${encodeURIComponent(flowId)}/reprocess`,
+      versions: (flowId: string) => `/api/flows/${encodeURIComponent(flowId)}/versions`,
+      versionDetail: (flowId: string, versionId: string) =>
+        `/api/flows/${encodeURIComponent(flowId)}/versions/${encodeURIComponent(versionId)}`,
+      rollback: (flowId: string, versionId: string) =>
+        `/api/flows/${encodeURIComponent(flowId)}/versions/${encodeURIComponent(versionId)}/rollback`,
+      operations: (flowId: string) => `/api/flows/${encodeURIComponent(flowId)}/ops`,
+    },
+    opsCockpit: {
+      overview: '/api/ops/cockpit/overview',
+      components: '/api/ops/cockpit/components',
+      incidents: '/api/ops/cockpit/incidents',
+      flows: '/api/ops/cockpit/flows',
+    },
   },
 };

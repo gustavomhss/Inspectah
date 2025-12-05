@@ -18,12 +18,16 @@ from app.flows.schemas import (
     FlowExecutionDetailRead,
     FlowExecutionRead,
     FlowListItem,
+    FlowOperationRead,
     FlowRead,
     FlowReplaceAgentRequest,
     FlowReprocessRequest,
     FlowStepExecutionRead,
     FlowStepRead,
+    FlowTemplateRead,
+    FlowTemplateWrite,
     FlowUpdateStateRequest,
+    FlowVersionRead,
 )
 from app.flows.service import FlowService
 
@@ -87,6 +91,11 @@ if APIRouter is not None:  # pragma: no cover
                 slug=f.slug,
                 tipo_entrada=f.tipo_entrada,
                 estado=f.estado,
+                domain=f.domain,
+                flow_version_id=f.flow_version_id,
+                active_version_id=f.active_version_id,
+                test_version_id=f.test_version_id,
+                flow_ops_profile_id=f.flow_ops_profile_id,
                 template_origem_id=f.template_origem_id,
                 percentual_teste=f.percentual_teste,
                 metadata=f.metadata,
@@ -96,18 +105,20 @@ if APIRouter is not None:  # pragma: no cover
             for f in flows
         ]
 
-    @router.get("/templates")
+    @router.get("/templates", response_model=List[FlowTemplateRead])
     def list_templates(service: FlowService = Depends(_service)):
         return [
-            {
-                "id": t.id,
-                "slug": t.slug,
-                "versao": t.versao,
-                "tipo_entrada": t.tipo_entrada,
-                "estrutura": t.estrutura,
-                "ativo": t.ativo,
-                "metadata": t.metadata,
-            }
+            FlowTemplateRead(
+                id=t.id,
+                slug=t.slug,
+                versao=t.versao,
+                tipo_entrada=t.tipo_entrada,
+                estrutura=t.estrutura,
+                ativo=t.ativo,
+                metadata=t.metadata,
+                created_at=t.created_at,
+                updated_at=t.updated_at,
+            )
             for t in service.list_templates()
         ]
 
@@ -134,6 +145,50 @@ if APIRouter is not None:  # pragma: no cover
             raise HTTPException(status_code=400, detail=str(exc))
         steps = service.list_steps(flow.id)
         return _to_flow_read(flow, steps=steps)
+
+    @router.post("/templates", response_model=FlowTemplateRead, status_code=status.HTTP_201_CREATED)
+    def create_template(payload: FlowTemplateWrite, service: FlowService = Depends(_service)):
+        try:
+            tpl = service.save_template(payload.model_dump())
+            return FlowTemplateRead(
+                id=tpl.id,
+                slug=tpl.slug,
+                versao=tpl.versao,
+                tipo_entrada=tpl.tipo_entrada,
+                estrutura=tpl.estrutura,
+                ativo=tpl.ativo,
+                metadata=tpl.metadata,
+                created_at=tpl.created_at,
+                updated_at=tpl.updated_at,
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc))
+
+    @router.put("/templates/{slug}", response_model=FlowTemplateRead)
+    def update_template(slug: str, payload: FlowTemplateWrite, service: FlowService = Depends(_service)):
+        try:
+            tpl = service.save_template(payload.model_dump(), slug_override=slug)
+            return FlowTemplateRead(
+                id=tpl.id,
+                slug=tpl.slug,
+                versao=tpl.versao,
+                tipo_entrada=tpl.tipo_entrada,
+                estrutura=tpl.estrutura,
+                ativo=tpl.ativo,
+                metadata=tpl.metadata,
+                created_at=tpl.created_at,
+                updated_at=tpl.updated_at,
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc))
+
+    @router.delete("/{flow_id}", status_code=status.HTTP_204_NO_CONTENT)
+    def delete_flow(flow_id: str, service: FlowService = Depends(_service)):
+        try:
+            service.delete_flow(flow_id)
+        except ValueError as exc:
+            raise HTTPException(status_code=404, detail=str(exc))
+        return None
 
     @router.post("/{flow_id}/state", response_model=FlowRead)
     def update_state(flow_id: str, payload: FlowUpdateStateRequest, service: FlowService = Depends(_service)):
@@ -170,6 +225,8 @@ if APIRouter is not None:  # pragma: no cover
             FlowExecutionRead(
                 id=e.id,
                 flow_id=e.flow_id,
+                flow_version_id=e.flow_version_id,
+                operation_id=e.operation_id,
                 item_id=e.item_id,
                 tipo_entrada=e.tipo_entrada,
                 status=e.status,
@@ -193,6 +250,8 @@ if APIRouter is not None:  # pragma: no cover
         return FlowExecutionDetailRead(
             id=execution.id,
             flow_id=execution.flow_id,
+            flow_version_id=execution.flow_version_id,
+            operation_id=execution.operation_id,
             item_id=execution.item_id,
             tipo_entrada=execution.tipo_entrada,
             status=execution.status,
@@ -233,6 +292,67 @@ if APIRouter is not None:  # pragma: no cover
             }
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc))
+
+    @router.get("/{flow_id}/versions", response_model=List[FlowVersionRead])
+    def list_versions(flow_id: str, service: FlowService = Depends(_service)):
+        flow = service.get_flow(flow_id)
+        if not flow:
+            raise HTTPException(status_code=404, detail="Fluxo não encontrado")
+        versions = []
+        for v in service.list_versions(flow_id):
+            versions.append(
+                FlowVersionRead(
+                    id=v.id,
+                    flow_id=v.flow_id,
+                    version_id=v.version_id,
+                    template_slug=v.template_slug,
+                    estado=v.estado,
+                    metadata=v.metadata or {},
+                    created_at=v.created_at,
+                    updated_at=v.updated_at,
+                )
+            )
+        return versions
+
+    @router.get("/{flow_id}/versions/{version_id}", response_model=FlowVersionRead)
+    def get_version(flow_id: str, version_id: str, service: FlowService = Depends(_service)):
+        flow = service.get_flow(flow_id)
+        if not flow:
+            raise HTTPException(status_code=404, detail="Fluxo não encontrado")
+        ver = service.get_version(flow_id, version_id)
+        if not ver:
+            raise HTTPException(status_code=404, detail="Versão não encontrada")
+        return FlowVersionRead.model_validate(ver)
+
+    @router.post("/{flow_id}/versions/{version_id}/rollback", response_model=FlowRead)
+    def rollback(flow_id: str, version_id: str, service: FlowService = Depends(_service)):
+        try:
+            flow = service.rollback_flow(flow_id, version_id)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc))
+        steps = service.list_steps(flow_id)
+        return _to_flow_read(flow, steps=steps)
+
+    @router.get("/{flow_id}/ops", response_model=List[FlowOperationRead])
+    def list_operations(flow_id: str, limit: int = Query(50, ge=1, le=200), service: FlowService = Depends(_service)):
+        flow = service.get_flow(flow_id)
+        if not flow:
+            raise HTTPException(status_code=404, detail="Fluxo não encontrado")
+        ops = []
+        for op in service.list_operations(flow_id, limit=limit):
+            ops.append(
+                FlowOperationRead(
+                    id=op.id,
+                    flow_id=op.flow_id,
+                    flow_version_id=getattr(op, "flow_version_id", None),
+                    operacao=op.operacao,
+                    payload=op.payload if isinstance(op.payload, dict) else {},
+                    resultado=op.resultado,
+                    created_at=op.created_at,
+                    updated_at=op.updated_at,
+                )
+            )
+        return ops
 
 else:  # pragma: no cover
     router = None

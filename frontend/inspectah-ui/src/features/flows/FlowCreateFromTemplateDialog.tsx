@@ -8,7 +8,7 @@ interface Props {
 }
 
 export function FlowCreateFromTemplateDialog({ onCreated }: Props) {
-  const templates = useFlowTemplates();
+  const { templates, reload } = useFlowTemplates();
   const [templateSlug, setTemplateSlug] = useState<string>('');
   const [nome, setNome] = useState('');
   const [slug, setSlug] = useState('');
@@ -70,7 +70,9 @@ export function FlowCreateFromTemplateDialog({ onCreated }: Props) {
               nome,
               slug,
               bindings: bindingClassifier ? { classificador: bindingClassifier } : {},
-            }).catch((err) => setError(err instanceof Error ? err.message : 'Falha ao criar fluxo'));
+            })
+              .then(() => reload?.())
+              .catch((err) => setError(err instanceof Error ? err.message : 'Falha ao criar fluxo'));
           }}
           disabled={saving}
         >

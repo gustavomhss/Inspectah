@@ -60,6 +60,11 @@ class Flow:
     slug: str
     tipo_entrada: str
     estado: FlowState
+    domain: str = "generic"
+    flow_version_id: Optional[str] = None
+    active_version_id: Optional[str] = None
+    test_version_id: Optional[str] = None
+    flow_ops_profile_id: Optional[str] = None
     template_origem_id: Optional[str] = None
     percentual_teste: int = 0
     metadata: Dict = field(default_factory=dict)
@@ -85,6 +90,8 @@ class FlowStep:
 class FlowExecution:
     id: str
     flow_id: str
+    flow_version_id: Optional[str]
+    operation_id: Optional[str]
     item_id: str
     tipo_entrada: str
     status: FlowExecutionStatus
@@ -114,5 +121,19 @@ class FlowOperationLog:
     operacao: str
     payload: Dict = field(default_factory=dict)
     resultado: str = "ok"
+    flow_version_id: Optional[str] = None
     user_id: Optional[str] = None
     created_at: datetime = field(default_factory=utcnow)
+    updated_at: datetime = field(default_factory=utcnow)
+
+
+@dataclass
+class FlowVersion:
+    id: str
+    flow_id: str
+    version_id: str
+    template_slug: str
+    estado: str
+    metadata: Dict = field(default_factory=dict)
+    created_at: datetime = field(default_factory=utcnow)
+    updated_at: datetime = field(default_factory=utcnow)
