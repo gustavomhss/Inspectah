@@ -58,6 +58,10 @@ try:  # pragma: no cover
     from app.api.providers_routes import router as providers_router
 except ModuleNotFoundError:  # pragma: no cover
     providers_router = None
+try:  # pragma: no cover
+    from app.api.ops_cockpit_routes import router as ops_cockpit_router
+except ModuleNotFoundError:  # pragma: no cover
+    ops_cockpit_router = None
 
 
 def _add_cors(app: FastAPI, origins: Iterable[str]) -> None:
@@ -107,6 +111,8 @@ def build_app():  # pragma: no cover
         app.include_router(console_router)
     if providers_router is not None:
         app.include_router(providers_router, tags=["providers"])
+    if ops_cockpit_router is not None:
+        app.include_router(ops_cockpit_router)
     if copiloto_fontes_router is not None:
         app.include_router(copiloto_fontes_router, prefix="/admin/copiloto-fontes", tags=["admin-copiloto-fontes"])
     if auth_router is not None:
