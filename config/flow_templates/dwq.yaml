@@ -1,0 +1,38 @@
+{
+  "slug": "dwq",
+  "version": "1",
+  "domain": "dwwdqdw",
+  "entry_type": "qdwqdwq",
+  "description": "qwdwqwd",
+  "limits": null,
+  "policies": null,
+  "steps": [
+    {
+      "ordem": 1,
+      "tipo_etapa": "interprete",
+      "agent_role": "agent_role_exemplo"
+    },
+    {
+      "ordem": 2,
+      "tipo_etapa": "interprete",
+      "agent_role": "w"
+    },
+    {
+      "ordem": 3,
+      "tipo_etapa": "classificador",
+      "agent_role": "f"
+    },
+    {
+      "ordem": 4,
+      "tipo_etapa": "debunker",
+      "agent_role": "g"
+    },
+    {
+      "ordem": 5,
+      "tipo_etapa": "decision_maker",
+      "agent_role": "2"
+    }
+  ],
+  "metadata": {},
+  "id": null
+}

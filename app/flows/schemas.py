@@ -32,6 +32,11 @@ class FlowListItem(BaseModel):
     slug: str
     tipo_entrada: str
     estado: FlowState
+    domain: str = "generic"
+    flow_version_id: Optional[str] = None
+    active_version_id: Optional[str] = None
+    test_version_id: Optional[str] = None
+    flow_ops_profile_id: Optional[str] = None
     template_origem_id: Optional[str] = None
     percentual_teste: int = 0
     metadata: Dict = Field(default_factory=dict)
@@ -69,6 +74,8 @@ class FlowReplaceAgentRequest(BaseModel):
 class FlowExecutionRead(BaseModel):
     id: str
     flow_id: str
+    flow_version_id: Optional[str] = None
+    operation_id: Optional[str] = None
     item_id: str
     tipo_entrada: str
     status: FlowExecutionStatus
@@ -92,6 +99,53 @@ class FlowStepExecutionRead(BaseModel):
 
 class FlowExecutionDetailRead(FlowExecutionRead):
     steps: List[FlowStepExecutionRead] = Field(default_factory=list)
+
+
+class FlowTemplateRead(BaseModel):
+    id: str
+    slug: str
+    versao: str
+    tipo_entrada: str
+    ativo: bool
+    estrutura: Dict = Field(default_factory=dict)
+    metadata: Dict = Field(default_factory=dict)
+    created_at: datetime
+    updated_at: datetime
+
+
+class FlowTemplateWrite(BaseModel):
+    slug: str
+    version: str
+    domain: str
+    entry_type: str
+    description: Optional[str] = None
+    limits: Optional[Dict] = None
+    policies: Optional[List[Dict]] = None
+    steps: List[Dict]
+    metadata: Dict = Field(default_factory=dict)
+    id: Optional[str] = None
+
+
+class FlowVersionRead(BaseModel):
+    id: str
+    flow_id: str
+    version_id: str
+    template_slug: str
+    estado: str
+    metadata: Dict = Field(default_factory=dict)
+    created_at: datetime
+    updated_at: datetime
+
+
+class FlowOperationRead(BaseModel):
+    id: str
+    flow_id: str
+    flow_version_id: Optional[str] = None
+    operacao: str
+    payload: Dict = Field(default_factory=dict)
+    resultado: str
+    created_at: datetime
+    updated_at: datetime
 
 
 class FlowReprocessCriteria(BaseModel):

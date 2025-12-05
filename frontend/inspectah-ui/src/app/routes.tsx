@@ -20,12 +20,15 @@ import CaseTimelinePage from '../modules/cases/pages/CaseTimelinePage';
 import CaseXrayPage from '../modules/cases/pages/CaseXrayPage';
 import ConsultPage from '../modules/consult/pages/ConsultPage';
 import { SourceEditPage, SourcesListPage } from '../features/sources';
+import { FlowsListPage } from '../features/flows/FlowsListPage';
+import { FlowDetailPage } from '../features/flows/FlowDetailPage';
 import SourcesLayout from '../features/sources/pages/SourcesLayout';
 import SourcesIngestionPage from '../features/sources/pages/SourcesIngestionPage';
 import SourcesDebunkerPage from '../features/sources/pages/SourcesDebunkerPage';
 import SourcesNotFoundPage from '../features/sources/pages/SourcesNotFoundPage';
 import AgentFlowsPage from '../features/agent-flows/AgentFlowsPage';
 import ProvidersPage from '../features/providers/ProvidersPage';
+import OpsCockpitPage from '../modules/ops/pages/OpsCockpitPage';
 
 export function AppRoutes() {
   return (
@@ -60,6 +63,9 @@ export function AppRoutes() {
         <Route path="/admin/console/truth" element={<TruthConsolePage />} />
         <Route path="/admin/console/agents" element={<AgentStudioPage />} />
         <Route path="/admin/console/incidents" element={<IncidentConsolePage />} />
+        <Route path="/flows" element={<FlowsListPage />} />
+        <Route path="/flows/:flowId" element={<FlowDetailPage />} />
+        <Route path="/admin/ops/cockpit" element={<OpsCockpitPage />} />
         <Route path="/admin/sources" element={<SourcesLayout />}>
           <Route index element={<SourcesListPage />} />
           <Route path="new" element={<SourceEditPage />} />

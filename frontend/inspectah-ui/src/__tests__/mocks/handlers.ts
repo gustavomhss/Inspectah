@@ -58,3 +58,38 @@ export const authHandler = rest.post(`${BASE_URL}/auth/login`, async (req, res, 
 });
 
 handlers.push(authHandler);
+
+// Ops Cockpit
+handlers.push(
+  rest.get(`${BASE_URL}/api/ops/cockpit/overview`, (_req, res, ctx) =>
+    res(
+      ctx.status(200),
+      ctx.json({
+        components: 3,
+        incidents: 2,
+        slos: [
+          { slo_id: 's33_slo_recencia_fonte_noticias', status: 'OK', metrica: 'metric', janela: '15m', limiar: '<=900' },
+          { slo_id: 's33_slo_latencia_pipeline_noticias', status: 'DEGRADED', metrica: 'metric', janela: '30m', limiar: '<=60' },
+        ],
+      }),
+    ),
+  ),
+  rest.get(`${BASE_URL}/api/ops/cockpit/components`, (_req, res, ctx) =>
+    res(
+      ctx.status(200),
+      ctx.json([
+        { id: 'fonte_noticias_principal', tipo: 'fonte', criticidade: 'alta', descricao: 'Feed' },
+        { id: 'pipeline_noticias', tipo: 'pipeline', criticidade: 'alta', descricao: 'Pipeline' },
+      ]),
+    ),
+  ),
+  rest.get(`${BASE_URL}/api/ops/cockpit/incidents`, (_req, res, ctx) =>
+    res(
+      ctx.status(200),
+      ctx.json([
+        { id: 'inc1', title: 'Falha fonte', severity: 'HIGH', state: 'OPEN', component_id: 'fonte_noticias_principal' },
+        { id: 'inc2', title: 'Latência alta', severity: 'MEDIUM', state: 'TRIAGE', component_id: 'pipeline_noticias' },
+      ]),
+    ),
+  ),
+);

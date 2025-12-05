@@ -16,7 +16,13 @@ class FlowExecutionEngine:
         decision: RoutingDecision = select_flow_for_event(evento, service=self.service)
         flow = decision.flow
         item_id = evento.get("item_id") or evento.get("id") or "unknown_item"
-        exec_obj = self.service.record_execution(flow.id, item_id, flow.tipo_entrada, FlowExecutionStatus.EM_ANDAMENTO)
+        exec_obj = self.service.record_execution(
+            flow.id,
+            item_id,
+            flow.tipo_entrada,
+            FlowExecutionStatus.EM_ANDAMENTO,
+            flow_version_id=flow.flow_version_id,
+        )
         instrumentation.record_flow_execution_started(exec_obj)
 
         steps = self.service.list_steps(flow.id)

@@ -1,0 +1,43 @@
+{
+  "slug": "1234",
+  "version": "1",
+  "domain": "122445",
+  "entry_type": "noticia",
+  "description": "123242",
+  "limits": null,
+  "policies": null,
+  "steps": [
+    {
+      "ordem": 1,
+      "tipo_etapa": "interprete",
+      "agent_role": "agent_role_exemplo"
+    },
+    {
+      "ordem": 2,
+      "tipo_etapa": "interprete",
+      "agent_role": "123"
+    },
+    {
+      "ordem": 3,
+      "tipo_etapa": "analista",
+      "agent_role": "1234"
+    },
+    {
+      "ordem": 4,
+      "tipo_etapa": "debunker",
+      "agent_role": "12345"
+    },
+    {
+      "ordem": 5,
+      "tipo_etapa": "debunker",
+      "agent_role": "98"
+    },
+    {
+      "ordem": 6,
+      "tipo_etapa": "decision_maker",
+      "agent_role": "987"
+    }
+  ],
+  "metadata": {},
+  "id": null
+}

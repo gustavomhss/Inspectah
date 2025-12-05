@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -6,6 +6,8 @@ import { FlowsListPage } from '../FlowsListPage';
 import { FlowDetailPage } from '../FlowDetailPage';
 import * as api from '../api';
 import type { Flow } from '../types';
+
+const flushPromises = () => new Promise((resolve) => setTimeout(resolve, 0));
 
 const sampleFlows: Flow[] = [
   {
@@ -27,13 +29,18 @@ describe('Console de Fluxos', () => {
   it('renderiza lista de fluxos', async () => {
     vi.spyOn(api, 'listFlows').mockResolvedValue(sampleFlows);
     vi.spyOn(api, 'listFlowTemplates').mockResolvedValue([]);
-    render(
-      <MemoryRouter>
-        <FlowsListPage />
-      </MemoryRouter>,
-    );
-    await waitFor(() => expect(screen.getByText('Fluxo Noticias')).toBeInTheDocument());
-    expect(screen.getByText('noticia_texto')).toBeInTheDocument();
+    vi.spyOn(api, 'listFlowVersions').mockResolvedValue([]);
+    vi.spyOn(api, 'listFlowOperations').mockResolvedValue([]);
+    vi.spyOn(api, 'listOpsCockpitFlows').mockResolvedValue([]);
+    await act(async () => {
+      render(
+        <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+          <FlowsListPage />
+        </MemoryRouter>,
+      );
+    });
+    expect(await screen.findByText('Fluxo Noticias')).toBeInTheDocument();
+    expect(await screen.findByText('noticia_texto')).toBeInTheDocument();
   });
 
   it('permite navegar para detalhe e acionar mudança de estado', async () => {
@@ -43,19 +50,28 @@ describe('Console de Fluxos', () => {
       steps: [],
     });
     vi.spyOn(api, 'listFlowExecutions').mockResolvedValue([]);
+    vi.spyOn(api, 'listFlowVersions').mockResolvedValue([]);
+    vi.spyOn(api, 'listFlowOperations').mockResolvedValue([]);
+    vi.spyOn(api, 'listOpsCockpitFlows').mockResolvedValue([]);
     vi.spyOn(api, 'updateFlowState').mockResolvedValue({ ...sampleFlows[0], estado: 'em_teste', steps: [] });
 
-    render(
-      <MemoryRouter initialEntries={['/flows/f1']}>
-        <Routes>
-          <Route path="/flows/:flowId" element={<FlowDetailPage />} />
-        </Routes>
-      </MemoryRouter>,
-    );
+    await act(async () => {
+      render(
+        <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={['/flows/f1']}>
+          <Routes>
+            <Route path="/flows/:flowId" element={<FlowDetailPage />} />
+          </Routes>
+        </MemoryRouter>,
+      );
+      await flushPromises();
+    });
 
-    await waitFor(() => expect(screen.getByText('Fluxo Noticias')).toBeInTheDocument());
+    expect(await screen.findByText('Fluxo Noticias')).toBeInTheDocument();
     const button = screen.getByRole('button', { name: /Marcar em teste/i });
-    await userEvent.click(button);
-    await waitFor(() => expect(api.updateFlowState).toHaveBeenCalled());
+    await act(async () => {
+      await userEvent.click(button);
+      await flushPromises();
+    });
+    expect(api.updateFlowState).toHaveBeenCalled();
   });
 });

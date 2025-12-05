@@ -98,6 +98,10 @@ export async function httpClient<T>(path: string, options: HttpClientOptions = {
       throw new HttpError(detail || `Falha na requisição (${response.status})`, response.status);
     }
 
+    // Respostas vazias (204) ou sem body: retornam undefined
+    if (response.status === 204 || response.headers.get('Content-Length') === '0') {
+      return undefined as T;
+    }
     try {
       return (await response.json()) as T;
     } catch (error) {

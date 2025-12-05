@@ -53,9 +53,9 @@ class Incident:
 
 
 class IncidentService:
-    """Simple SQLite-backed Incident service for S33 G1."""
+    """Simple SQLite-backed Incident service (atualizado para S34)."""
 
-    def __init__(self, db_path: Path | str = "out/databases/s33_ops.sqlite"):
+    def __init__(self, db_path: Path | str = "out/databases/s34_ops.sqlite"):
         self.db_path = Path(db_path)
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self._ensure_schema()

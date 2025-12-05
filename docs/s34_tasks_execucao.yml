@@ -1,0 +1,475 @@
+sprint: S34
+programa: 1
+epico: 28
+
+ace_resumo:
+  objetivo_sprint: >
+    Entregar fluxos governáveis multi-domínio (notícias + contestação v0) com templates/políticas versionados,
+    console/API multi-fluxo, SLO/incident/observabilidade por flow_id/flow_version_id e operação 24/7 com evidências/bundle (G0–G5 verdes).
+  leitura_minima_spec:
+    - Programa 1/Epico 28/Sprint 34/Capitulo 1/Capitulo 1.md
+    - Programa 1/Epico 28/Sprint 34/Capitulo 2/Capitulo 2.md
+    - Programa 1/Epico 28/Sprint 34/Capitulo 3/Capitulo 3.md
+    - Programa 1/Epico 28/Sprint 34/Capitulo 4/Capitulo 4.md
+  instrucoes_para_ace: >
+    Trabalhe wave a wave usando apenas o ace_context da wave/task atual.
+    Não invente fluxos/SLOs fora do recorte (notícias + contestação v0).
+    Indicadores/alertas fake são proibidos; bundle multi-fluxo é obrigatório.
+
+waves:
+  - id: W0
+    nome: "Grounding & G0"
+    descricao: "Fechar recorte multi-fluxo, templates, limites/flags e SLO map; script G0."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 34/Capitulo 2/Bloco 1.md
+        - config/flow_templates/news_v2.yaml
+        - config/flow_templates/contestacao_v0.yaml
+        - config/flows_limits.yaml
+        - config/feature_flags.yaml
+      resumo_para_ace: >
+        Valide que templates, limites e flags existem e que o mapa de componentes/SLO S34 está consistente.
+        Rode G0 para gerar scorecard.
+      observacoes_execucao: >
+        Não codar console aqui; foco em recorte/arquivos e script G0.
+
+  - id: W1
+    nome: "Modelo/Políticas (G1)"
+    descricao: "Migração/entidades multi-fluxo, loader de templates, políticas mínimas e limites/flags aplicados."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 34/Capitulo 2/Bloco 2.md
+        - Programa 1/Epico 28/Sprint 34/Capitulo 3/Capitulo 3.md
+      resumo_para_ace: >
+        Aplique migração 0034, implemente modelos/versionamento/policy engine e enforcement de limites/flags.
+        Teste invariantes (flow_id/version obrigatório, rollback gated, limites).
+      observacoes_execucao: >
+        Rodar G1 em DB limpo e pós-S32. Falhas de invariante são STOP.
+
+  - id: W2
+    nome: "Console/API & OracleOps v2 (G2)"
+    descricao: "Console/API multi-fluxo (histórico/diffs/rollback) com RBAC + cockpit OracleOps exibindo fluxos/versões/SLO/incident."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 34/Capitulo 2/Bloco 3.md
+        - Programa 1/Epico 28/Sprint 34/Capitulo 3/Capitulo 3.md
+      resumo_para_ace: >
+        Implementar rotas e UI multi-fluxo, com dados reais/fixtures, diffs/rollback/test, RBAC.
+        Cockpit deve mostrar fluxos/versões com SLO/incident.
+      observacoes_execucao: >
+        IDs precisam bater com mapa. Sem estados hardcoded. G2 script valida recorte e 2xx.
+
+  - id: W3
+    nome: "Observabilidade & SLO (G3)"
+    descricao: "Métricas/logs/alertas por fluxo/versão/teste; painel s34_flow_ops_overview; SLOs versionados no cockpit."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 34/Capitulo 2/Bloco 3.md
+        - observability/dashboards/s34_flow_ops_overview.json
+        - observability/alerts/s34/
+      resumo_para_ace: >
+        Emitir métricas (exec_total/latency/policy violations/rollback), configurar alertas e expor estados SLO no cockpit.
+        Painel não pode estar vazio; queries/alerts versionados.
+      observacoes_execucao: >
+        Simule violações para validar alertas/estado. G3 script deve confirmar métricas/alerts/painel.
+
+  - id: W4
+    nome: "Pilotos + Evidência (G4)"
+    descricao: "Executar pilotos (notícias e contestação v0) em teste/ativo, rollback, coletar evidências e bundle parcial."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 34/Capitulo 4/Capitulo 4.md
+        - Programa 1/Epico 28/Sprint 34/Capitulo 5/Capitulo 5.md
+      resumo_para_ace: >
+        Rodar fluxos governados, testar rollback, coletar dataset/ingest_log/exec_dump/metrics/logs/screenshots.
+        Scripts de gates, metrics summary e bundle parcial devem rodar.
+      observacoes_execucao: >
+        Evidências precisam cobrir ambos fluxos. Workflow s34-gates.yml deve estar verde.
+
+  - id: W5
+    nome: "ORR & Bundle final (G5)"
+    descricao: "Conduzir ORR operacional G0–G4, gerar scorecard final e bundle completo."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 34/Capitulo 5/Capitulo 5.md
+        - Programa 1/Epico 28/Sprint 34/Capitulo 6/Capitulo 6.md
+      resumo_para_ace: >
+        Rodar ORR com bundle/scorecards/metrics_summary; registrar GO/NO-GO e riscos.
+        Empacotar inspectah_s34_evidence_bundle.zip com scorecards/evidências.
+      observacoes_execucao: >
+        Sem bundle íntegro, sem GO. Registrar notas em out/evidence/S34_ORR_summary.txt.
+
+tasks:
+  - id: S34-DOC-000
+    wave: W0
+    area: docs
+    gate_relacionado: S34_G0
+    descricao: "Consolidar recorte S34 (fluxos notícias + contestação v0), templates e SLO map."
+    arquivos_alvo:
+      - Programa 1/Epico 28/Sprint 34/Capitulo 1/*
+      - Programa 1/Epico 28/Sprint 34/Capitulo 2/Bloco 1.md
+      - config/flow_templates/news_v2.yaml
+      - config/flow_templates/contestacao_v0.yaml
+      - config/flows_limits.yaml
+      - config/feature_flags.yaml
+    criterios_aceite:
+      - "Templates existem e estão alinhados ao recorte."
+      - "Limites/flags definidos; SLO map referenciado."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 34/Capitulo 2/Bloco 1.md
+      resumo_para_ace: >
+        Feche o recorte antes de G1. Sem templates/limits/flags, não siga.
+
+  - id: S34-CI-001
+    wave: W0
+    area: ci/orr
+    gate_relacionado: S34_G0
+    descricao: "Script G0 (`bin/s34_g0_scope.sh`) validando templates/limits/flags/SLO map e gerando scorecard."
+    arquivos_alvo:
+      - bin/s34_g0_scope.sh
+      - out/scorecards/S34_G0_scope.json
+      - out/evidence/S34_G0_scope_and_templates/
+    criterios_aceite:
+      - "Script roda e checa consistência; scorecard PASS/WARN justificado."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 34/Capitulo 2/Bloco 1.md
+      resumo_para_ace: >
+        Automatize checagens básicas; sem scorecard, não avança.
+
+  - id: S34-BE-010
+    wave: W1
+    area: backend
+    gate_relacionado: S34_G1
+    descricao: "Implementar migração 0034 e modelos/versionamento/policy engine multi-fluxo; loader de templates."
+    arquivos_alvo:
+      - migrations/versions/0034_s34_flow_multidomain_ops.py
+      - app/flows/models.py
+      - app/flows/versioning.py
+      - app/flows/policy_engine.py
+      - app/flows/templates/loader.py
+    criterios_aceite:
+      - "Migração aplica em DB limpo e pós-S32."
+      - "Templates carregam; policies mínimas por domínio ativas."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 34/Capitulo 3/Capitulo 3.md
+      resumo_para_ace: >
+        Garanta flow_id/flow_version_id em execuções; política mínima por domínio.
+
+  - id: S34-BE-011
+    wave: W1
+    area: backend
+    gate_relacionado: S34_G1
+    descricao: "Aplicar limites/flags (rollbacks/test percent/versions keep/timeout) nas operações de fluxo."
+    arquivos_alvo:
+      - app/flows/service.py
+      - config/flows_limits.yaml
+      - config/feature_flags.yaml
+      - app/flows/ops_integration.py
+    criterios_aceite:
+      - "Operações respeitam limites; violações falham claramente."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 34/Capitulo 2/Bloco 2.md
+      resumo_para_ace: >
+        Enforce limites/flags em create/test/rollback. Logs claros em caso de violação.
+
+  - id: S34-QA-012
+    wave: W1
+    area: testes
+    gate_relacionado: S34_G1
+    descricao: "Testes de políticas/invariantes (flow_id/version obrigatório, rollback gated, limites/flags, policy violations)."
+    arquivos_alvo:
+      - tests/flows/test_flow_models_and_policies.py
+      - tests/flows/test_flow_limits.py
+    criterios_aceite:
+      - "Pytest verde cobrindo invariantes/limites."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 34/Capitulo 2/Bloco 2.md
+      resumo_para_ace: >
+        Simule violações para provar enforcement. Esses testes alimentam G1.
+
+  - id: S34-CI-013
+    wave: W1
+    area: ci/orr
+    gate_relacionado: S34_G1
+    descricao: "Script G1 (`bin/s34_g1_model.sh`) rodando migração + testes e gerando scorecard."
+    arquivos_alvo:
+      - bin/s34_g1_model.sh
+      - out/scorecards/S34_G1_model.json
+      - out/evidence/S34_G1_model_and_policies_multifluxo/
+    criterios_aceite:
+      - "Script fim-a-fim; scorecard lista invariantes/limites checados."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 34/Capitulo 2/Bloco 2.md
+      resumo_para_ace: >
+        Automatize migração + pytest + checagens de limites. Scorecard obrigatório.
+
+  - id: S34-BE-020
+    wave: W2
+    area: backend
+    gate_relacionado: S34_G2
+    descricao: "APIs de console multi-fluxo (histórico/diffs/rollback/teste) com RBAC e payloads com flow_id/version."
+    arquivos_alvo:
+      - app/api/flow_console_routes.py
+      - app/flows/schemas.py
+      - app/flows/service.py
+    criterios_aceite:
+      - "Rotas 2xx; histórico/diffs/rollback/teste funcionam; RBAC aplicado; IDs consistentes."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 34/Capitulo 2/Bloco 3.md
+      resumo_para_ace: >
+        Integre rollback/teste e histórico de versões; proteja com autorização.
+
+  - id: S34-FE-021
+    wave: W2
+    area: frontend
+    gate_relacionado: S34_G2
+    descricao: "UI multi-fluxo (lista/detalhe/histórico/diffs/rollback dialogs) alinhada ao backend."
+    arquivos_alvo:
+      - frontend/inspectah-ui/src/features/flows/FlowListMulti.tsx
+      - frontend/inspectah-ui/src/features/flows/FlowDetailMulti.tsx
+      - frontend/inspectah-ui/src/features/flows/FlowVersionHistory.tsx
+      - frontend/inspectah-ui/src/features/flows/FlowRollbackDialog.tsx
+      - frontend/inspectah-ui/src/features/flows/FlowOpsPanel.tsx
+    criterios_aceite:
+      - "UI renderiza dados reais/fixtures; drill-down/rollback funcionam; diffs/histórico visíveis."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 34/Capitulo 2/Bloco 3.md
+      resumo_para_ace: >
+        Use dados com flow_id/version. Links para dashboards/ops panel devem funcionar.
+
+  - id: S34-OPS-022
+    wave: W2
+    area: observabilidade
+    gate_relacionado: S34_G2
+    descricao: "Integrar cockpit OracleOps v2 para exibir fluxos/versões/SLO/incident (mapa de componentes atualizado)."
+    arquivos_alvo:
+      - app/flows/ops_integration.py
+      - app/api/ops_cockpit_routes.py
+      - frontend/inspectah-ui/src/features/flows/FlowOpsPanel.tsx
+    criterios_aceite:
+      - "Cockpit lista fluxos/versões com estado/SLO/incident; IDs consistentes."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 34/Capitulo 3/Capitulo 3.md
+      resumo_para_ace: >
+        Alinhar dados com components_map/SLO map. Evitar hardcode.
+
+  - id: S34-QA-023
+    wave: W2
+    area: testes
+    gate_relacionado: S34_G2
+    descricao: "Testes API/UI de console multi-fluxo e integração OracleOps (recorte, RBAC, rollback/teste)."
+    arquivos_alvo:
+      - tests/flows/test_console_api.py
+      - tests/flows/test_console_ui.ts
+      - tests/flows/test_ops_integration.py
+    criterios_aceite:
+      - "Testes verdes cobrindo overview/detalhe/rollback e presença de flow_id/version."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 34/Capitulo 2/Bloco 3.md
+      resumo_para_ace: >
+        Cobrir recorte completo; validar autorização e integração ops.
+
+  - id: S34-CI-024
+    wave: W2
+    area: ci/orr
+    gate_relacionado: S34_G2
+    descricao: "Script G2 (`bin/s34_g2_console.sh`) validando endpoints/recorte e gerando scorecard."
+    arquivos_alvo:
+      - bin/s34_g2_console.sh
+      - out/scorecards/S34_G2_console.json
+      - out/evidence/S34_G2_console_multifluxo/
+    criterios_aceite:
+      - "Script roda, valida 2xx e IDs, gera scorecard PASS/WARN."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 34/Capitulo 2/Bloco 3.md
+      resumo_para_ace: >
+        Automatize sanity de API/recorte; salvar evidências.
+
+  - id: S34-OBS-030
+    wave: W3
+    area: observabilidade
+    gate_relacionado: S34_G3
+    descricao: "Instrumentar métricas/logs por fluxo/versão e criar painel s34_flow_ops_overview + alertas s34."
+    arquivos_alvo:
+      - app/flows/instrumentation.py
+      - observability/dashboards/s34_flow_ops_overview.json
+      - observability/alerts/s34/
+    criterios_aceite:
+      - "Métricas flow_exec_total/latency/policy_violations/rollback emitidas."
+      - "Painel não vazio; alertas configurados."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 34/Capitulo 2/Bloco 3.md
+      resumo_para_ace: >
+        Use labels flow_id/flow_version_id. Exporte prints/queries em evidência.
+
+  - id: S34-BE-031
+    wave: W3
+    area: backend
+    gate_relacionado: S34_G3
+    descricao: "Expor estados de SLO/alerta por fluxo/versão para cockpit; cache/aggregation se necessário."
+    arquivos_alvo:
+      - app/flows/ops_integration.py
+      - app/api/flow_console_routes.py
+    criterios_aceite:
+      - "Endpoints retornam slo_id/status por fluxo/versão; UI consome."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 34/Capitulo 3/Capitulo 3.md
+      resumo_para_ace: >
+        Refletir SLOs versionados na API; evitar consultas pesadas na UI.
+
+  - id: S34-FE-032
+    wave: W3
+    area: frontend
+    gate_relacionado: S34_G3
+    descricao: "UI de SLO/alertas por fluxo/versão (badges/links) no cockpit/flow detail."
+    arquivos_alvo:
+      - frontend/inspectah-ui/src/features/flows/FlowOpsPanel.tsx
+    criterios_aceite:
+      - "SLOs/alertas visíveis, estados corretos, links funcionam (ao menos 1)."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 34/Capitulo 2/Bloco 3.md
+      resumo_para_ace: >
+        Mostrar estado de SLO no painel ops; IDs/names consistentes.
+
+  - id: S34-QA-033
+    wave: W3
+    area: testes
+    gate_relacionado: S34_G3
+    descricao: "Testes de observabilidade/SLO (queries retornam dados, alertas disparam, cockpit reflete estados)."
+    arquivos_alvo:
+      - tests/flows/test_slos_queries.py
+      - tests/flows/test_flow_alerts.py
+      - tests/flows/test_cockpit_slo_ui.ts
+    criterios_aceite:
+      - "Testes verdes; alertas simulados geram violação; UI mostra estados corretos."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 34/Capitulo 2/Bloco 3.md
+      resumo_para_ace: >
+        Simule breaches para validar pipeline métrica→alerta→UI.
+
+  - id: S34-CI-034
+    wave: W3
+    area: ci/orr
+    gate_relacionado: S34_G3
+    descricao: "Script G3 (`bin/s34_g3_obs.sh`) para validar métricas/painel/alertas/SLO e gerar scorecard."
+    arquivos_alvo:
+      - bin/s34_g3_obs.sh
+      - out/scorecards/S34_G3_obs.json
+      - out/evidence/S34_G3_observabilidade_multifluxo/
+    criterios_aceite:
+      - "Script checa métricas/alerts/painel não vazio; scorecard PASS/WARN."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 34/Capitulo 2/Bloco 3.md
+      resumo_para_ace: >
+        Automatize a validação de observabilidade; salvar evidências.
+
+  - id: S34-OPS-040
+    wave: W4
+    area: backend
+    gate_relacionado: S34_G4
+    descricao: "Executar pilotos (notícias e contestação v0) em teste/ativo com rollback e coletar evidências completas."
+    arquivos_alvo:
+      - scripts/pilotos/*
+      - ingest logs
+      - exec dumps
+      - metrics/logs snapshots
+      - console screenshots
+    criterios_aceite:
+      - "Fluxos rodaram (teste/ativo), rollback exercitado, evidências coletadas para ambos fluxos."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 34/Capitulo 4/Capitulo 4.md
+      resumo_para_ace: >
+        Use datasets de prova (news + contestação), registre ingest_log/exec_dump/metrics/screenshots.
+
+  - id: S34-CI-041
+    wave: W4
+    area: ci/orr
+    gate_relacionado: S34_G4
+    descricao: "Scripts G4/metrics_summary/bundle e workflow CI (`.github/workflows/s34-gates.yml`)."
+    arquivos_alvo:
+      - bin/s34_g4_pilotos.sh
+      - bin/s34_metrics_summary.sh
+      - bin/s34_bundle.sh
+      - .github/workflows/s34-gates.yml
+    criterios_aceite:
+      - "Scripts rodam e geram scorecards/evidências/bundle parcial; CI verde."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 34/Capitulo 4/Capitulo 4.md
+      resumo_para_ace: >
+        Automatize coleta de evidências e bundle parcial; CI deve cobrir gates.
+
+  - id: S34-DOC-042
+    wave: W4
+    area: docs
+    gate_relacionado: S34_G4
+    descricao: "Atualizar runbooks S34 (notícias, contestação v0, incidentes, observabilidade) com flow_id/flow_version_id e políticas."
+    arquivos_alvo:
+      - docs/runbooks/S34_fluxo_noticias_ops.md
+      - docs/runbooks/S34_fluxo_contestacao_ops.md
+      - docs/runbooks/S34_fluxo_multifluxo_incidentes.md
+      - docs/runbooks/S34_fluxo_multifluxo_observabilidade.md
+    criterios_aceite:
+      - "Runbooks completos, executáveis, alinhados à UI e às policies/limits."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 34/Capitulo 5/Capitulo 5.md
+      resumo_para_ace: >
+        Garanta acesso rápido na UI; incluir rollback/teste e escalonamento de incidentes.
+
+  - id: S34-CI-050
+    wave: W5
+    area: ci/orr
+    gate_relacionado: S34_G5
+    descricao: "Script ORR (`bin/s34_g5_orr.sh`) integrando G0–G4 e scorecard final."
+    arquivos_alvo:
+      - bin/s34_g5_orr.sh
+      - out/scorecards/S34_G5_orr.json
+      - out/evidence/S34_ORR_summary.txt
+    criterios_aceite:
+      - "ORR executada (real/simulada), scorecard G5 PASS/WARN justificado."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 34/Capitulo 5/Capitulo 5.md
+      resumo_para_ace: >
+        Conduzir ORR com bundle/metrics_summary; registrar decisão GO/NO-GO e riscos.
+
+  - id: S34-CI-051
+    wave: W5
+    area: ci/orr
+    gate_relacionado: S34_G5
+    descricao: "Empacotar bundle final `inspectah_s34_evidence_bundle.zip` com scorecards/evidências/metrics_summary."
+    arquivos_alvo:
+      - out/bundles/inspectah_s34_evidence_bundle.zip
+      - out/scorecards/S34_G0_scope.json
+      - out/scorecards/S34_G1_model.json
+      - out/scorecards/S34_G2_console.json
+      - out/scorecards/S34_G3_obs.json
+      - out/scorecards/S34_G4_pilotos.json
+      - out/scorecards/S34_G5_orr.json
+      - out/scorecards/S34_metrics_summary.json
+      - out/evidence/**
+    criterios_aceite:
+      - "Bundle `unzip -t` ok, contém scorecards/evidências/metrics_summary; referenciado no scorecard G5."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 34/Capitulo 4/Capitulo 4.md
+      resumo_para_ace: >
+        Sem bundle íntegro, sem GO. Registrar caminho no scorecard.

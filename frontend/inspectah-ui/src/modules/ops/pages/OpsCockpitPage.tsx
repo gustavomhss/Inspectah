@@ -13,7 +13,7 @@ type Component = {
   tipo?: string;
   criticidade?: string;
   descricao?: string;
-  slos?: string[];
+  slos?: (string | { id?: string; slo_id?: string })[];
 };
 
 type Incident = {
@@ -153,8 +153,18 @@ export default function OpsCockpitPage() {
     });
   }, [incidents, incidentSeverity, incidentState]);
 
-  const totalComponents = overview?.components ?? components.length;
-  const totalIncidents = overview?.incidents ?? incidents.length;
+  const totalComponents =
+    typeof overview?.components === 'number'
+      ? overview.components
+      : Array.isArray(overview?.components)
+        ? overview.components.length
+        : components.length;
+  const totalIncidents =
+    typeof overview?.incidents === 'number'
+      ? overview.incidents
+      : Array.isArray(overview?.incidents)
+        ? overview.incidents.length
+        : incidents.length;
   const sloStates = overview?.slos || [];
 
   return (
@@ -178,6 +188,17 @@ export default function OpsCockpitPage() {
           <p className="text-sm text-rose-100">Falha ao carregar cockpit: {error}</p>
         </PageContainer>
       ) : null}
+
+      <PageContainer className="border-white/10 bg-white/5">
+        <h3 className="text-lg font-semibold text-white">Como usar esta tela</h3>
+        <ul className="mt-2 space-y-1 text-sm text-slate-100 list-disc list-inside">
+          <li>Use os filtros de incidentes para priorizar (severidade/estado).</li>
+          <li>Filtre componentes por ID/descrição ou tipo (fonte/pipeline/api).</li>
+          <li>Badges de SLO indicam status; clique nos componentes para checar SLOs ligados.</li>
+          <li>Cards de métricas no topo dão visão rápida de volume de componentes/incidentes/SLOs.</li>
+          <li>Leve qualquer fluxo ao cockpit pela tela de detalhes do fluxo (botão “Abrir painel de operações”).</li>
+        </ul>
+      </PageContainer>
 
       <PageContainer>
         <div className="grid gap-4 md:grid-cols-3">
@@ -302,16 +323,17 @@ export default function OpsCockpitPage() {
               {filteredComponents.map((c) => (
                 <tr key={c.id} className="border-b border-white/5 last:border-0">
                   <td className="px-4 py-3 font-mono text-sm text-slate-100">{c.id}</td>
-                  <td className="px-4 py-3 text-sm capitalize text-slate-200">{c.tipo || '—'}</td>
-                  <td className="px-4 py-3 text-sm text-slate-200">{c.criticidade || '—'}</td>
-                  <td className="px-4 py-3">
-                    <div className="flex flex-wrap gap-2">
-                      {(c.slos || []).map((sloId) => {
-                        const slo = sloIndex.get(sloId);
-                        return (
-                          <Badge key={sloId} tone={slo ? (slo.status === 'OK' ? 'success' : 'warning') : 'default'}>
-                            {sloId}
-                          </Badge>
+              <td className="px-4 py-3 text-sm capitalize text-slate-200">{c.tipo || '—'}</td>
+              <td className="px-4 py-3 text-sm text-slate-200">{c.criticidade || '—'}</td>
+              <td className="px-4 py-3">
+                <div className="flex flex-wrap gap-2">
+                  {(c.slos || []).map((raw) => {
+                    const sloId = typeof raw === 'string' ? raw : raw?.id || raw?.slo_id || 'slo';
+                    const slo = sloIndex.get(sloId);
+                    return (
+                      <Badge key={sloId} tone={slo ? (slo.status === 'OK' ? 'success' : 'warning') : 'default'}>
+                        {sloId}
+                      </Badge>
                         );
                       })}
                       {(c.slos || []).length === 0 ? <span className="text-sm text-slate-400">Sem SLO</span> : null}
@@ -343,7 +365,8 @@ export default function OpsCockpitPage() {
         <div className="flex flex-col gap-2">
           <h3 className="text-lg font-semibold text-white">SLOs monitorados</h3>
           <p className="text-sm text-slate-300">
-            Estados baseados nas consultas configuradas; use esta lista para priorizar incidentes e monitorar ingestão.
+            O que você monitora: cada SLO é uma meta (métrica + janela + limiar).
+            Ideal (OK) = meta cumprida; Problema (DEGRADED) = em risco/fora do limiar; UNKNOWN = sem dado ou não mapeado.
           </p>
         </div>
         <Table className="mt-4">

@@ -2,12 +2,14 @@ from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException
 
+from app.flows.service import FlowService
 from app.ops.components import load_components_map
-from app.ops.slo_evaluator import evaluate_slos
 from app.ops.incidents import IncidentService
+from app.ops.slo_evaluator import evaluate_slos
 
 router = APIRouter(prefix="/api/ops/cockpit", tags=["ops_cockpit"])
 incident_service = IncidentService()
+flow_service = FlowService()
 
 
 @router.get("/components")
@@ -45,8 +47,56 @@ def overview():
     comps = load_components_map()
     incs = list_incidents()
     slos = evaluate_slos()
+    flows = []
+    try:
+        flows = [
+            {
+                "id": f.id,
+                "slug": f.slug,
+                "domain": f.domain,
+                "estado": f.estado,
+                "flow_version_id": f.flow_version_id,
+                "active_version_id": f.active_version_id,
+                "test_version_id": f.test_version_id,
+            }
+            for f in flow_service.list_flows()
+        ]
+    except Exception:
+        flows = []
     return {
         "components": len(comps),
+        "components_list": comps,
         "incidents": len(incs),
+        "incidents_list": incs,
         "slos": slos,
+        "flows": len(flows),
+        "flows_list": flows,
     }
+
+
+@router.get("/flows")
+def flows():
+    comps = {c.id: c for c in load_components_map()}
+    slo_status_map = {s["slo_id"]: s.get("status", "UNKNOWN") for s in evaluate_slos()}
+    flows = []
+    for f in flow_service.list_flows():
+        comp_key = f"flow_{f.slug}"
+        comp = comps.get(comp_key)
+        slos = comp.slos if comp else []
+        flows.append(
+            {
+                "id": f.id,
+                "slug": f.slug,
+                "domain": f.domain,
+                "estado": f.estado,
+                "flow_version_id": f.flow_version_id,
+                "active_version_id": f.active_version_id,
+                "test_version_id": f.test_version_id,
+                "component_id": comp.id if comp else None,
+                "slos": [
+                    {"id": slo, "status": slo_status_map.get(slo, "UNKNOWN")}
+                    for slo in slos  # type: ignore[arg-type]
+                ],
+            }
+        )
+    return flows

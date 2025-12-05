@@ -22,6 +22,11 @@ export interface Flow {
   slug: string;
   tipo_entrada: string;
   estado: FlowState;
+  domain?: string;
+  flow_version_id?: string | null;
+  active_version_id?: string | null;
+  test_version_id?: string | null;
+  flow_ops_profile_id?: string | null;
   template_origem_id?: string | null;
   percentual_teste?: number;
   metadata?: Record<string, unknown>;
@@ -30,19 +35,47 @@ export interface Flow {
   steps?: FlowStep[];
 }
 
+export interface FlowVersion {
+  id: string;
+  flow_id: string;
+  version_id: string;
+  template_slug: string;
+  estado: string;
+  metadata?: Record<string, unknown>;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface FlowOperation {
+  id: string;
+  flow_id: string;
+  flow_version_id?: string | null;
+  operacao: string;
+  payload?: Record<string, unknown>;
+  resultado: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface FlowTemplate {
   id: string;
   slug: string;
   versao: string;
   tipo_entrada: string;
+  domain?: string;
+  description?: string;
   estrutura: Record<string, unknown>;
   ativo?: boolean;
   metadata?: Record<string, unknown>;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface FlowExecution {
   id: string;
   flow_id: string;
+  flow_version_id?: string | null;
+  operation_id?: string | null;
   item_id: string;
   tipo_entrada: string;
   status: FlowExecutionStatus;
