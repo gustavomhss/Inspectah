@@ -323,17 +323,17 @@ export default function OpsCockpitPage() {
               {filteredComponents.map((c) => (
                 <tr key={c.id} className="border-b border-white/5 last:border-0">
                   <td className="px-4 py-3 font-mono text-sm text-slate-100">{c.id}</td>
-                  <td className="px-4 py-3 text-sm capitalize text-slate-200">{c.tipo || '—'}</td>
-                  <td className="px-4 py-3 text-sm text-slate-200">{c.criticidade || '—'}</td>
-                  <td className="px-4 py-3">
-                    <div className="flex flex-wrap gap-2">
-                      {(c.slos || []).map((raw) => {
-                        const sloId = typeof raw === 'string' ? raw : (raw as any)?.id || (raw as any)?.slo_id || 'slo';
-                        const slo = sloIndex.get(sloId);
-                        return (
-                          <Badge key={sloId} tone={slo ? (slo.status === 'OK' ? 'success' : 'warning') : 'default'}>
-                            {sloId}
-                          </Badge>
+              <td className="px-4 py-3 text-sm capitalize text-slate-200">{c.tipo || '—'}</td>
+              <td className="px-4 py-3 text-sm text-slate-200">{c.criticidade || '—'}</td>
+              <td className="px-4 py-3">
+                <div className="flex flex-wrap gap-2">
+                  {(c.slos || []).map((raw) => {
+                    const sloId = typeof raw === 'string' ? raw : raw?.id || raw?.slo_id || 'slo';
+                    const slo = sloIndex.get(sloId);
+                    return (
+                      <Badge key={sloId} tone={slo ? (slo.status === 'OK' ? 'success' : 'warning') : 'default'}>
+                        {sloId}
+                      </Badge>
                         );
                       })}
                       {(c.slos || []).length === 0 ? <span className="text-sm text-slate-400">Sem SLO</span> : null}

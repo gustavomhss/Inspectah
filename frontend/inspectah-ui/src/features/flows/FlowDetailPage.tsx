@@ -18,7 +18,7 @@ export function FlowDetailPage() {
   const { executions } = useFlowExecutions(flowId);
   const { versions } = useFlowVersions(flowId);
   const operations = useFlowOperations(flowId);
-  const { updateStateAction, replaceAgentAction, deleteFlowAction, saving, deleting, error: actionError, setError } = useFlowActions(
+  const { updateStateAction, replaceAgentAction, deleteFlowAction, saving, deleting, error: actionError } = useFlowActions(
     flowId,
     (updated) => setFlow(updated),
   );

@@ -7,6 +7,16 @@ import { useFlowsList, useFlowTemplates } from './hooks';
 import { upsertFlowTemplate } from './api';
 import type { Flow, FlowTemplate } from './types';
 
+type TemplateStep = { ordem: number; tipo_etapa: string; agent_role: string };
+type TemplateForm = {
+  slug: string;
+  version: string;
+  domain: string;
+  entry_type: string;
+  description: string;
+  steps: TemplateStep[];
+};
+
 export function FlowsListPage() {
   const navigate = useNavigate();
   const { items, loading, error, reload } = useFlowsList();
@@ -18,7 +28,7 @@ export function FlowsListPage() {
   const [showTemplateForm, setShowTemplateForm] = useState(false);
   const [tplError, setTplError] = useState<string | null>(null);
   const [tplSaving, setTplSaving] = useState(false);
-  const [tplForm, setTplForm] = useState({
+  const [tplForm, setTplForm] = useState<TemplateForm>({
     slug: '',
     version: '1',
     domain: '',
@@ -27,20 +37,30 @@ export function FlowsListPage() {
     steps: [{ ordem: 1, tipo_etapa: 'interprete', agent_role: 'agent_role_exemplo' }],
   });
   const [selectedTemplate, setSelectedTemplate] = useState<string>('');
-  const [newStep, setNewStep] = useState({ tipo_etapa: 'interprete', agent_role: '' });
+  const [newStep, setNewStep] = useState<Pick<TemplateStep, 'tipo_etapa' | 'agent_role'>>({
+    tipo_etapa: 'interprete',
+    agent_role: '',
+  });
   const stepTypes = ['interprete', 'classificador', 'analista', 'debunker', 'decision_maker'];
 
   const applyTemplateToForm = (tpl: FlowTemplate) => {
-    const estrutura = tpl.estrutura || {};
-    const steps = (estrutura as any).steps || [];
+    const estrutura = (tpl.estrutura || {}) as {
+      steps?: TemplateStep[];
+      version?: string;
+      domain?: string;
+      entry_type?: string;
+      description?: string;
+      slug?: string;
+    };
+    const steps = estrutura.steps || [];
     setTplForm({
       slug: tpl.slug || estrutura.slug || '',
-      version: (estrutura as any).version || tpl.versao || '1',
-      domain: (estrutura as any).domain || '',
-      entry_type: (estrutura as any).entry_type || tpl.tipo_entrada || '',
-      description: (estrutura as any).description || '',
+      version: estrutura.version || tpl.versao || '1',
+      domain: estrutura.domain || '',
+      entry_type: estrutura.entry_type || tpl.tipo_entrada || '',
+      description: estrutura.description || '',
       steps: steps.length
-        ? steps.map((s: any, idx: number) => ({ ordem: s.ordem || idx + 1, tipo_etapa: s.tipo_etapa, agent_role: s.agent_role }))
+        ? steps.map((s, idx) => ({ ordem: s.ordem || idx + 1, tipo_etapa: s.tipo_etapa, agent_role: s.agent_role }))
         : [{ ordem: 1, tipo_etapa: 'interprete', agent_role: 'agent_role_exemplo' }],
     });
   };
@@ -226,30 +246,47 @@ export function FlowsListPage() {
           <div className="space-y-2 text-white">
             {tplError && <Banner tone="danger" title="Erro ao salvar template" description={tplError} />}
             <div className="grid gap-3 md:grid-cols-2">
-              <label className="flex flex-col gap-1">
+              <label className="flex flex-col gap-1" htmlFor="tpl-slug">
                 <span className="text-sm font-semibold text-white">Slug</span>
-                <Input value={tplForm.slug} onChange={(e) => setTplForm({ ...tplForm, slug: e.target.value })} />
+                <Input
+                  id="tpl-slug"
+                  value={tplForm.slug}
+                  onChange={(e) => setTplForm({ ...tplForm, slug: e.target.value })}
+                />
               </label>
-              <label className="flex flex-col gap-1">
+              <label className="flex flex-col gap-1" htmlFor="tpl-version">
                 <span className="text-sm font-semibold text-white">Versão</span>
-                <Input value={tplForm.version} onChange={(e) => setTplForm({ ...tplForm, version: e.target.value })} />
+                <Input
+                  id="tpl-version"
+                  value={tplForm.version}
+                  onChange={(e) => setTplForm({ ...tplForm, version: e.target.value })}
+                />
               </label>
-              <label className="flex flex-col gap-1">
+              <label className="flex flex-col gap-1" htmlFor="tpl-domain">
                 <span className="text-sm font-semibold text-white">Domínio</span>
-                <Input value={tplForm.domain} onChange={(e) => setTplForm({ ...tplForm, domain: e.target.value })} />
+                <Input
+                  id="tpl-domain"
+                  value={tplForm.domain}
+                  onChange={(e) => setTplForm({ ...tplForm, domain: e.target.value })}
+                />
               </label>
-              <label className="flex flex-col gap-1">
+              <label className="flex flex-col gap-1" htmlFor="tpl-entry">
                 <span className="text-sm font-semibold text-white">Tipo de entrada</span>
                 <Input
+                  id="tpl-entry"
                   value={tplForm.entry_type}
                   onChange={(e) => setTplForm({ ...tplForm, entry_type: e.target.value })}
                   placeholder="ex.: noticia_texto"
                 />
               </label>
             </div>
-            <label className="flex flex-col gap-1">
+            <label className="flex flex-col gap-1" htmlFor="tpl-description">
               <span className="text-sm font-semibold text-white">Descrição</span>
-              <Input value={tplForm.description} onChange={(e) => setTplForm({ ...tplForm, description: e.target.value })} />
+              <Input
+                id="tpl-description"
+                value={tplForm.description}
+                onChange={(e) => setTplForm({ ...tplForm, description: e.target.value })}
+              />
             </label>
             <div className="rounded-xl border border-slate-700 bg-slate-800 p-3 space-y-3">
               <div className="flex items-center justify-between">
