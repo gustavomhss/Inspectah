@@ -5,6 +5,7 @@ import { FlowCreateFromTemplateDialog } from './FlowCreateFromTemplateDialog';
 import { FlowExecutionDetailDrawer } from './FlowExecutionDetailDrawer';
 import { FlowOpsPanel } from './FlowOpsPanel';
 import { FlowStateBadge } from './FlowStateBadge';
+import { FlowRolloutPanel } from './FlowRolloutPanel';
 import { FlowVersionHistory } from './FlowVersionHistory';
 import { useFlowActions, useFlowDetail, useFlowExecutions, useFlowOperations, useFlowVersions, useRollback } from './hooks';
 import type { FlowExecution, FlowExecutionDetail } from './types';
@@ -236,6 +237,8 @@ export function FlowDetailPage() {
                     </p>
                   </AdminContent>
                 )}
+
+                <FlowRolloutPanel flow={flow} onUpdated={(f) => setFlow(f)} />
               </div>
             </div>
           </div>

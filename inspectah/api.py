@@ -38,6 +38,10 @@ try:  # pragma: no cover
 except ModuleNotFoundError:  # pragma: no cover
     agents_router = None
 try:  # pragma: no cover
+    from app.api.admin_agent_flows_routes import router as agent_flows_admin_router
+except ModuleNotFoundError:  # pragma: no cover
+    agent_flows_admin_router = None
+try:  # pragma: no cover
     from app.api.debunk.routes import router as debunk_router
 except ModuleNotFoundError:  # pragma: no cover
     debunk_router = None
@@ -54,6 +58,14 @@ try:  # pragma: no cover
     from app.api.console_routes import router as console_router
 except ModuleNotFoundError:  # pragma: no cover
     console_router = None
+try:  # pragma: no cover
+    from app.api.flow_console_routes import router as flows_router
+except ModuleNotFoundError:  # pragma: no cover
+    flows_router = None
+try:  # pragma: no cover
+    from app.api.catalog_routes import router as catalog_router
+except ModuleNotFoundError:  # pragma: no cover
+    catalog_router = None
 try:  # pragma: no cover
     from app.api.providers_routes import router as providers_router
 except ModuleNotFoundError:  # pragma: no cover
@@ -99,6 +111,8 @@ def build_app():  # pragma: no cover
         app.include_router(ingestion_router)
     if agents_router is not None:
         app.include_router(agents_router)
+    if agent_flows_admin_router is not None:
+        app.include_router(agent_flows_admin_router)
     if debunk_router is not None:
         app.include_router(debunk_router, prefix="/api", tags=["debunk"])
     if cases_router is not None:
@@ -109,6 +123,10 @@ def build_app():  # pragma: no cover
         app.include_router(truth_router)
     if console_router is not None:
         app.include_router(console_router)
+    if flows_router is not None:
+        app.include_router(flows_router)
+    if catalog_router is not None:
+        app.include_router(catalog_router)
     if providers_router is not None:
         app.include_router(providers_router, tags=["providers"])
     if ops_cockpit_router is not None:

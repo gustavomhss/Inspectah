@@ -1,0 +1,3 @@
+# Bloco 1 — Gates G0 e G1
+- **G0 — Escopo e baseline:** confirmar 24 arquivos 6×4, sem TODO/FIXME; templates de fluxo versionados (`config/flow_templates/*.yaml`); mapa de componentes/SLOs S34 publicado; script `bin/s34_g0_scope.sh` retorna 0.
+- **G1 — Modelo/Políticas multi-fluxo:** migração `migrations/versions/0034_s34_flow_multidomain_ops.py` aplicada em DB limpo e pós-S32; entidades/templates carregam sem erro; políticas mínimas por domínio (notícias, contestação) ativas; limites/flags (`config/flows_limits.yaml`, `config/feature_flags.yaml`) configurados; script `bin/s34_g1_model.sh` PASS.

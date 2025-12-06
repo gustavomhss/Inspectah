@@ -1,0 +1,30 @@
+# S34 — Mapa de componentes monitorados (multi-fluxo)
+components:
+  - id: flow_news_v2
+    tipo: flow
+    criticidade: alta
+    descricao: Fluxo governado de notícias v2 (piloto multi-domínio).
+    slos:
+      - s34_slo_exec_latency_news_v2
+      - s34_slo_policy_violations_news_v2
+      - s34_slo_rollback_rate_news_v2
+  - id: flow_contestacao_v0
+    tipo: flow
+    criticidade: alta
+    descricao: Piloto de contestação v0 governado.
+    slos:
+      - s34_slo_exec_latency_contestacao_v0
+      - s34_slo_policy_violations_contestacao_v0
+      - s34_slo_rollback_rate_contestacao_v0
+  - id: api_flow_console
+    tipo: api
+    criticidade: alta
+    descricao: Console/API multi-fluxo (histórico/diffs/rollback + SLO/incident).
+    slos:
+      - s34_slo_disponibilidade_console
+  - id: observabilidade_flow_ops
+    tipo: painel
+    criticidade: media
+    descricao: Painel e alertas `s34_flow_ops_overview` com métricas reais.
+    slos:
+      - s34_slo_freshness_obs_panel

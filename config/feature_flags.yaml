@@ -6,3 +6,8 @@ s31_flow_rollout_test_enabled: true
 s34_flow_multidomain_enabled: true
 s34_flow_console_history_enabled: true
 s34_flow_rollout_test_enabled: true
+
+# S35 — governança avançada de rollout/catalogo
+s35_flow_rollout_enabled: true
+s35_flow_catalog_enforced: true
+s35_flow_logic_contract_enabled: true

@@ -1,0 +1,17 @@
+flow_id: flow_contestacao_v0
+domain: contestacao
+version: 0.1.0
+flow_version_id: v0.1.0
+template_ref: config/flow_templates/contestacao_v0.yaml
+policies:
+  min_confidence: 0.6
+  max_latency_ms: 90000
+  block_on_missing_entities: true
+rollout_defaults:
+  mode: test
+  test_percentual: 15
+  max_canary_duration_minutes: 60
+  promote_on_slo_pass: true
+  rollback_on_policy_violation: true
+hash: 087147cec8bd9a6b1d5a4023a2bbfe5dc125cf974f3019655096d270b1a0c56d
+signature: ops_catalog_v1

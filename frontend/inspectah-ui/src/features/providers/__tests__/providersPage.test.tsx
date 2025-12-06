@@ -140,6 +140,9 @@ describe('ProvidersPage', () => {
       { route: '/admin/providers' },
     );
 
+    const providerRow = await screen.findByRole('button', { name: /News Pilot/i });
+    await userEvent.click(providerRow);
+
     const runButton = await screen.findByRole('button', { name: /Rodar agora/i });
     await userEvent.click(runButton);
 

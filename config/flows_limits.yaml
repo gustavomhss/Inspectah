@@ -4,3 +4,4 @@ max_versions_to_keep: 10
 operation_timeout_seconds: 30
 alert_rollbacks_threshold: 2
 alert_policy_violations_threshold: 1
+max_canary_duration_minutes: 60

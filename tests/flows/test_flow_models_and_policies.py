@@ -14,7 +14,7 @@ def test_create_flow_from_template_sets_version_and_domain(tmp_path):
     service = _service(tmp_path)
     flow = service.create_flow_from_template("news_v2", "Fluxo News v2", "flow_news_v2")
 
-    assert flow.flow_version_id == "2"
+    assert flow.flow_version_id == "v2.1.0"
     assert flow.domain == "noticias"
     assert flow.active_version_id is not None
 

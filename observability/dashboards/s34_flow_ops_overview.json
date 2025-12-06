@@ -1,0 +1,36 @@
+{
+  "title": "S34 Flow Ops Overview",
+  "description": "Executions, policy violations, rollbacks e SLO breaches por fluxo/versão.",
+  "panels": [
+    {
+      "id": "exec_total",
+      "title": "Execuções por status",
+      "query": "sum by(flow_id,flow_version_id,status) (inspectah_flow_executions_total)",
+      "type": "timeseries"
+    },
+    {
+      "id": "latency_p95",
+      "title": "Latência p95 por versão",
+      "query": "histogram_quantile(0.95, sum by (le,flow_id,flow_version_id) (rate(inspectah_flow_latency_seconds_bucket[5m])))",
+      "type": "timeseries"
+    },
+    {
+      "id": "policy_violations",
+      "title": "Violações de política",
+      "query": "sum by(flow_id,flow_version_id) (inspectah_flow_policy_violations_total)",
+      "type": "stat"
+    },
+    {
+      "id": "rollbacks",
+      "title": "Rollbacks por versão",
+      "query": "sum by(flow_id,flow_version_id) (inspectah_flow_rollbacks_total)",
+      "type": "stat"
+    },
+    {
+      "id": "slo_breaches",
+      "title": "SLO breaches",
+      "query": "sum by(flow_id,flow_version_id,slo_id) (inspectah_flow_slo_breach_total)",
+      "type": "table"
+    }
+  ]
+}
