@@ -11,6 +11,11 @@ import {
   listFlowVersions,
   listOpsCockpitFlows,
   replaceFlowAgent,
+  getRolloutStatus,
+  listFlowCatalog,
+  promoteFlowRollout,
+  rollbackFlowRollout,
+  startFlowRollout,
   reprocessFlowItems,
   rollbackFlowVersion,
   updateFlowState,
@@ -26,6 +31,8 @@ import type {
   FlowVersion,
   FlowTemplate,
   FlowUpdateStatePayload,
+  FlowCatalogEntry,
+  FlowRolloutStatus,
 } from './types';
 
 export function useFlowsList() {
@@ -290,4 +297,76 @@ export function useExecutionDetail(flowId: string | null, executionId: string | 
       .catch(() => setDetail(null));
   }, [flowId, executionId]);
   return detail;
+}
+
+export function useRollout(flowId: string | null) {
+  const [status, setStatus] = useState<FlowRolloutStatus | null>(null);
+  const [catalog, setCatalog] = useState<FlowCatalogEntry[]>([]);
+  useEffect(() => {
+    if (!flowId) return;
+    getRolloutStatus(flowId).then(setStatus).catch(() => setStatus(null));
+    listFlowCatalog().then(setCatalog).catch(() => setCatalog([]));
+  }, [flowId]);
+  return { status, catalog, setStatus };
+}
+
+export function useRolloutActions(flowId: string | null, onUpdated?: (flow: Flow) => void) {
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const start = useCallback(
+    async (payload: { mode: string; test_percentual: number; criteria?: Record<string, unknown>; actor?: string }) => {
+      if (!flowId) return;
+      setSaving(true);
+      setError(null);
+      try {
+        const updated = await startFlowRollout(flowId, payload);
+        onUpdated?.(updated);
+        return updated;
+      } catch (err) {
+        setError((err as Error).message);
+        throw err;
+      } finally {
+        setSaving(false);
+      }
+    },
+    [flowId, onUpdated],
+  );
+
+  const promote = useCallback(async (payload?: { actor?: string }) => {
+    if (!flowId) return;
+    setSaving(true);
+    setError(null);
+    try {
+      const updated = await promoteFlowRollout(flowId, payload || {});
+      onUpdated?.(updated);
+      return updated;
+    } catch (err) {
+      setError((err as Error).message);
+      throw err;
+    } finally {
+      setSaving(false);
+    }
+  }, [flowId, onUpdated]);
+
+  const rollback = useCallback(
+    async (flowVersionId?: string | null, payload?: { actor?: string }) => {
+      if (!flowId) return;
+      setSaving(true);
+      setError(null);
+      try {
+        const updated = await rollbackFlowRollout(flowId, { flow_version_id: flowVersionId, ...(payload || {}) });
+        onUpdated?.(updated);
+        return updated;
+      } catch (err) {
+        setError((err as Error).message);
+        throw err;
+      } finally {
+        setSaving(false);
+      }
+    },
+    [flowId, onUpdated],
+  );
+
+  return { start, promote, rollback, saving, error, setError };
 }

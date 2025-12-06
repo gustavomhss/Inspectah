@@ -1,0 +1,456 @@
+sprint: S35
+programa: 1
+epico: 28
+
+ace_resumo:
+  objetivo_sprint: >
+    Fechar E28 com governança avançada de fluxo: rollout progressivo/canary/teste percentual governado, catálogo versionado,
+    integração flow_version_id para lógica/Truth, OracleOps v3 com SLO/incident por modo, pilotos notícias/contestação v0 com evidências e bundle (G0–G5).
+  leitura_minima_spec:
+    - Programa 1/Epico 28/Sprint 35/Capitulo 1/Capitulo 1.md
+    - Programa 1/Epico 28/Sprint 35/Capitulo 2/Capitulo 2.md
+    - Programa 1/Epico 28/Sprint 35/Capitulo 3/Capitulo 3.md
+    - Programa 1/Epico 28/Sprint 35/Capitulo 4/Capitulo 4.md
+  instrucoes_para_ace: >
+    Trabalhe wave a wave usando apenas o ace_context da wave/task atual.
+    Não invente fluxos/SLOs fora do recorte (news_v2, contestacao_v0). Indicadores/alertas fake proibidos.
+    Cada operação de rollout/promoção/rollback deve ter flow_id/flow_version_id/mode e auditoria.
+
+waves:
+  - id: W0
+    nome: "Grounding & G0"
+    descricao: "Catalogo inicial (news_v2, contestacao_v0), limits/flags e script G0."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 35/Capitulo 2/Bloco 1.md
+        - config/flow_catalog/news_v2.yaml
+        - config/flow_catalog/contestacao_v0.yaml
+        - config/flows_limits.yaml
+        - config/feature_flags.yaml
+      resumo_para_ace: >
+        Confirme catálogo/limits/flags presentes e consistentes. Prepare script G0 para scorecard.
+      observacoes_execucao: >
+        Nada de rollout aqui; foco em arquivos e checagem automatizada.
+
+  - id: W1
+    nome: "Modelo/Rollout/Catálogo (G1)"
+    descricao: "Migração 0036, rollout canary/teste percentual, catálogo enforced, limites/flags aplicados."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 35/Capitulo 2/Bloco 2.md
+        - Programa 1/Epico 28/Sprint 35/Capitulo 3/Capitulo 3.md
+      resumo_para_ace: >
+        Aplique migração; implemente rollout/teste com policies por domínio; carregue/enforce catálogo; aplique limites/flags.
+        Teste invariantes/limites via pytest e script G1.
+      observacoes_execucao: >
+        Rodar em DB limpo e pós-S34. Violações de limites/invariantes são STOP.
+
+  - id: W2
+    nome: "Console/API rollout (G2)"
+    descricao: "Console/API para canary/teste/promoção/rollback com auditoria/RBAC e catálogo/hash expostos."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 35/Capitulo 2/Bloco 3.md
+        - Programa 1/Epico 28/Sprint 35/Capitulo 3/Capitulo 3.md
+      resumo_para_ace: >
+        Implementar rotas e UI rollout (painel/dialog), auditoria de operações, exibição de catálogo/hash, ações de promoção/rollback/teste.
+      observacoes_execucao: >
+        IDs/mode obrigatórios em payloads/auditoria. G2 script valida 2xx/recorte.
+
+  - id: W3
+    nome: "Observabilidade rollout (G3)"
+    descricao: "Métricas/logs/alertas rollout; painel s35_flow_rollout_overview; SLO rollout no cockpit."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 35/Capitulo 2/Bloco 3.md
+        - observability/dashboards/s35_flow_rollout_overview.json
+        - observability/alerts/s35/
+      resumo_para_ace: >
+        Emitir métricas rollout/canary/teste; configurar alertas; expor estado SLO rollout via API/UI. Painel não pode ficar vazio.
+      observacoes_execucao: >
+        Simule breaches/rollbacks para validar alertas/painel. G3 script checa métricas/alerts/painel.
+
+  - id: W4
+    nome: "Pilotos rollout (G4)"
+    descricao: "Rodar pilotos (notícias, contestação v0) em canary/teste→promo/rollback, coletar evidências e bundle parcial."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 35/Capitulo 4/Capitulo 4.md
+        - Programa 1/Epico 28/Sprint 35/Capitulo 5/Capitulo 5.md
+      resumo_para_ace: >
+        Executar fluxos governados com canary/teste, promoção/rollback, coletando dataset/ingest_log/exec_dump/rollout_timeline/metrics/logs/screenshots.
+        Rodar scripts metrics_summary/bundle e workflow s35-gates.yml.
+      observacoes_execucao: >
+        Evidências para ambos fluxos. Sem evidência completa, G4 falha.
+
+  - id: W5
+    nome: "ORR & bundle final (G5)"
+    descricao: "Conduzir ORR G0–G4, gerar scorecard final e bundle inspectah_s35_evidence_bundle.zip."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 35/Capitulo 5/Capitulo 5.md
+        - Programa 1/Epico 28/Sprint 35/Capitulo 6/Capitulo 6.md
+      resumo_para_ace: >
+        Executar ORR com bundle/metrics_summary/scorecards; registrar GO/NO-GO e riscos; empacotar bundle final.
+      observacoes_execucao: >
+        Bundle final deve passar unzip -t; registrar caminho no scorecard G5.
+
+tasks:
+  - id: S35-DOC-000
+    wave: W0
+    area: docs
+    gate_relacionado: S35_G0
+    descricao: "Fechar catálogo inicial (news_v2, contestacao_v0), limits/flags e SLO map rollout."
+    arquivos_alvo:
+      - config/flow_catalog/news_v2.yaml
+      - config/flow_catalog/contestacao_v0.yaml
+      - config/flows_limits.yaml
+      - config/feature_flags.yaml
+      - Programa 1/Epico 28/Sprint 35/Capitulo 1/*
+      - Programa 1/Epico 28/Sprint 35/Capitulo 2/Bloco 1.md
+    criterios_aceite:
+      - "Catálogo presente e consistente; limits/flags definidos; SLO map alinhado."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 35/Capitulo 2/Bloco 1.md
+      resumo_para_ace: >
+        Sem catálogo/limits/flags prontos, não siga. Prepare base para G1.
+
+  - id: S35-CI-001
+    wave: W0
+    area: ci/orr
+    gate_relacionado: S35_G0
+    descricao: "Script G0 (`bin/s35_g0_scope.sh`) validando catálogo/limits/flags e gerando scorecard."
+    arquivos_alvo:
+      - bin/s35_g0_scope.sh
+      - out/scorecards/S35_G0_scope.json
+      - out/evidence/S35_G0_scope_and_catalog/
+    criterios_aceite:
+      - "Script roda e marca PASS/WARN com checagens básicas."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 35/Capitulo 2/Bloco 1.md
+      resumo_para_ace: >
+        Automatize checagens iniciais; sem scorecard, sem avançar.
+
+  - id: S35-BE-010
+    wave: W1
+    area: backend
+    gate_relacionado: S35_G1
+    descricao: "Implementar migração 0036, rollout/teste percentual, catálogo loader/enforce, audit trail."
+    arquivos_alvo:
+      - migrations/versions/0036_s35_flow_governance_advanced.py
+      - app/flows/models.py
+      - app/flows/versioning.py
+      - app/flows/rollout.py
+      - app/flows/catalog.py
+    criterios_aceite:
+      - "Migração aplica (DB limpo+pós-S34); catálogo carrega; operações registram flow_id/version/mode."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 35/Capitulo 3/Capitulo 3.md
+      resumo_para_ace: >
+        Foco em canary/teste percent; audit trail obrigatório.
+
+  - id: S35-BE-011
+    wave: W1
+    area: backend
+    gate_relacionado: S35_G1
+    descricao: "Aplicar limites/flags rollout e policies por domínio/mode em operações."
+    arquivos_alvo:
+      - app/flows/service.py
+      - app/flows/policy_engine.py
+      - config/flows_limits.yaml
+      - config/feature_flags.yaml
+    criterios_aceite:
+      - "Limites/flags bloqueiam violações; policies mínimas ativas."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 35/Capitulo 2/Bloco 2.md
+      resumo_para_ace: >
+        Enforce percentuais/rollbacks/timeout; erros claros; logs de violações.
+
+  - id: S35-QA-012
+    wave: W1
+    area: testes
+    gate_relacionado: S35_G1
+    descricao: "Testes de rollout/limites/catalog enforcement/auditoria."
+    arquivos_alvo:
+      - tests/flows/test_flow_rollout_models.py
+      - tests/flows/test_flow_limits.py
+      - tests/flows/test_catalog_enforcement.py
+    criterios_aceite:
+      - "Pytest verde; violações falham ruidosamente; audit trail presente."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 35/Capitulo 2/Bloco 2.md
+      resumo_para_ace: >
+        Simule percentuais e rollbacks fora do limite; testar catálogo enforced.
+
+  - id: S35-CI-013
+    wave: W1
+    area: ci/orr
+    gate_relacionado: S35_G1
+    descricao: "Script G1 (`bin/s35_g1_model.sh`) rodando migração+pytest (rollout/limits/catalog) e scorecard."
+    arquivos_alvo:
+      - bin/s35_g1_model.sh
+      - out/scorecards/S35_G1_model.json
+      - out/evidence/S35_G1_model_rollout/
+    criterios_aceite:
+      - "Script fim-a-fim; scorecard PASS/WARN com invariantes."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 35/Capitulo 2/Bloco 2.md
+      resumo_para_ace: >
+        Automatize; sem scorecard, sem seguir.
+
+  - id: S35-BE-020
+    wave: W2
+    area: backend
+    gate_relacionado: S35_G2
+    descricao: "APIs rollout (start canary/test, promoção/rollback, status, catálogo/hash) com RBAC/auditoria."
+    arquivos_alvo:
+      - app/api/flow_console_routes.py
+      - app/flows/schemas.py
+      - app/flows/service.py
+      - app/flows/catalog.py
+    criterios_aceite:
+      - "Rotas 2xx; auditoria de operações; catálogo/hash exposto; RBAC aplicado."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 35/Capitulo 2/Bloco 3.md
+      resumo_para_ace: >
+        Expor operações completas de rollout com segurança e auditoria.
+
+  - id: S35-FE-021
+    wave: W2
+    area: frontend
+    gate_relacionado: S35_G2
+    descricao: "UI rollout (FlowRolloutPanel/Dialog, catálogo/hash badges) integrada aos endpoints."
+    arquivos_alvo:
+      - frontend/inspectah-ui/src/features/flows/FlowRolloutPanel.tsx
+      - frontend/inspectah-ui/src/features/flows/FlowRolloutDialog.tsx
+      - frontend/inspectah-ui/src/features/flows/FlowListMulti.tsx
+      - frontend/inspectah-ui/src/features/flows/FlowDetailMulti.tsx
+      - frontend/inspectah-ui/src/features/flows/FlowVersionHistory.tsx
+    criterios_aceite:
+      - "UI mostra canary/teste/ativo, catálogo/hash; ações de promo/rollback/teste funcionam (RBAC)."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 35/Capitulo 3/Capitulo 3.md
+      resumo_para_ace: >
+        UI deve refletir auditoria e estados; sem hardcode de status.
+
+  - id: S35-QA-022
+    wave: W2
+    area: testes
+    gate_relacionado: S35_G2
+    descricao: "Testes API/UI rollout (start/promo/rollback, audit trail, RBAC)."
+    arquivos_alvo:
+      - tests/flows/test_console_rollout_api.py
+      - tests/flows/test_console_rollout_ui.ts
+    criterios_aceite:
+      - "Testes verdes cobrindo fluxo completo; auditoria/IDs presentes."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 35/Capitulo 2/Bloco 3.md
+      resumo_para_ace: >
+        Inclua casos de erro/autorização e catálogo/hash.
+
+  - id: S35-CI-023
+    wave: W2
+    area: ci/orr
+    gate_relacionado: S35_G2
+    descricao: "Script G2 (`bin/s35_g2_console.sh`) validando endpoints/recorte/rollout e scorecard."
+    arquivos_alvo:
+      - bin/s35_g2_console.sh
+      - out/scorecards/S35_G2_console.json
+      - out/evidence/S35_G2_console_rollout/
+    criterios_aceite:
+      - "Script roda, valida 2xx/auditoria básica; scorecard PASS/WARN."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 35/Capitulo 2/Bloco 3.md
+      resumo_para_ace: >
+        Automatize sanity; salvar evidências.
+
+  - id: S35-OBS-030
+    wave: W3
+    area: observabilidade
+    gate_relacionado: S35_G3
+    descricao: "Instrumentar métricas/alertas rollout/canary/teste; painel s35_flow_rollout_overview com thresholds versionados."
+    arquivos_alvo:
+      - app/flows/instrumentation.py
+      - observability/dashboards/s35_flow_rollout_overview.json
+      - observability/alerts/s35/rollout_alerts.yaml
+    criterios_aceite:
+      - "Métricas rollout_requests_total/rollout_success_total/rollout_rollback_total, flow_exec_total/latency/policy_violations por flow_id/flow_version_id/mode emitidas."
+      - "Painel não vazio; alertas configurados (rollbacks>2/h, SLO breach em canary/teste); configs/queries/alerts versionadas."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 35/Capitulo 2/Bloco 3.md
+      resumo_para_ace: >
+        Exportar prints/queries; validar alertas simulando rollbacks/breaches. Painel não pode estar vazio.
+
+  - id: S35-BE-031
+    wave: W3
+    area: backend
+    gate_relacionado: S35_G3
+    descricao: "Expor estados SLO/alerta rollout para cockpit; integração com lógica/Truth via flow_version_id."
+    arquivos_alvo:
+      - app/flows/ops_integration.py
+      - app/api/flow_console_routes.py
+    criterios_aceite:
+      - "Endpoints retornam slo_id/status por flow/version/mode com labels consistentes com métricas/alertas; UI consome."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 35/Capitulo 3/Capitulo 3.md
+      resumo_para_ace: >
+        Garantir labels corretos; pronto para handoff lógico/Truth; alinhar labels com observabilidade.
+
+  - id: S35-FE-032
+    wave: W3
+    area: frontend
+    gate_relacionado: S35_G3
+    descricao: "UI de SLO/alertas rollout (badges/links) no painel ops/rollout."
+    arquivos_alvo:
+      - frontend/inspectah-ui/src/features/flows/FlowRolloutPanel.tsx
+    criterios_aceite:
+      - "SLO/alertas visíveis e consistentes; links funcionam (>=1)."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 35/Capitulo 2/Bloco 3.md
+      resumo_para_ace: >
+        Mostrar estados de SLO rollout; IDs/names consistentes.
+
+  - id: S35-QA-033
+    wave: W3
+    area: testes
+    gate_relacionado: S35_G3
+    descricao: "Testes de observabilidade rollout (queries/alertas/UI)."
+    arquivos_alvo:
+      - tests/flows/test_rollout_queries.py
+      - tests/flows/test_rollout_alerts.py
+      - tests/flows/test_rollout_slo_ui.ts
+    criterios_aceite:
+      - "Testes verdes simulando breaches/rollbacks; UI reflete estados."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 35/Capitulo 2/Bloco 3.md
+      resumo_para_ace: >
+        Simular violações; evidenciar alertas e painel.
+
+  - id: S35-CI-034
+    wave: W3
+    area: ci/orr
+    gate_relacionado: S35_G3
+    descricao: "Script G3 (`bin/s35_g3_obs.sh`) validando métricas/painel/alertas/SLO rollout e scorecard."
+    arquivos_alvo:
+      - bin/s35_g3_obs.sh
+      - out/scorecards/S35_G3_obs.json
+      - out/evidence/S35_G3_observabilidade_rollout/
+    criterios_aceite:
+      - "Script checa métricas/alerts/painel; scorecard PASS/WARN."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 35/Capitulo 2/Bloco 3.md
+      resumo_para_ace: >
+        Automatize G3; salvar evidências.
+
+  - id: S35-OPS-040
+    wave: W4
+    area: backend
+    gate_relacionado: S35_G4
+    descricao: "Executar pilotos (news/contestação v0) em canary/teste→promo/rollback; coletar evidências completas."
+    arquivos_alvo:
+      - scripts/pilotos/*
+      - ingest logs
+      - exec_dump.json
+      - rollout_timeline.json
+      - metrics/logs snapshots
+      - console screenshots
+      - dataset_noticias.json
+      - dataset_contestacao.json
+    criterios_aceite:
+      - "Pilotos executados em canary/teste; promo/rollback evidenciados para ambos fluxos com todos os artefatos (datasets, ingest_log, exec_dump, rollout_timeline, metrics/logs snapshots, console screenshots)."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 35/Capitulo 4/Capitulo 4.md
+      resumo_para_ace: >
+        Registre datasets, ingest_log, exec_dump, rollout_timeline, metrics/logs, screenshots. Cobrir dois fluxos.
+
+  - id: S35-CI-041
+    wave: W4
+    area: ci/orr
+    gate_relacionado: S35_G4
+    descricao: "Scripts G4/metrics_summary/bundle parcial e workflow CI `s35-gates.yml` (checar unzip -t e metrics_summary)."
+    arquivos_alvo:
+      - bin/s35_g4_pilotos.sh
+      - bin/s35_metrics_summary.sh
+      - bin/s35_bundle.sh
+      - .github/workflows/s35-gates.yml
+    criterios_aceite:
+      - "Scripts rodam; scorecards/evidências/bundle parcial gerados; out/scorecards/S35_metrics_summary.json presente; CI verde; `unzip -t` do bundle parcial passa."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 35/Capitulo 4/Capitulo 4.md
+      resumo_para_ace: >
+        Automatize coleta/bundle; CI cobre gates; verificar integridade do zip e presença de metrics_summary no repo.
+
+  - id: S35-DOC-042
+    wave: W4
+    area: docs
+    gate_relacionado: S35_G4
+    descricao: "Atualizar runbooks S35 (rollout/catalog/logic) com flow_version_id, políticas, limites, flags."
+    arquivos_alvo:
+      - docs/runbooks/S35_fluxo_noticias_rollout.md
+      - docs/runbooks/S35_fluxo_contestacao_rollout.md
+      - docs/runbooks/S35_rollout_catalog_ops.md
+      - docs/runbooks/S35_rollout_logic_handoff.md
+    criterios_aceite:
+      - "Runbooks executáveis, usados nos pilotos, alinhados à UI/policies/limits."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 35/Capitulo 5/Capitulo 5.md
+      resumo_para_ace: >
+        Incluir rollback/teste, catálogo, integração lógica/Truth, escalonamento de incidentes.
+
+  - id: S35-CI-050
+    wave: W5
+    area: ci/orr
+    gate_relacionado: S35_G5
+    descricao: "Script ORR (`bin/s35_g5_orr.sh`) integrando G0–G4 + metrics_summary e scorecard final."
+    arquivos_alvo:
+      - bin/s35_g5_orr.sh
+      - out/scorecards/S35_G5_orr.json
+      - out/evidence/S35_ORR_summary.txt
+    criterios_aceite:
+      - "ORR executada (real/simulada); scorecard final PASS/WARN; GO/NO-GO registrado."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 35/Capitulo 5/Capitulo 5.md
+      resumo_para_ace: >
+        Use bundle/metrics_summary; registrar decisão e riscos.
+
+  - id: S35-CI-051
+    wave: W5
+    area: ci/orr
+    gate_relacionado: S35_G5
+    descricao: "Empacotar bundle final `inspectah_s35_evidence_bundle.zip` com scorecards/evidências/metrics_summary."
+    arquivos_alvo:
+      - out/bundles/inspectah_s35_evidence_bundle.zip
+      - out/scorecards/S35_G0_scope.json
+      - out/scorecards/S35_G1_model.json
+      - out/scorecards/S35_G2_console.json
+      - out/scorecards/S35_G3_obs.json
+      - out/scorecards/S35_G4_pilotos.json
+      - out/scorecards/S35_G5_orr.json
+      - out/scorecards/S35_metrics_summary.json
+      - out/evidence/**
+    criterios_aceite:
+      - "Bundle passa unzip -t; contém scorecards/evidências/metrics_summary; referenciado no scorecard G5."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 35/Capitulo 4/Capitulo 4.md
+      resumo_para_ace: >
+        Sem bundle íntegro, sem GO. Registrar caminho no scorecard G5.

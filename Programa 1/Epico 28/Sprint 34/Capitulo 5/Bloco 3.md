@@ -1,0 +1,12 @@
+# Bloco 3 — Flags e limites (defaults)
+- `config/feature_flags.yaml`:
+  - `s34_flow_multidomain_enabled` (default true dev/test; controlável em prod).
+  - `s34_flow_console_history_enabled` (default true).
+  - `s34_flow_rollout_test_enabled` (default true; controla modo teste/percentual).
+- `config/flows_limits.yaml`:
+  - `max_rollbacks_per_hour: 2`
+  - `max_test_percentual: 20`
+  - `max_versions_to_keep: 10`
+  - `operation_timeout_seconds: 30`
+  - `alert_rollbacks_threshold: 2`
+  - `alert_policy_violations_threshold: 1`

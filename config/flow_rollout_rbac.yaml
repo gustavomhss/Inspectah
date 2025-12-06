@@ -1,0 +1,10 @@
+start_rollout:
+  - ops_user
+  - ops_admin
+promote:
+  - ops_admin
+rollback:
+  - ops_admin
+actors:
+  - ops_user
+  - ops_admin

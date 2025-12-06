@@ -7,6 +7,8 @@ import type {
   FlowExecutionDetail,
   FlowOperation,
   FlowVersion,
+  FlowCatalogEntry,
+  FlowRolloutStatus,
   FlowReplaceAgentPayload,
   FlowReprocessPayload,
   FlowTemplate,
@@ -116,6 +118,35 @@ export async function rollbackFlowVersion(flowId: string, versionId: string): Pr
 
 export async function listFlowOperations(flowId: string): Promise<FlowOperation[]> {
   return httpClient<FlowOperation[]>(endpoints.admin.flows.operations(flowId)) ?? [];
+}
+
+export async function listFlowCatalog(): Promise<FlowCatalogEntry[]> {
+  return httpClient<FlowCatalogEntry[]>(endpoints.admin.flows.catalog) ?? [];
+}
+
+export async function startFlowRollout(flowId: string, payload: { mode: string; test_percentual: number; criteria?: Record<string, unknown>; actor?: string }): Promise<Flow> {
+  return httpClient<Flow>(endpoints.admin.flows.rollout(flowId), {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function promoteFlowRollout(flowId: string, payload: { actor?: string }): Promise<Flow> {
+  return httpClient<Flow>(endpoints.admin.flows.rolloutPromote(flowId), {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function rollbackFlowRollout(flowId: string, payload: { flow_version_id?: string | null; actor?: string }): Promise<Flow> {
+  return httpClient<Flow>(endpoints.admin.flows.rolloutRollback(flowId), {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function getRolloutStatus(flowId: string): Promise<FlowRolloutStatus> {
+  return httpClient<FlowRolloutStatus>(endpoints.admin.flows.rolloutStatus(flowId));
 }
 
 export async function deleteFlow(flowId: string): Promise<void> {

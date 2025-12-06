@@ -71,6 +71,36 @@ _slo_breaches = Counter(
     ["flow_id", "flow_version_id", "slo_id"],
 )
 
+_rollout_requests = Counter(
+    "inspectah_flow_rollout_requests_total",
+    "Total de requisições de rollout por fluxo/versão/modo",
+    ["flow_id", "flow_version_id", "mode"],
+)
+
+_rollout_success = Counter(
+    "inspectah_flow_rollout_success_total",
+    "Total de rollouts promovidos com sucesso por fluxo/versão/modo",
+    ["flow_id", "flow_version_id", "mode"],
+)
+
+_rollout_rollbacks = Counter(
+    "inspectah_flow_rollout_rollback_total",
+    "Total de rollbacks de rollout por fluxo/versão/modo",
+    ["flow_id", "flow_version_id", "mode"],
+)
+
+_rollout_catalog_drift = Counter(
+    "inspectah_flow_rollout_catalog_drift_total",
+    "Detecções de drift de catálogo por fluxo/versão",
+    ["flow_id", "flow_version_id"],
+)
+
+_rollout_duration = Histogram(
+    "inspectah_flow_rollout_duration_seconds",
+    "Duração de rollout por fluxo/versão/modo",
+    ["flow_id", "flow_version_id", "mode"],
+)
+
 
 def _duration_seconds(started_at: datetime, finished_at: Optional[datetime]) -> Optional[float]:
     if not finished_at:
@@ -163,4 +193,38 @@ def record_slo_breach(flow_id: str, flow_version_id: Optional[str], slo_id: str)
     logger.warning(
         "flow_slo_breach",
         extra={"flow_id": flow_id, "flow_version_id": flow_version_id, "slo_id": slo_id},
+    )
+
+
+def record_rollout_request(flow_id: str, flow_version_id: Optional[str], mode: str) -> None:
+    _rollout_requests.labels(flow_id=flow_id, flow_version_id=flow_version_id or "unknown", mode=mode).inc()
+    logger.info(
+        "flow_rollout_request",
+        extra={"flow_id": flow_id, "flow_version_id": flow_version_id, "mode": mode},
+    )
+
+
+def record_rollout_success(flow_id: str, flow_version_id: Optional[str], mode: str, duration_seconds: Optional[float]) -> None:
+    _rollout_success.labels(flow_id=flow_id, flow_version_id=flow_version_id or "unknown", mode=mode).inc()
+    if duration_seconds is not None:
+        _rollout_duration.labels(flow_id=flow_id, flow_version_id=flow_version_id or "unknown", mode=mode).observe(duration_seconds)
+    logger.info(
+        "flow_rollout_success",
+        extra={"flow_id": flow_id, "flow_version_id": flow_version_id, "mode": mode, "duration_seconds": duration_seconds},
+    )
+
+
+def record_rollout_rollback(flow_id: str, flow_version_id: Optional[str], mode: Optional[str]) -> None:
+    _rollout_rollbacks.labels(flow_id=flow_id, flow_version_id=flow_version_id or "unknown", mode=mode or "unknown").inc()
+    logger.info(
+        "flow_rollout_rollback",
+        extra={"flow_id": flow_id, "flow_version_id": flow_version_id, "mode": mode},
+    )
+
+
+def record_catalog_drift(flow_id: str, flow_version_id: Optional[str]) -> None:
+    _rollout_catalog_drift.labels(flow_id=flow_id, flow_version_id=flow_version_id or "unknown").inc()
+    logger.warning(
+        "flow_catalog_drift",
+        extra={"flow_id": flow_id, "flow_version_id": flow_version_id},
     )

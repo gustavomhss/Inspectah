@@ -13,14 +13,15 @@ def _service(tmp_path):
 def test_rollback_respects_hourly_limit(tmp_path):
     service = _service(tmp_path)
     flow = service.create_flow_from_template("news_v2", "Fluxo News v2", "flow_news_v2")
+    base_version = flow.flow_version_id
     # cria uma nova versão e aplica rollback até estourar limite
-    service.create_version(flow.id, "news_v2", "3")
-    service.rollback_flow(flow.id, "2")
-    service.create_version(flow.id, "news_v2", "4")
-    service.rollback_flow(flow.id, "2")
+    service.create_version(flow.id, "news_v2", "v2.1.1")
+    service.rollback_flow(flow.id, base_version)
+    service.create_version(flow.id, "news_v2", "v2.1.2")
+    service.rollback_flow(flow.id, base_version)
 
     with pytest.raises(ValueError):
-        service.rollback_flow(flow.id, "2")
+        service.rollback_flow(flow.id, base_version)
 
 
 def test_record_execution_requires_version(tmp_path):

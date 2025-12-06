@@ -36,6 +36,12 @@ class FlowListItem(BaseModel):
     flow_version_id: Optional[str] = None
     active_version_id: Optional[str] = None
     test_version_id: Optional[str] = None
+    rollout_mode: Optional[str] = None
+    rollout_state: Optional[str] = None
+    catalog_hash: Optional[str] = None
+    catalog_signature: Optional[str] = None
+    rollout_started_at: Optional[datetime] = None
+    rollout_criteria: Dict = Field(default_factory=dict)
     flow_ops_profile_id: Optional[str] = None
     template_origem_id: Optional[str] = None
     percentual_teste: int = 0
@@ -75,6 +81,7 @@ class FlowExecutionRead(BaseModel):
     id: str
     flow_id: str
     flow_version_id: Optional[str] = None
+    mode: Optional[str] = None
     operation_id: Optional[str] = None
     item_id: str
     tipo_entrada: str
@@ -144,6 +151,9 @@ class FlowOperationRead(BaseModel):
     operacao: str
     payload: Dict = Field(default_factory=dict)
     resultado: str
+    mode: Optional[str] = None
+    actor: Optional[str] = None
+    catalog_hash: Optional[str] = None
     created_at: datetime
     updated_at: datetime
 
@@ -157,3 +167,39 @@ class FlowReprocessCriteria(BaseModel):
 class FlowReprocessRequest(BaseModel):
     criteria: FlowReprocessCriteria
     motivo: Optional[str] = None
+
+
+class FlowRolloutRequest(BaseModel):
+    flow_version_id: Optional[str] = None
+    mode: str
+    test_percentual: int
+    criteria: Dict = Field(default_factory=dict)
+    actor: Optional[str] = None
+
+
+class FlowRolloutStatus(BaseModel):
+    flow_id: str
+    flow_version_id: Optional[str] = None
+    active_version_id: Optional[str] = None
+    test_version_id: Optional[str] = None
+    rollout_mode: Optional[str] = None
+    rollout_state: Optional[str] = None
+    catalog_hash: Optional[str] = None
+    catalog_signature: Optional[str] = None
+    rollout_started_at: Optional[datetime] = None
+    rollout_criteria: Dict = Field(default_factory=dict)
+    alerts: List[str] = Field(default_factory=list)
+    policy_violations: List[str] = Field(default_factory=list)
+    slo_status: List[Dict] = Field(default_factory=list)
+
+
+class FlowCatalogEntry(BaseModel):
+    flow_id: str
+    domain: Optional[str] = None
+    version: Optional[str] = None
+    flow_version_id: Optional[str] = None
+    template_ref: Optional[str] = None
+    policies: Dict = Field(default_factory=dict)
+    rollout_defaults: Dict = Field(default_factory=dict)
+    hash: Optional[str] = None
+    signature: Optional[str] = None

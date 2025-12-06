@@ -13,6 +13,7 @@ except ModuleNotFoundError:  # pragma: no cover
 
 from app.flows.models import FlowExecutionStatus, FlowState
 from app.flows.schemas import (
+    FlowCatalogEntry,
     FlowCreateFromTemplateRequest,
     FlowCreateFromTemplateResponse,
     FlowExecutionDetailRead,
@@ -22,6 +23,8 @@ from app.flows.schemas import (
     FlowRead,
     FlowReplaceAgentRequest,
     FlowReprocessRequest,
+    FlowRolloutRequest,
+    FlowRolloutStatus,
     FlowStepExecutionRead,
     FlowStepRead,
     FlowTemplateRead,
@@ -46,6 +49,16 @@ def _to_flow_read(flow, steps=None) -> FlowRead:
         estado=flow.estado,
         template_origem_id=flow.template_origem_id,
         percentual_teste=flow.percentual_teste,
+        domain=flow.domain,
+        flow_version_id=flow.flow_version_id,
+        active_version_id=flow.active_version_id,
+        test_version_id=flow.test_version_id,
+        rollout_mode=getattr(flow, "rollout_mode", None),
+        rollout_state=getattr(flow, "rollout_state", None),
+        catalog_hash=getattr(flow, "catalog_hash", None),
+        catalog_signature=getattr(flow, "catalog_signature", None),
+        rollout_started_at=getattr(flow, "rollout_started_at", None),
+        rollout_criteria=getattr(flow, "rollout_criteria", {}),
         metadata=flow.metadata,
         created_at=flow.created_at,
         updated_at=flow.updated_at,
@@ -314,6 +327,55 @@ if APIRouter is not None:  # pragma: no cover
             )
         return versions
 
+    @router.get("/catalog", response_model=List[FlowCatalogEntry])
+    def list_catalog(service: FlowService = Depends(_service)):
+        try:
+            entries = service.list_catalog()
+        except Exception as exc:  # pragma: no cover
+            raise HTTPException(status_code=500, detail=str(exc))
+        return [FlowCatalogEntry.model_validate(e) for e in entries]
+
+    @router.post("/{flow_id}/rollout", response_model=FlowRead)
+    def start_rollout(flow_id: str, payload: FlowRolloutRequest, service: FlowService = Depends(_service)):
+        try:
+            flow = service.start_rollout(
+                flow_id,
+                mode=payload.mode,
+                test_percentual=payload.test_percentual,
+                criteria=payload.criteria,
+                actor=payload.actor,
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc))
+        steps = service.list_steps(flow_id)
+        return _to_flow_read(flow, steps=steps)
+
+    @router.post("/{flow_id}/promote", response_model=FlowRead)
+    def promote(flow_id: str, payload: FlowRolloutRequest, service: FlowService = Depends(_service)):
+        try:
+            flow = service.promote_rollout(flow_id, actor=payload.actor)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc))
+        steps = service.list_steps(flow_id)
+        return _to_flow_read(flow, steps=steps)
+
+    @router.post("/{flow_id}/rollback_rollout", response_model=FlowRead)
+    def rollback_rollout(flow_id: str, payload: FlowRolloutRequest, service: FlowService = Depends(_service)):
+        try:
+            flow = service.rollback_rollout(flow_id, target_version_id=payload.flow_version_id, actor=payload.actor)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc))
+        steps = service.list_steps(flow_id)
+        return _to_flow_read(flow, steps=steps)
+
+    @router.get("/{flow_id}/rollout/status", response_model=FlowRolloutStatus)
+    def rollout_status(flow_id: str, service: FlowService = Depends(_service)):
+        try:
+            status_payload = service.rollout_status(flow_id)
+        except ValueError as exc:
+            raise HTTPException(status_code=404, detail=str(exc))
+        return FlowRolloutStatus.model_validate(status_payload)
+
     @router.get("/{flow_id}/versions/{version_id}", response_model=FlowVersionRead)
     def get_version(flow_id: str, version_id: str, service: FlowService = Depends(_service)):
         flow = service.get_flow(flow_id)
@@ -348,6 +410,9 @@ if APIRouter is not None:  # pragma: no cover
                     operacao=op.operacao,
                     payload=op.payload if isinstance(op.payload, dict) else {},
                     resultado=op.resultado,
+                    mode=getattr(op, "mode", None),
+                    actor=getattr(op, "actor", None),
+                    catalog_hash=getattr(op, "catalog_hash", None),
                     created_at=op.created_at,
                     updated_at=op.updated_at,
                 )

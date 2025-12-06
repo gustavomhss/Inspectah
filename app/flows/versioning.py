@@ -12,7 +12,15 @@ class FlowVersioning:
         self.conn = conn
         self.limits = limits
 
-    def create_version(self, flow_id: str, template_slug: str, version_id: str, estado: str = "ativo") -> FlowVersion:
+    def create_version(
+        self,
+        flow_id: str,
+        template_slug: str,
+        version_id: str,
+        estado: str = "ativo",
+        catalog_hash: Optional[str] = None,
+        catalog_signature: Optional[str] = None,
+    ) -> FlowVersion:
         ver_row = self.conn.execute(
             "SELECT id FROM flow_flow_versions WHERE flow_id=? AND version_id=?", (flow_id, version_id)
         ).fetchone()
@@ -22,10 +30,10 @@ class FlowVersioning:
             version_pk = f"ver_{flow_id[:6]}_{version_id}"
             self.conn.execute(
                 """
-                INSERT INTO flow_flow_versions (id, flow_id, version_id, template_slug, estado, metadata, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, '{}', datetime('now'), datetime('now'))
+                INSERT INTO flow_flow_versions (id, flow_id, version_id, template_slug, estado, catalog_hash, catalog_signature, metadata, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, '{}', datetime('now'), datetime('now'))
                 """,
-                (version_pk, flow_id, version_id, template_slug, estado),
+                (version_pk, flow_id, version_id, template_slug, estado, catalog_hash, catalog_signature),
             )
         self._enforce_version_retention(flow_id)
         row = self.conn.execute("SELECT * FROM flow_flow_versions WHERE id=?", (version_pk,)).fetchone()
@@ -44,6 +52,8 @@ class FlowVersioning:
             version_id=row["version_id"],
             template_slug=row["template_slug"],
             estado=row["estado"],
+            catalog_hash=row["catalog_hash"] if "catalog_hash" in row.keys() else None,
+            catalog_signature=row["catalog_signature"] if "catalog_signature" in row.keys() else None,
             metadata={},
             created_at=datetime.fromisoformat(row["created_at"]),
             updated_at=datetime.fromisoformat(row["updated_at"]),

@@ -26,6 +26,12 @@ export interface Flow {
   flow_version_id?: string | null;
   active_version_id?: string | null;
   test_version_id?: string | null;
+  rollout_mode?: string | null;
+  rollout_state?: string | null;
+  rollout_started_at?: string | null;
+  rollout_criteria?: Record<string, unknown>;
+  catalog_hash?: string | null;
+  catalog_signature?: string | null;
   flow_ops_profile_id?: string | null;
   template_origem_id?: string | null;
   percentual_teste?: number;
@@ -53,6 +59,9 @@ export interface FlowOperation {
   operacao: string;
   payload?: Record<string, unknown>;
   resultado: string;
+  mode?: string | null;
+  actor?: string | null;
+  catalog_hash?: string | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -75,6 +84,7 @@ export interface FlowExecution {
   id: string;
   flow_id: string;
   flow_version_id?: string | null;
+  mode?: string | null;
   operation_id?: string | null;
   item_id: string;
   tipo_entrada: string;
@@ -127,4 +137,31 @@ export interface FlowReprocessPayload {
     janela_horas?: number;
   };
   motivo?: string;
+}
+
+export interface FlowCatalogEntry {
+  flow_id: string;
+  domain?: string;
+  version?: string;
+  flow_version_id?: string | null;
+  template_ref?: string;
+  policies?: Record<string, unknown>;
+  rollout_defaults?: Record<string, unknown>;
+  hash?: string;
+  signature?: string;
+}
+
+export interface FlowRolloutStatus {
+  flow_id: string;
+  flow_version_id?: string | null;
+  active_version_id?: string | null;
+  test_version_id?: string | null;
+  rollout_mode?: string | null;
+  rollout_state?: string | null;
+  catalog_hash?: string | null;
+  catalog_signature?: string | null;
+  rollout_started_at?: string | null;
+  rollout_criteria?: Record<string, unknown>;
+  alerts?: string[];
+  policy_violations?: string[];
 }

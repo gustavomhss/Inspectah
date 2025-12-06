@@ -219,13 +219,22 @@ export default function ProvidersPage() {
               />
               <div className="mt-3 space-y-2">
                 {filteredProviders.map((provider) => (
-                  <button
+                  <div
                     key={provider.id}
-                    type="button"
+                    role="button"
+                    tabIndex={0}
                     onClick={() => {
                       clear();
                       setSelectedProviderId(provider.id);
                       setProviderForm({ ...provider });
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        clear();
+                        setSelectedProviderId(provider.id);
+                        setProviderForm({ ...provider });
+                      }
                     }}
                     className={`w-full rounded-lg border px-3 py-3 text-left transition ${
                       provider.id === selectedProviderId
@@ -267,7 +276,7 @@ export default function ProvidersPage() {
                         {provider.status === 'active' ? 'Desativar' : 'Ativar'}
                       </button>
                     </div>
-                  </button>
+                  </div>
                 ))}
                 {!filteredProviders.length && (
                   <p className="text-sm text-slate-300">Nenhum provider encontrado. Cadastre abaixo.</p>

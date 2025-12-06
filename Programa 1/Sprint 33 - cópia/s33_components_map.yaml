@@ -1,0 +1,15 @@
+# S33 — Mapa de componentes monitorados (placeholder)
+# Preencher com componentes do recorte: id, tipo, criticidade, slos
+components:
+  - id: fonte_noticias_principal
+    tipo: fonte
+    criticidade: alta
+    slos: []
+  - id: pipeline_noticias
+    tipo: pipeline
+    criticidade: alta
+    slos: []
+  - id: api_interna_ops
+    tipo: api
+    criticidade: media
+    slos: []

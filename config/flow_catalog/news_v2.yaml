@@ -1,0 +1,17 @@
+flow_id: flow_news_v2
+domain: noticias
+version: 2.1.0
+flow_version_id: v2.1.0
+template_ref: config/flow_templates/news_v2.yaml
+policies:
+  min_confidence: 0.72
+  max_latency_ms: 8000
+  block_on_missing_entities: true
+rollout_defaults:
+  mode: canary
+  test_percentual: 10
+  max_canary_duration_minutes: 45
+  promote_on_slo_pass: true
+  rollback_on_policy_violation: true
+hash: c1096b3d99226b5b4bcf688e50e1cdb09dd69c88566c088c24594d82b78743c7
+signature: ops_catalog_v1

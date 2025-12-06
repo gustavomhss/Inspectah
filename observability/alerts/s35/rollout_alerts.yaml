@@ -1,0 +1,31 @@
+groups:
+  - name: s35_flow_rollout
+    rules:
+      - alert: S35_FlowRolloutRollbacksHigh
+        expr: sum by(flow_id,flow_version_id,mode) (increase(inspectah_flow_rollout_rollback_total[1h])) > 2
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Rollbacks altos no rollout {{ $labels.flow_id }} {{ $labels.flow_version_id }} modo {{ $labels.mode }}"
+      - alert: S35_FlowRolloutDurationLong
+        expr: histogram_quantile(0.95, sum by (le,flow_id,flow_version_id,mode) (rate(inspectah_flow_rollout_duration_seconds_bucket[10m]))) > 2700
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Rollout demorando além do limite em {{ $labels.flow_id }} {{ $labels.flow_version_id }} modo {{ $labels.mode }}"
+      - alert: S35_FlowRolloutPolicyViolations
+        expr: sum by(flow_id,flow_version_id) (increase(inspectah_flow_policy_violations_total[10m])) > 0
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Violações de política em rollout {{ $labels.flow_id }} {{ $labels.flow_version_id }}"
+      - alert: S35_FlowRolloutCatalogDrift
+        expr: sum by(flow_id,flow_version_id) (increase(inspectah_flow_rollout_catalog_drift_total[15m])) > 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Drift de catálogo detectado em rollout {{ $labels.flow_id }} {{ $labels.flow_version_id }}"

@@ -64,6 +64,12 @@ class Flow:
     flow_version_id: Optional[str] = None
     active_version_id: Optional[str] = None
     test_version_id: Optional[str] = None
+    rollout_mode: Optional[str] = None
+    rollout_state: Optional[str] = None
+    rollout_started_at: Optional[datetime] = None
+    rollout_criteria: Dict = field(default_factory=dict)
+    catalog_hash: Optional[str] = None
+    catalog_signature: Optional[str] = None
     flow_ops_profile_id: Optional[str] = None
     template_origem_id: Optional[str] = None
     percentual_teste: int = 0
@@ -91,6 +97,7 @@ class FlowExecution:
     id: str
     flow_id: str
     flow_version_id: Optional[str]
+    mode: Optional[str]
     operation_id: Optional[str]
     item_id: str
     tipo_entrada: str
@@ -121,7 +128,10 @@ class FlowOperationLog:
     operacao: str
     payload: Dict = field(default_factory=dict)
     resultado: str = "ok"
+    mode: Optional[str] = None
     flow_version_id: Optional[str] = None
+    actor: Optional[str] = None
+    catalog_hash: Optional[str] = None
     user_id: Optional[str] = None
     created_at: datetime = field(default_factory=utcnow)
     updated_at: datetime = field(default_factory=utcnow)
@@ -134,6 +144,8 @@ class FlowVersion:
     version_id: str
     template_slug: str
     estado: str
+    catalog_hash: Optional[str] = None
+    catalog_signature: Optional[str] = None
     metadata: Dict = field(default_factory=dict)
     created_at: datetime = field(default_factory=utcnow)
     updated_at: datetime = field(default_factory=utcnow)

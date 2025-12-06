@@ -1,0 +1,373 @@
+sprint: S32
+programa: 1
+epico: 28
+
+ace_resumo:
+  objetivo_sprint: >
+    Colocar o Truth-DB + Sistema de Blocos em operação 24/7 com fluxo claim → blocos → estado de verdade,
+    contestação v1 funcional, invariantes codificadas, métricas mínimas e bundle reexecutável (gates G0–G4 verdes).
+  leitura_minima_spec:
+    - Programa 1/Epico 28/Sprint 32/Capitulo 1/Capitulo 1.md
+    - Programa 1/Epico 28/Sprint 32/Capitulo 2/Capitulo 2.md
+    - Programa 1/Epico 28/Sprint 32/Capitulo 3/Capitulo 3.md
+    - Programa 1/Epico 28/Sprint 32/Capitulo 4/Capitulo 4.md
+  instrucoes_para_ace: >
+    Leia apenas os capítulos listados acima para entender objetivos, gates e filemap.
+    Trabalhe wave a wave usando apenas o ace_context da wave atual e das tasks dela.
+    Gates e ORR são lei; bundle final precisa estar íntegro.
+
+waves:
+  - id: W0
+    nome: "Baseline & G0"
+    descricao: "Estruturar sprint: docs materializados, scripts de gate esqueleto, diretórios de evidências/scorecards."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 32/Capitulo 4/Bloco 2.md
+        - Programa 1/Epico 28/Sprint 32/Capitulo 5/Bloco 2.md
+      resumo_para_ace: >
+        Garanta que a casa está pronta: scripts s32_g0..g4.sh criados (mesmo esqueleto),
+        pastas out/scorecards, out/evidence, out/bundles existem e G0 gera scorecard.
+      observacoes_execucao: >
+        Não mergulhe em código aqui; só estrutura. Após G0 PASS, siga para W1.
+
+  - id: W1
+    nome: "Fundação Truth-DB (G1)"
+    descricao: "Modelos/migração do Truth-DB e testes de invariantes estruturais."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 32/Capitulo 2/Bloco 1.md
+        - Programa 1/Epico 28/Sprint 32/Capitulo 3/Bloco 2.md
+        - Programa 1/Epico 28/Sprint 32/Capitulo 4/Bloco 2.md
+      resumo_para_ace: >
+        Implemente modelos (FactBlock, EvidenceBlock, TruthState, DecisionBlock, ContestRecord),
+        migração S32 e testes de invariantes (sem blocos órfãos, estados finais com DecisionBlock,
+        histórico monotônico, integridade de FKs). Rode G1 para validar.
+      observacoes_execucao: >
+        Prefira seguir filemap sugerido. Falhas de invariantes são STOP. G1 precisa gerar scorecard PASS.
+
+  - id: W2
+    nome: "Fluxo de promoção (G2)"
+    descricao: "Fluxo claim prioritária → blocos → estado de verdade, com métricas e testes."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 32/Capitulo 2/Bloco 2.md
+        - Programa 1/Epico 28/Sprint 32/Capitulo 3/Bloco 3.md
+        - Programa 1/Epico 28/Sprint 32/Capitulo 4/Bloco 3.md
+      resumo_para_ace: >
+        Fixe o tipo de claim prioritário. Adapte claim → Fact/EvidenceBlock, implemente PromotionService,
+        métricas de promoção e testes de fluxo. G2 deve rodar criando scorecard com contagem de promoções e métricas.
+      observacoes_execucao: >
+        Mantenha invariantes; estados finais exigem DecisionBlock. Não siga para W3 com G2 falhando.
+
+  - id: W3
+    nome: "Fluxo de contestação (G3)"
+    descricao: "Contestação v1: registrar/processar, gerar DecisionBlock/TruthState preservando histórico, com métricas e testes."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 32/Capitulo 2/Bloco 2.md
+        - Programa 1/Epico 28/Sprint 32/Capitulo 3/Bloco 3.md
+        - Programa 1/Epico 28/Sprint 32/Capitulo 4/Bloco 3.md
+      resumo_para_ace: >
+        Com TruthStates criados na W2, implemente ContestationService, métricas de contestação/erros/latência,
+        testes end-to-end e G3 script. Histórico não pode ser apagado.
+      observacoes_execucao: >
+        Use dumps antes/depois para evidência. Se contestação não cria ContestRecord/DecisionBlock, trate como bug.
+
+  - id: W4
+    nome: "Sanidade cruzada, bundle & G4"
+    descricao: "Rodar sanidade ingestão/claims, consolidar scorecards, montar bundle e G4."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 32/Capitulo 4/Bloco 4.md
+        - Programa 1/Epico 28/Sprint 32/Capitulo 5/Capitulo 5.md
+        - Programa 1/Epico 28/Sprint 32/Capitulo 6/Capitulo 6.md
+      resumo_para_ace: >
+        Execute gates/suites críticos de ingestão/claims (S21/S24) e classifique regressões.
+        Monte bundle com scorecards G0–G4, evidências G1–G3, README de replay. G4 deve fechar com PASS.
+      observacoes_execucao: >
+        Verifique integridade do zip (unzip -t). Registre sanidade no scorecard/log. Atualize docs Cap.4–6 com resultados.
+
+tasks:
+  - id: S32-CI-000
+    wave: W0
+    area: ci/orr
+    gate_relacionado: S32_G0
+    descricao: "Criar/ajustar docs da S32, scripts esqueleto s32_g0..g4.sh e estrutura out/ (scorecards, evidence, bundles)."
+    arquivos_alvo:
+      - docs/sprint_32_capitulo_* 
+      - bin/s32_g0_scope_and_baseline.sh
+      - bin/s32_g1_models_and_invariants.sh
+      - bin/s32_g2_promotion_flows.sh
+      - bin/s32_g3_contestation_flows.sh
+      - bin/s32_g4_orr_and_bundle.sh
+      - out/scorecards/
+      - out/evidence/
+      - out/bundles/
+    criterios_aceite:
+      - "Scorecard out/scorecards/S32_G0_scope_and_baseline.json gerado com status PASS ou WARN aceitável."
+      - "Scripts esqueleto existem e rodam sem erro (prints básicos)."
+      - "Diretórios out/scorecards, out/evidence, out/bundles presentes."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 32/Capitulo 4/Bloco 2.md
+      resumo_para_ace: >
+        Apenas estrutura. Não mergulhe em modelo/serviços. Rode G0 e confirme scorecard criado.
+
+  - id: S32-BE-010
+    wave: W1
+    area: backend
+    gate_relacionado: S32_G1
+    descricao: "Implementar modelos Truth-DB (FactBlock, EvidenceBlock, TruthState, DecisionBlock, ContestRecord) e migração S32."
+    arquivos_alvo:
+      - app/truthdb/models.py
+      - app/truthdb/repositories.py
+      - migrations/versions/XXXX_s32_truthdb_blocks.py
+    criterios_aceite:
+      - "Migração S32 aplica em banco de teste sem erros."
+      - "Modelos refletem relações e FKs obrigatórias (sem blocos órfãos; estados finais exigem DecisionBlock)."
+      - "Indices/constraints básicos criados conforme filemap."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 32/Capitulo 3/Bloco 2.md
+        - Programa 1/Epico 28/Sprint 32/Capitulo 2/Capitulo 2.md
+      resumo_para_ace: >
+        Siga o filemap: novas tabelas para blocos/estados/contestações, FKs fortes e compatibilidade com dados existentes.
+
+  - id: S32-QA-011
+    wave: W1
+    area: testes
+    gate_relacionado: S32_G1
+    descricao: "Codificar testes de invariantes (blocos órfãos, estados finais com DecisionBlock, histórico monotônico, integridade de FKs)."
+    arquivos_alvo:
+      - tests/truthdb/test_models_and_invariants.py
+    criterios_aceite:
+      - "Pytest do arquivo roda verde cobrindo invariantes listadas no Cap.2."
+      - "Falhas de integridade geram erro explícito (não silenciam)."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 32/Capitulo 2/Bloco 1.md
+        - Programa 1/Epico 28/Sprint 32/Capitulo 4/Bloco 2.md
+      resumo_para_ace: >
+        Tests devem quebrar se blocos órfãos ou estados finais sem DecisionBlock forem criados. Integre com script G1.
+
+  - id: S32-CI-012
+    wave: W1
+    area: ci/orr
+    gate_relacionado: S32_G1
+    descricao: "Implementar `bin/s32_g1_models_and_invariants.sh` aplicando migrações + pytest invariantes e gerando scorecard."
+    arquivos_alvo:
+      - bin/s32_g1_models_and_invariants.sh
+      - out/scorecards/S32_G1_models_and_invariants.json
+      - out/evidence/S32_G1_models_and_invariants/
+    criterios_aceite:
+      - "Script roda fim-a-fim em ambiente de teste."
+      - "Scorecard lista invariantes checadas e status PASS."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 32/Capitulo 4/Bloco 2.md
+      resumo_para_ace: >
+        Automatize migração + pytest e crie scorecard JSON. Salve logs em out/evidence/S32_G1_models_and_invariants/.
+
+  - id: S32-BE-020
+    wave: W2
+    area: backend
+    gate_relacionado: S32_G2
+    descricao: "Implementar adaptadores claim → blocos e PromotionService (claim suportada → Fact/EvidenceBlock → TruthState + DecisionBlock)."
+    arquivos_alvo:
+      - app/claims/adapters_truthdb.py
+      - app/truthdb/services.py
+      - app/truthdb/models.py
+    criterios_aceite:
+      - "Claim prioritária é promovida criando Fact/EvidenceBlock e TruthState consistente."
+      - "Tipos de claim não suportados falham de forma limpa e metricada."
+      - "DecisionBlock criado para estados finais; invariantes mantidas."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 32/Capitulo 3/Bloco 3.md
+        - Programa 1/Epico 28/Sprint 32/Capitulo 4/Bloco 3.md
+      resumo_para_ace: >
+        Fixe o tipo de claim prioritário. Preserve invariantes. PromotionService deve ser ponto único de orquestração.
+
+  - id: S32-OBS-021
+    wave: W2
+    area: observabilidade
+    gate_relacionado: S32_G2
+    descricao: "Implementar métricas de promoção (attempt/success/error + latência) e integrar no PromotionService."
+    arquivos_alvo:
+      - app/truthdb/metrics.py
+      - app/truthdb/services.py
+    criterios_aceite:
+      - "Chamadas a metrics para tentativa, sucesso e erro em pontos claros."
+      - "Latência do fluxo observada e exportada."
+      - "Métricas visíveis em execução de G2."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 32/Capitulo 2/Bloco 3.md
+      resumo_para_ace: >
+        Use client padrão (Prometheus/OTEL). Capture métricas específicas do domínio, não só HTTP.
+
+  - id: S32-QA-022
+    wave: W2
+    area: testes
+    gate_relacionado: S32_G2
+    descricao: "Testes de fluxo de promoção (positivo e negativo) garantindo invariantes e criação de DecisionBlock."
+    arquivos_alvo:
+      - tests/truthdb/test_promotion_flows.py
+    criterios_aceite:
+      - "Cenário positivo cria blocos/estado/decision; negativo falha limpo."
+      - "Invariantes permanecem verdes após execuções múltiplas."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 32/Capitulo 2/Bloco 1.md
+        - Programa 1/Epico 28/Sprint 32/Capitulo 4/Bloco 3.md
+      resumo_para_ace: >
+        Use fixtures realistas. Registre dumps em out/evidence/S32_G2_promotion_flows/ para prova.
+
+  - id: S32-CI-023
+    wave: W2
+    area: ci/orr
+    gate_relacionado: S32_G2
+    descricao: "Script `bin/s32_g2_promotion_flows.sh` para semear claims, rodar PromotionService/pytest e gerar scorecard."
+    arquivos_alvo:
+      - bin/s32_g2_promotion_flows.sh
+      - out/scorecards/S32_G2_promotion_flows.json
+      - out/evidence/S32_G2_promotion_flows/
+    criterios_aceite:
+      - "Script executa fim-a-fim sem intervenção manual."
+      - "Scorecard traz contagem de promoções e métricas amostradas."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 32/Capitulo 4/Bloco 3.md
+      resumo_para_ace: >
+        Automatize semeadura de claim, chamada do serviço e coleta de evidências (logs/dumps/metrics).
+
+  - id: S32-BE-030
+    wave: W3
+    area: backend
+    gate_relacionado: S32_G3
+    descricao: "Implementar ContestationService (registrar/processar), ajustes de ContestRecord/status, atualização de TruthState preservando histórico."
+    arquivos_alvo:
+      - app/truthdb/services.py
+      - app/truthdb/models.py
+    criterios_aceite:
+      - "register_contestation cria ContestRecord persistente com status pending."
+      - "process_contestation gera DecisionBlock e, se aplicável, atualiza TruthState sem apagar histórico."
+      - "Fluxo falha limpo em contestações inválidas ou duplicadas."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 32/Capitulo 3/Bloco 3.md
+        - Programa 1/Epico 28/Sprint 32/Capitulo 2/Bloco 1.md
+      resumo_para_ace: >
+        Reuse padrões de W2. Garantir monotonicidade do histórico e vínculos fortes com DecisionBlock.
+
+  - id: S32-OBS-031
+    wave: W3
+    area: observabilidade
+    gate_relacionado: S32_G3
+    descricao: "Emitir métricas de contestação (rate, erros, latência) e logs estruturados nos pontos de decisão."
+    arquivos_alvo:
+      - app/truthdb/metrics.py
+      - app/truthdb/services.py
+    criterios_aceite:
+      - "Métricas acionadas ao registrar e processar contestações."
+      - "Erros mapeados em truthdb_flow_error_rate."
+      - "Latência capturada para contest flow."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 32/Capitulo 2/Bloco 3.md
+      resumo_para_ace: >
+        Espelhe abordagem da W2. Certifique-se de não duplicar métricas; reuse helpers em metrics.py.
+
+  - id: S32-QA-032
+    wave: W3
+    area: testes
+    gate_relacionado: S32_G3
+    descricao: "Testes end-to-end de contestação: ContestRecord criado, DecisionBlock gerado, TruthState atualizado, histórico preservado."
+    arquivos_alvo:
+      - tests/truthdb/test_contestation_flows.py
+    criterios_aceite:
+      - "Cenário de contestação altera ou mantém estado com trilha clara."
+      - "Tentativa de processar contestação inexistente/duplicada falha limpo."
+      - "Histórico (blocos/records) cresce, nunca diminui."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 32/Capitulo 4/Bloco 3.md
+      resumo_para_ace: >
+        Use TruthStates criados em W2. Salve dumps antes/depois em out/evidence/S32_G3_contestation_flows/.
+
+  - id: S32-CI-033
+    wave: W3
+    area: ci/orr
+    gate_relacionado: S32_G3
+    descricao: "Script `bin/s32_g3_contestation_flows.sh` para preparar estados, registrar/processar contestações e gerar scorecard."
+    arquivos_alvo:
+      - bin/s32_g3_contestation_flows.sh
+      - out/scorecards/S32_G3_contestation_flows.json
+      - out/evidence/S32_G3_contestation_flows/
+    criterios_aceite:
+      - "Script roda sem intervenção; produz scorecard com contestações testadas e outcomes."
+      - "Evidências (logs/dumps) salvas em out/evidence/S32_G3_contestation_flows/."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 32/Capitulo 4/Bloco 3.md
+      resumo_para_ace: >
+        Reuse fixtures da W2 para seeds. Inclua checagem básica de métricas/logs no script.
+
+  - id: S32-QA-040
+    wave: W4
+    area: testes
+    gate_relacionado: S32_G4
+    descricao: "Sanidade cruzada ingestão/claims (gates/suites S21/S24), classificar regressões e registrar em Cap.5."
+    arquivos_alvo:
+      - bin/s21_*
+      - bin/s24_*
+      - docs/sprint_32_capitulo_5.md
+    criterios_aceite:
+      - "Execução registrada; regressões classificadas (bloqueante vs não) e anotadas."
+      - "Nenhuma regressão bloqueante sem plano/waiver."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 32/Capitulo 4/Bloco 4.md
+        - Programa 1/Epico 28/Sprint 32/Capitulo 5/Bloco 2.md
+      resumo_para_ace: >
+        Execute suites críticas pós-S32. Documente resultados e classificação; alimentar scorecard G4 e docs Cap.5.
+
+  - id: S32-CI-041
+    wave: W4
+    area: ci/orr
+    gate_relacionado: S32_G4
+    descricao: "Montar bundle `inspectah_s32_evidence_bundle.zip`, implementar `bin/s32_g4_orr_and_bundle.sh`, gerar scorecard G4."
+    arquivos_alvo:
+      - bin/s32_g4_orr_and_bundle.sh
+      - out/bundles/inspectah_s32_evidence_bundle.zip
+      - out/scorecards/S32_G4_orr_and_bundle.json
+      - docs/README_S32_BUNDLE.md
+    criterios_aceite:
+      - "Bundle contém scorecards G0–G4, evidências G1–G3, README de replay."
+      - "unzip -t do bundle passa."
+      - "Scorecard G4 com status PASS (ou WARN justificado)."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 32/Capitulo 5/Bloco 2.md
+        - Programa 1/Epico 28/Sprint 32/Capitulo 4/Bloco 4.md
+      resumo_para_ace: >
+        Consolidar tudo. Sem bundle íntegro, não há GO. Inclua instruções de replay no README.
+
+  - id: S32-DOC-042
+    wave: W4
+    area: docs
+    gate_relacionado: S32_G4
+    descricao: "Atualizar Cap.4–6 com resultados finais, sanidade cruzada, ORR e referências ao bundle."
+    arquivos_alvo:
+      - docs/sprint_32_capitulo_4_execucao_e_evidencias.md
+      - docs/sprint_32_capitulo_5_orr_operacao_pos_sprint.md
+      - docs/sprint_32_capitulo_6_learnings_e_anti_gaps.md
+    criterios_aceite:
+      - "Docs refletem resultados reais (gates, regressões, bundle) com links para evidências."
+      - "Notas de ORR e learnings finais atualizadas."
+    ace_context:
+      spec_refs:
+        - Programa 1/Epico 28/Sprint 32/Capitulo 5/Capitulo 5.md
+        - Programa 1/Epico 28/Sprint 32/Capitulo 6/Capitulo 6.md
+      resumo_para_ace: >
+        Feche a documentação com o que foi entregue e aprendido. Referencie scorecards e bundle.
