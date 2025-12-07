@@ -1,12 +1,13 @@
 import { rest } from 'msw';
 import { Route, Routes } from 'react-router-dom';
 import userEvent from '@testing-library/user-event';
-import { screen, waitFor } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import IngestionListPage from '../../modules/ingestion/pages/IngestionListPage';
 import IngestionSourceDetailPage from '../../modules/ingestion/pages/IngestionSourceDetailPage';
 import IngestionRunDetailModal from '../../modules/ingestion/components/IngestionRunDetailModal';
 import { renderWithProviders } from '../test-utils';
 import { server } from '../mocks/server';
+import type { IngestionRun } from '../../core/api/api-types';
 
 const BASE_URL = 'http://localhost:8000';
 
@@ -244,7 +245,7 @@ describe('Ingestion – ops_only e meta', () => {
       },
     };
 
-    renderWithProviders(<IngestionRunDetailModal run={run as any} open onClose={() => undefined} />);
+    renderWithProviders(<IngestionRunDetailModal run={run as IngestionRun} open onClose={() => undefined} />);
 
     expect(screen.getByText(/Tentativas/i)).toBeInTheDocument();
     expect(screen.getByText(/1.20s/)).toBeInTheDocument();

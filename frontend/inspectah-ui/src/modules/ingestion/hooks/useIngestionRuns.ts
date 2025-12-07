@@ -66,7 +66,7 @@ export function useIngestionRuns(sourceId: string, opts: { enabled?: boolean } =
         pollRef.current = null;
       }
     };
-  }, [runs, load]);
+  }, [runs, load, enabled]);
 
   return { runs, configMode, loading, error, reload: load };
 }

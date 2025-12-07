@@ -10,9 +10,11 @@ interface Props {
 }
 
 export function FlowRolloutPanel({ flow, onUpdated }: Props) {
+  const safeCrypto = typeof globalThis !== 'undefined' && globalThis.crypto ? globalThis.crypto : undefined;
+  const safeNavigator = typeof globalThis !== 'undefined' && globalThis.navigator ? globalThis.navigator : undefined;
   const genOpId = () => {
     try {
-      return typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `op-${Date.now()}-${Math.random().toString(16).slice(2, 6)}`;
+      return safeCrypto?.randomUUID ? safeCrypto.randomUUID() : `op-${Date.now()}-${Math.random().toString(16).slice(2, 6)}`;
     } catch {
       return `op-${Date.now()}`;
     }
@@ -73,12 +75,17 @@ export function FlowRolloutPanel({ flow, onUpdated }: Props) {
             <p className="text-sm text-slate-200">Promova versões de fluxo com hash assinado, SLO e rollback seguro.</p>
           </div>
           <div className="flex items-center gap-2">
-            <Badge tone={hasDrift ? 'danger' : 'info'}>{hasDrift ? 'Drift de catálogo' : 'Catalog hash'}: {rolloutHash?.toString().slice(0, 12)}</Badge>
-            <Badge tone="neutral">Op ID: {currentOpId}</Badge>
-            <Button size="xs" variant="primary" onClick={() => navigator.clipboard?.writeText(currentOpId || '')} className="bg-sky-600 text-white hover:bg-sky-700">
-              Copiar op_id
-            </Button>
-          </div>
+          <Badge tone={hasDrift ? 'danger' : 'info'}>{hasDrift ? 'Drift de catálogo' : 'Catalog hash'}: {rolloutHash?.toString().slice(0, 12)}</Badge>
+          <Badge tone="neutral">Op ID: {currentOpId}</Badge>
+          <Button
+            size="xs"
+            variant="primary"
+            onClick={() => safeNavigator?.clipboard?.writeText?.(currentOpId || '')}
+            className="bg-sky-600 text-white hover:bg-sky-700"
+          >
+            Copiar op_id
+          </Button>
+        </div>
         </div>
         <div className="rounded-xl border border-slate-700 bg-slate-800 px-4 py-3 text-sm text-slate-100">
           <p className="font-semibold text-white">Guia rápido (o que é e como usar)</p>
@@ -194,7 +201,7 @@ export function FlowRolloutPanel({ flow, onUpdated }: Props) {
                 setError('Critério inválido (JSON esperado)');
                 return;
               }
-              const opId = crypto.randomUUID ? crypto.randomUUID() : `op-${Date.now()}`;
+              const opId = safeCrypto?.randomUUID ? safeCrypto.randomUUID() : `op-${Date.now()}`;
               setOperationId(opId);
               start({ mode, test_percentual: percentual, actor, criteria: parsed, operation_id: opId, catalog_hash: rolloutHash?.toString() || '' });
               void reload();
@@ -212,7 +219,7 @@ export function FlowRolloutPanel({ flow, onUpdated }: Props) {
             variant="secondary"
             className="bg-slate-700 text-slate-50 hover:bg-slate-600"
             onClick={() => {
-              const opId = crypto.randomUUID ? crypto.randomUUID() : `op-${Date.now()}`;
+              const opId = safeCrypto?.randomUUID ? safeCrypto.randomUUID() : `op-${Date.now()}`;
               setOperationId(opId);
               void promote({ actor, operation_id: opId, catalog_hash: rolloutHash?.toString() || '' });
               void reload();
@@ -225,7 +232,7 @@ export function FlowRolloutPanel({ flow, onUpdated }: Props) {
             size="sm"
             variant="secondary"
             onClick={() => {
-              const opId = crypto.randomUUID ? crypto.randomUUID() : `op-${Date.now()}`;
+              const opId = safeCrypto?.randomUUID ? safeCrypto.randomUUID() : `op-${Date.now()}`;
               setOperationId(opId);
               void rollback(flow.flow_version_id, { actor, operation_id: opId, catalog_hash: rolloutHash?.toString() || '' });
               void reload();
@@ -353,7 +360,7 @@ export function FlowRolloutPanel({ flow, onUpdated }: Props) {
                     setError('Critério inválido (JSON esperado)');
                     return;
                   }
-                  const opId = crypto.randomUUID ? crypto.randomUUID() : `op-${Date.now()}`;
+                  const opId = safeCrypto?.randomUUID ? safeCrypto.randomUUID() : `op-${Date.now()}`;
                   setOperationId(opId);
                   start({ mode, test_percentual: percentual, actor, criteria: parsed, operation_id: opId, catalog_hash: rolloutHash?.toString() || '' });
                   void reload();
@@ -371,7 +378,7 @@ export function FlowRolloutPanel({ flow, onUpdated }: Props) {
                 variant="secondary"
                 className="bg-slate-700 text-slate-50 hover:bg-slate-600"
                 onClick={() => {
-                  const opId = crypto.randomUUID ? crypto.randomUUID() : `op-${Date.now()}`;
+                  const opId = safeCrypto?.randomUUID ? safeCrypto.randomUUID() : `op-${Date.now()}`;
                   setOperationId(opId);
                   void promote({ actor, operation_id: opId, catalog_hash: rolloutHash?.toString() || '' });
                   void reload();
@@ -385,7 +392,7 @@ export function FlowRolloutPanel({ flow, onUpdated }: Props) {
                 variant="secondary"
                 className="bg-slate-700 text-slate-50 hover:bg-slate-600"
                 onClick={() => {
-                  const opId = crypto.randomUUID ? crypto.randomUUID() : `op-${Date.now()}`;
+                  const opId = safeCrypto?.randomUUID ? safeCrypto.randomUUID() : `op-${Date.now()}`;
                   setOperationId(opId);
                   void rollback(flow.flow_version_id, { actor, operation_id: opId, catalog_hash: rolloutHash?.toString() || '' });
                   void reload();
