@@ -60,6 +60,11 @@ _policy_violations = Counter(
     "Total de violações de políticas por fluxo/versão",
     ["flow_id", "flow_version_id"],
 )
+_policy_violations_rollout = Counter(
+    "flow_policy_violations_total",
+    "Violações de políticas de rollout por fluxo/versão/modo",
+    ["flow_id", "flow_version_id", "mode"],
+)
 _rollbacks = Counter(
     "inspectah_flow_rollbacks_total",
     "Total de rollbacks acionados por fluxo/versão",
@@ -93,6 +98,11 @@ _rollout_catalog_drift = Counter(
     "inspectah_flow_rollout_catalog_drift_total",
     "Detecções de drift de catálogo por fluxo/versão",
     ["flow_id", "flow_version_id"],
+)
+_rollout_catalog_mismatch = Counter(
+    "flow_catalog_hash_mismatch_total",
+    "Drift de catálogo detectado em operações de rollout",
+    ["flow_id", "flow_version_id", "mode"],
 )
 
 _rollout_duration = Histogram(
@@ -169,13 +179,19 @@ def record_flow_step_execution(step_exec: FlowStepExecution) -> None:
     )
 
 
-def record_policy_violation(flow_id: str, flow_version_id: Optional[str]) -> None:
+def record_policy_violation(flow_id: str, flow_version_id: Optional[str], mode: Optional[str] = None) -> None:
     _policy_violations.labels(flow_id=flow_id, flow_version_id=flow_version_id or "unknown").inc()
+    _policy_violations_rollout.labels(
+        flow_id=flow_id,
+        flow_version_id=flow_version_id or "unknown",
+        mode=mode or "unknown",
+    ).inc()
     logger.warning(
         "flow_policy_violation",
         extra={
             "flow_id": flow_id,
             "flow_version_id": flow_version_id,
+            "mode": mode,
         },
     )
 
@@ -227,4 +243,16 @@ def record_catalog_drift(flow_id: str, flow_version_id: Optional[str]) -> None:
     logger.warning(
         "flow_catalog_drift",
         extra={"flow_id": flow_id, "flow_version_id": flow_version_id},
+    )
+
+
+def record_catalog_mismatch(flow_id: str, flow_version_id: Optional[str], mode: Optional[str]) -> None:
+    _rollout_catalog_mismatch.labels(
+        flow_id=flow_id,
+        flow_version_id=flow_version_id or "unknown",
+        mode=mode or "unknown",
+    ).inc()
+    logger.warning(
+        "flow_catalog_hash_mismatch",
+        extra={"flow_id": flow_id, "flow_version_id": flow_version_id, "mode": mode},
     )

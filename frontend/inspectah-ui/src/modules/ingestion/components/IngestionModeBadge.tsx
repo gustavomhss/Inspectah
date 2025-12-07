@@ -7,6 +7,9 @@ interface Props {
 }
 
 function IngestionModeBadge({ mode, onToggle }: Props) {
+  if (mode === 'DERIVED') {
+    return <Badge tone="info">Derivada (prov.)</Badge>;
+  }
   const label = mode === 'AUTOMATIC' ? 'Automático' : 'Manual';
   const tone = mode === 'AUTOMATIC' ? 'success' : 'warning';
 

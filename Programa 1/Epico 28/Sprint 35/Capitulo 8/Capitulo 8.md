@@ -18,14 +18,14 @@
 - Dados de diffs: diferenças de catálogo (hash antigo vs novo), mudanças de políticas/percentuais, SLOs usados.
 
 ### 8.3 Interações chave
-- **Iniciar canary/teste:** modal com percentuais/critério; valida limites; mostra preview de SLO/alertas que serão monitorados; confirma com RBAC.
-- **Promover:** botão só habilita se SLO/alertas ok e catálogo sem drift; confirma com resumo de evidências coletadas.
-- **Rollback:** botão aparece se canary/teste; exige razão; feedback imediato; atualiza timeline e badges.
-- **Baixar evidências:** link para `exec_dump`, `rollout_timeline`, screenshots; export em bundle.
-- **Differences:** toggle para ver diffs de catálogo/políticas entre versões.
+- **Iniciar canary/teste:** modal com percentuais/critério; valida limites; exige `actor` e `catalog_hash`; preview das SLO/alertas; bloqueia submissão se hash divergir.
+- **Promover:** só habilita se SLO/alertas verdes e sem drift; confirma com resumo de evidências (métricas/alertas) já coletadas; envia `operation_id`.
+- **Rollback:** sempre disponível em canary/teste; exige razão; feedback imediato; timeline atualiza; alerta de rollback dispara e aparece em UI.
+- **Baixar evidências:** links para `exec_dump`, `rollout_timeline`, screenshots reais; export bundle.
+- **Differences:** toggle para ver diffs de catálogo/políticas entre versões com hash antigo/novo.
 
 ### 8.4 Estados críticos e ergonomia
-- Sempre mostrar **modo atual** + **percentual/tempo restante** quando em canary/teste.
-- Alertas devem ser visíveis e específicos (ex.: “Drift de catálogo”, “SLO breach”, “Limite de rollback atingido”).
-- Feedback imediato pós-ação: loading → sucesso/erro; rollback/promoção refletem na tabela e painel sem reload pesado (polling curto ou websocket se disponível).
-- Acessibilidade: labels de modo/alerta com texto e ícones; estados de foco/teclado; contraste 4.5:1.
+- Sempre mostrar **modo atual** + **percentual/tempo restante** quando em canary/teste; badge “actor required” se falta contexto.
+- Alertas visíveis e específicos (“Drift de catálogo”, “SLO breach”, “Limite de rollback atingido”, “Actor ausente”).
+- Feedback imediato pós-ação com confirmação de hash e actor; rollback/promoção refletem na tabela e painel sem reload pesado (polling curto ou websocket se disponível).
+- Acessibilidade: labels de modo/alerta com texto e ícones; estados de foco/teclado; contraste 4.5:1; screenshots coletadas devem ser reais (falhar se placeholder).

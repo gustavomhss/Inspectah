@@ -302,12 +302,29 @@ export function useExecutionDetail(flowId: string | null, executionId: string | 
 export function useRollout(flowId: string | null) {
   const [status, setStatus] = useState<FlowRolloutStatus | null>(null);
   const [catalog, setCatalog] = useState<FlowCatalogEntry[]>([]);
+  const [loading, setLoading] = useState(false);
+  const reload = useCallback(async () => {
+    if (!flowId) return;
+    setLoading(true);
+    try {
+      const [st, cat] = await Promise.all([getRolloutStatus(flowId), listFlowCatalog()]);
+      setStatus(st);
+      setCatalog(cat || []);
+    } catch (err) {
+      setStatus(null);
+    } finally {
+      setLoading(false);
+    }
+  }, [flowId]);
   useEffect(() => {
     if (!flowId) return;
-    getRolloutStatus(flowId).then(setStatus).catch(() => setStatus(null));
-    listFlowCatalog().then(setCatalog).catch(() => setCatalog([]));
-  }, [flowId]);
-  return { status, catalog, setStatus };
+    void reload();
+    const t = setInterval(() => {
+      void reload();
+    }, 5000);
+    return () => clearInterval(t);
+  }, [flowId, reload]);
+  return { status, catalog, setStatus, reload, loading };
 }
 
 export function useRolloutActions(flowId: string | null, onUpdated?: (flow: Flow) => void) {
@@ -315,7 +332,7 @@ export function useRolloutActions(flowId: string | null, onUpdated?: (flow: Flow
   const [error, setError] = useState<string | null>(null);
 
   const start = useCallback(
-    async (payload: { mode: string; test_percentual: number; criteria?: Record<string, unknown>; actor?: string }) => {
+    async (payload: { mode: string; test_percentual: number; criteria?: Record<string, unknown>; actor: string; operation_id: string; catalog_hash: string }) => {
       if (!flowId) return;
       setSaving(true);
       setError(null);
@@ -338,7 +355,10 @@ export function useRolloutActions(flowId: string | null, onUpdated?: (flow: Flow
     setSaving(true);
     setError(null);
     try {
-      const updated = await promoteFlowRollout(flowId, payload || {});
+      const updated = await promoteFlowRollout(
+        flowId,
+        payload as { actor: string; operation_id: string; catalog_hash: string },
+      );
       onUpdated?.(updated);
       return updated;
     } catch (err) {
@@ -350,12 +370,20 @@ export function useRolloutActions(flowId: string | null, onUpdated?: (flow: Flow
   }, [flowId, onUpdated]);
 
   const rollback = useCallback(
-    async (flowVersionId?: string | null, payload?: { actor?: string }) => {
+    async (flowVersionId?: string | null, payload?: { actor?: string; operation_id?: string; catalog_hash?: string }) => {
       if (!flowId) return;
       setSaving(true);
       setError(null);
       try {
-        const updated = await rollbackFlowRollout(flowId, { flow_version_id: flowVersionId, ...(payload || {}) });
+        const updated = await rollbackFlowRollout(
+          flowId,
+          { flow_version_id: flowVersionId, ...(payload || {}) } as {
+            flow_version_id?: string | null;
+            actor: string;
+            operation_id: string;
+            catalog_hash: string;
+          },
+        );
         onUpdated?.(updated);
         return updated;
       } catch (err) {

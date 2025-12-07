@@ -1,9 +1,8 @@
 # Bloco 2 — Gate G2 (Console/API rollout)
-- Console multi-fluxo mostra estado de rollout/canary/teste (percentual, critérios de promoção, SLO/alertas) e ações de promoção/rollback/teste com autorização.
-- APIs em `app/api/flow_console_routes.py` incluem:
-  - `POST /api/flows/{id}/rollout` (inicia canary/teste percentual com limites/alertas).
-  - `POST /api/flows/{id}/promote` (promove versão se SLO/alertas ok).
-  - `POST /api/flows/{id}/rollback` (rollback de rollout em curso).
-  - `GET /api/flows/{id}/rollout/status` (estado atual, métricas e alertas ativos).
-- Auditoria grava `flow_id`, `flow_version_id`, `mode` (teste, canary, ativo), `operation_id`, `actor`.
-- G2 PASS: UI consome APIs reais; RBAC aplicado; logs/auditoria completos; script `bin/s35_g2_console.sh` PASS.
+- Console multi-fluxo mostra estado de rollout/teste/canary (percentual, limites, SLO/alertas) e ações start/promo/rollback com autorização obrigatória.
+- APIs em `app/api/flow_console_routes.py` devem:
+  - recusar requests sem `actor` (4xx) e registrar tentativa;
+  - aceitar `POST /api/flows/{id}/rollout|promote|rollback` apenas se catálogo/hash conferem e limites não violados;
+  - expor `GET /api/flows/{id}/rollout/status` com labels `flow_id`, `flow_version_id`, `mode`, `catalog_hash`, métricas/alertas relevantes.
+- Auditoria obrigatória: `flow_id`, `flow_version_id`, `mode`, `operation_id`, `actor`, `catalog_hash`, `request_id`, timestamp.
+- G2 PASS: UI consome APIs reais (sem mock); RBAC aplicado; casos negativos (sem actor, hash divergente, limite violado) retornam erro e são evidenciados; script `bin/s35_g2_console.sh` captura logs/JSON reais.

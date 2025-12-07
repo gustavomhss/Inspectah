@@ -1,0 +1,10 @@
+{
+  "item_id": "189edbc0e6e76091",
+  "source_id": "rss_news_minimal",
+  "canonical_url": "http://example.com/articles/second",
+  "collected_at": "2025-12-07T05:29:07.470444+00:00",
+  "content_hash": "234616f6e7e2645cdc8feef0f97984316fab5858c451d9d8257b043e4f8fea6e",
+  "raw_path": "/Users/gustavoschneiter/Documents/Inspectah/data/evidence/rss_news_minimal/2025/12/07/189edbc0e6e76091/raw.html",
+  "text_path": "/Users/gustavoschneiter/Documents/Inspectah/data/evidence/rss_news_minimal/2025/12/07/189edbc0e6e76091/text.txt",
+  "evidence_sha256": "f29b2a4523c7bc93e09f772560e56295431ca3cae036e7829b3fb8b84e604679"
+}

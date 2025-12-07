@@ -61,7 +61,7 @@ function MainLayout() {
                 Fontes
               </NavLink>
               <NavLink to="/admin/providers" className={navLinkClass}>
-                Providers v2
+                Perfis de Fonte
               </NavLink>
               <NavLink to="/admin/ingestion" className={navLinkClass}>
                 Ingestão

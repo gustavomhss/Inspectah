@@ -50,6 +50,27 @@
       "type": "stat",
       "unit": "breaches",
       "query": "sum(increase(inspectah_flow_slo_breach_total[1h])) by (flow_id, flow_version_id, slo_id)"
+    },
+    {
+      "id": "newsdata_requests",
+      "title": "Newsdata requests vs errors",
+      "type": "timeseries",
+      "unit": "req/min",
+      "query": "sum by(source_id, status) (rate(newsdata_ingest_requests_total[5m]))"
+    },
+    {
+      "id": "newsdata_items",
+      "title": "Newsdata items ingeridos",
+      "type": "timeseries",
+      "unit": "items/min",
+      "query": "sum by(source_id) (rate(newsdata_items_ingested_total[5m]))"
+    },
+    {
+      "id": "newsdata_duration_p95",
+      "title": "Newsdata duração p95",
+      "type": "timeseries",
+      "unit": "s",
+      "query": "histogram_quantile(0.95, sum by (le, source_id) (rate(newsdata_ingest_duration_seconds_bucket[5m])))"
     }
   ]
 }

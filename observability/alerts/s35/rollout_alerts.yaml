@@ -29,3 +29,30 @@ groups:
           severity: critical
         annotations:
           summary: "Drift de catálogo detectado em rollout {{ $labels.flow_id }} {{ $labels.flow_version_id }}"
+  - name: s35_newsdata_ingest
+    rules:
+      - alert: S35_NewsdataErrorsRateHigh
+        expr: |
+          sum by(source_id) (increase(newsdata_ingest_errors_total[15m]))
+          /
+          sum by(source_id) (increase(newsdata_ingest_requests_total[15m]))
+          > 0.05
+        for: 15m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Erro alto na ingestão newsdata {{ $labels.source_id }}"
+      - alert: S35_NewsdataRequestsZero
+        expr: sum by(source_id) (increase(newsdata_ingest_requests_total[30m])) == 0
+        for: 30m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Sem requisições newsdata nos últimos 30m {{ $labels.source_id }}"
+      - alert: S35_NewsdataItemsFlat
+        expr: sum by(source_id) (increase(newsdata_items_ingested_total[30m])) == 0
+        for: 30m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Sem novos itens ingeridos newsdata {{ $labels.source_id }}"

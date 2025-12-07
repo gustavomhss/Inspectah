@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import hashlib
 import logging
+import os
+import time
 import uuid
-from datetime import datetime
-from typing import Callable, Optional
+from datetime import datetime, timedelta
+from typing import Callable, Dict, List, Optional, Tuple
 
 from app.ingestion import state_machine
 from app.ingestion.errors import (
@@ -27,11 +30,32 @@ from app.ingestion.models import (
 )
 from app.ingestion.repository import IngestionRepository
 from app.ingestion import observability
+from app.ingestion.providers.news_provider_client import NewsProviderClient, RawNewsItem
 from app.sources.models import Source, SourceState
 from app.sources.service import get_source_detail
+from app.providers.models import IngestionProfile, ProfileKind, ProviderStatus
+from metrics import newsdata_ingest
 from inspectah.watchers.rss import _fetch_feed as _fetch_rss_feed, _parse_rss as _parse_rss_feed
 
 logger = logging.getLogger(__name__)
+
+NEWS_DATA_DOMAINS = [
+    "g1.globo.com",
+    "folha.uol.com.br",
+    "estadao.com.br",
+    "valor.globo.com",
+    "infomoney.com.br",
+    "agenciabrasil.ebc.com.br",
+    "correiobraziliense.com.br",
+    "gazetadopovo.com.br",
+    "nsctotal.com.br",
+    "correiodopovo.com.br",
+    "diariodonordeste.verdesmares.com.br",
+    "atarde.com.br",
+    "diariodopara.dol.com.br",
+    "adrenaline.com.br",
+    "lance.com.br",
+]
 
 
 def _gen_id(prefix: str) -> str:
@@ -44,6 +68,196 @@ def _assert_source_available(source: Optional[Source], expected_id: str) -> Sour
     if source.state in {SourceState.DISABLED_PERM, SourceState.DISABLED_TEMP}:
         raise SourceNotEligibleError("Fonte desabilitada para ingestão.")
     return source
+
+
+def _build_newsdata_profile() -> IngestionProfile:
+    return IngestionProfile.create(
+        id="profile_newsdata_br",
+        provider_id="newsdata",
+        name="newsdata.io Brasil",
+        slug="newsdata_br",
+        kind=ProfileKind.NEWS,
+        country="br",
+        language="pt",
+        categories=[],
+        keywords=[],
+        filters={"domainurl": ",".join(NEWS_DATA_DOMAINS)},
+        frequency_minutes=60,
+        enabled=True,
+        status=ProviderStatus.ACTIVE,
+    )
+
+
+def _newsdata_hash(entry: Dict) -> str:
+    raw = "|".join(
+        [
+            str(entry.get("id", "")),
+            entry.get("title") or "",
+            entry.get("link") or "",
+            entry.get("pubDate") or "",
+            entry.get("source_id") or "",
+            ",".join(entry.get("category") or []),
+            entry.get("description") or entry.get("content") or "",
+        ]
+    )
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
+
+def _dedup_newsdata_items(items: List[RawNewsItem]) -> Tuple[List[Dict], int]:
+    seen = set()
+    deduped: List[Dict] = []
+    duplicates = 0
+    for item in items:
+        key = (item.external_id, item.url, item.published_at)
+        if key in seen:
+            duplicates += 1
+            continue
+        seen.add(key)
+        payload = {
+            "id": item.external_id,
+            "title": item.title,
+            "link": item.url,
+            "pubDate": item.published_at,
+            "source_id": item.source_name,
+            "category": item.categories,
+            "description": item.summary,
+            "language": item.language,
+            "country": item.country,
+            "raw": item.payload,
+        }
+        payload["hash"] = _newsdata_hash(payload)
+        deduped.append(payload)
+    return deduped, duplicates
+
+
+def run_newsdata_ingestion(
+    *,
+    trigger_origin: str = "ops_api",
+    repo: Optional[IngestionRepository] = None,
+    size: int = 50,
+    throttle_seconds: float = 1.0,
+    max_attempts: int = 3,
+    domains_override: Optional[List[str]] = None,
+) -> IngestionRun:
+    """
+    Ingestão real do newsdata.io com throttling/backoff e persistência (G4).
+    - Fonte fixa: newsdata_br
+    - RBAC: endpoint deve validar role externamente (ops_ingest)
+    """
+    repo = repo or IngestionRepository()
+    source_id = "newsdata_br"
+    now = datetime.utcnow()
+    recent = repo.list_runs_by_source_between(source_id, now - timedelta(minutes=1), now)
+    if len(recent) >= 3:
+        raise RunInProgressError("Limite de 3 runs/min para newsdata_br excedido")
+    runs_today = repo.list_runs_by_source_between(source_id, now - timedelta(days=1), now)
+    daily_requests = sum(len((r.meta or {}).get("attempts", [])) or 0 for r in runs_today)
+    if daily_requests >= 1000:
+        raise RunInProgressError("Quota diária de 1000 requisições excedida para newsdata_br")
+    config = repo.get_config(source_id) or IngestionConfig.create(
+        id=_gen_id("cfg"),
+        source_id=source_id,
+        source_state=SourceState.ACTIVE,
+        enabled=True,
+        mode=IngestionMode.MANUAL_ONLY,
+        interval_minutes=60,
+        max_attempts=3,
+        timeout_seconds=60,
+        created_by="ops_ingest",
+    )
+    if not repo.get_config(source_id):
+        repo.save_config(config)
+
+    run = IngestionRun.create(
+        id=_gen_id("run"),
+        config=config,
+        trigger=IngestionTrigger.MANUAL,
+        status=IngestionStatus.RUNNING,
+        meta={"trigger_origin": trigger_origin},
+    )
+    repo.insert_run(run)
+    repo.set_last_run(config.id, run.id)
+    observability.log_run_start(run)
+
+    api_key = os.environ.get("NEWSDATA_API_KEY", "pub_1eb578cc391148dfb475bf474f2d2173")
+    base_url = os.environ.get("NEWSDATA_BASE_URL", "https://newsdata.io/api/1")
+    profile = _build_newsdata_profile()
+    client = NewsProviderClient(api_key=api_key, base_url=base_url)
+    domains = domains_override or NEWS_DATA_DOMAINS
+    requested_size = size
+    per_request_size = min(max(size, 1), 10)  # newsdata aceita até 10 itens por requisição
+    size = min(max(size, 1), 50)
+    attempt_log: List[dict] = []
+
+    start_time = time.time()
+    try:
+        all_items: List[RawNewsItem] = []
+        for i in range(0, len(domains), 5):
+            batch = domains[i : i + 5]
+            raw_items = client.fetch(
+                profile,
+                size=per_request_size,
+                domains=batch,
+                throttle_seconds=throttle_seconds,
+                max_attempts=max_attempts,
+                attempt_log=attempt_log,
+            )
+            all_items.extend(raw_items)
+        deduped, duplicates = _dedup_newsdata_items(all_items)
+        payload_ref = repo.save_raw_payload(run.id, source_id, deduped)
+        duration = time.time() - start_time
+        newsdata_ingest.record_request(source_id, "success", duration_seconds=duration)
+        newsdata_ingest.record_items(source_id, len(deduped))
+        _mark_run_success(repo, run, items_processed=len(deduped), payload_ref=payload_ref)
+        run.meta.update(
+            {
+                "fetched": len(all_items),
+                "deduped": len(deduped),
+                "duplicates": duplicates,
+                "domains": domains,
+                "throttle_seconds": throttle_seconds,
+                "max_attempts": max_attempts,
+                "payload_ref": payload_ref,
+                "items_sample": deduped[:5],
+                "duration_seconds": duration,
+                "attempts": attempt_log,
+                "size": size,
+                "requested_size": requested_size,
+                "per_request_size": per_request_size,
+                "trigger_origin": trigger_origin,
+                "requests_count": len(attempt_log),
+            }
+        )
+        repo.update_run(run)
+        return run
+    except Exception as exc:  # noqa: BLE001
+        error_type = getattr(exc, "__class__", type("obj", (), {})).__name__.lower()
+        newsdata_ingest.record_request(source_id, "error")
+        newsdata_ingest.record_error(source_id, error_type)
+        run.meta.update(
+            {
+                "domains": domains,
+                "throttle_seconds": throttle_seconds,
+                "max_attempts": max_attempts,
+                "attempts": attempt_log,
+                "size": size,
+                "requested_size": requested_size,
+                "per_request_size": per_request_size,
+                "trigger_origin": trigger_origin,
+                "error_type": error_type,
+                "requests_count": len(attempt_log),
+            }
+        )
+        repo.update_run(run)
+        _mark_run_fail(
+            repo,
+            run,
+            error_code=error_type,
+            error_message=str(exc),
+            items_processed=0,
+            payload_ref=None,
+        )
+        raise
 
 
 def _ensure_config_allows_trigger(config: IngestionConfig, trigger: IngestionTrigger) -> None:
@@ -225,7 +439,8 @@ def toggle_ingestion_mode(
     config.enabled = enabled
     config.updated_by = updated_by
     config.updated_at = datetime.utcnow()
-    _ensure_config_allows_trigger(config, IngestionTrigger.MANUAL if new_mode == IngestionMode.MANUAL_ONLY else IngestionTrigger.AUTOMATIC)
+    if enabled:
+        _ensure_config_allows_trigger(config, IngestionTrigger.MANUAL if new_mode == IngestionMode.MANUAL_ONLY else IngestionTrigger.AUTOMATIC)
     return repo.save_config(config)
 
 

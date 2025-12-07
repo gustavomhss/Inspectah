@@ -1,5 +1,6 @@
 # Bloco 3 — Objetivos e estados-alvo (testáveis)
-- **Rollout governado:** canary/teste percentual iniciados via API/Console, com limites/flags, critérios automáticos de promoção/rollback e auditoria completa (`flow_id`, `flow_version_id`, `operation_id`).
-- **Catálogo versionado/assinado:** `config/flow_catalog/*.yaml` com hash/assinatura; CLI/CI para publicar/validar/sincronizar; divergência derruba gate.
-- **Contratos expostos:** `flow_version_id` + políticas enviadas para lógica/Truth (E40.5) e usadas em OracleOps (labels/filters).
-- **OracleOps v3:** painel e alertas por modo (teste/canary/ativo), diffs de versão, timeline de promoções/rollback, SLO/incident por experimento.
+- **Rollout governado real:** canary/teste percentual iniciados via API/Console, limites aplicados (tempo/percentual/rollbacks), bloqueio automático se SLO/alerta negativo, rollback exercitado, auditoria completa (`flow_id`, `flow_version_id`, `mode`, `operation_id`, `actor`, `catalog_hash`).
+- **Catálogo versionado/assinado:** `config/flow_catalog/*.yaml` com hash/assinatura; CLI/CI para publicar/validar/sincronizar; runtime compara hash e recusa drift; evidência de hash no bundle.
+- **Contratos expostos:** eventos para OracleOps/Truth contendo flow/mode/version + `operation_id` e `actor`; `_derive_slo_status` consultando SLO real e registrando `slo_breach`.
+- **Observabilidade viva:** métricas `inspectah_flow_*` expostas e consultadas; alertas Prometheus disparam com simulação controlada; painel `s35_flow_rollout_overview` populado com dados reais.
+- **Pilotos reais:** news_v2 e contestacao_v0 executados via API/UI; promoção e rollback registrados; evidências (logs, métricas, screenshots reais, hashes) sem placeholders.

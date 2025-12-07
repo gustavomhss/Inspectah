@@ -33,6 +33,13 @@ from app.ingestion.schemas import (
     TriggerRunResponse,
 )
 from app.sources.service import get_source_detail
+try:
+    from app.utils.rbac import require_role
+except ModuleNotFoundError:  # pragma: no cover
+    def require_role(roles: Optional[set] = None, header_name: str = "x-role"):
+        def _dep():
+            return header_name  # dummy placeholder
+        return _dep
 
 
 def get_repo() -> IngestionRepository:
@@ -64,9 +71,26 @@ if APIRouter is not None:  # pragma: no cover
     def trigger_manual_run(
         source_id: str,
         payload: ManualRunRequest,
+        _: str = Depends(require_role(roles={"admin", "ops_ingest"}, header_name="x-role")),
         repo: IngestionRepository = Depends(get_repo),
         source_fetcher=Depends(get_source_fetcher),
     ) -> TriggerRunResponse:
+        # newsdata_br usa pipeline ops-only (run_newsdata_ingestion)
+        target_id = source_id
+        try:
+            source = source_fetcher(source_id)
+            target_id = getattr(source, "id", source_id)
+        except Exception:
+            source = None
+        if target_id in {"newsdata_br", "src_afca2b6b12"} or (source and getattr(source, "slug", None) == "newsdata_br"):
+            try:
+                run = services.run_newsdata_ingestion(
+                    trigger_origin=payload.trigger_origin,
+                    repo=repo,
+                )
+                return TriggerRunResponse(run_id=run.id, status=run.status, trigger=run.trigger)
+            except Exception as exc:  # noqa: BLE001
+                raise _handle_domain_error(exc) from exc
         try:
             run = services.start_ingestion_run(
                 source_id,
@@ -112,8 +136,13 @@ if APIRouter is not None:  # pragma: no cover
 
     @router.get("/{source_id}/runs", response_model=RunsResponse)
     def list_runs(source_id: str, limit: int = 20, offset: int = 0, repo: IngestionRepository = Depends(get_repo)) -> RunsResponse:
-        runs = repo.list_runs_by_source(source_id, limit=limit, offset=offset)
-        cfg = repo.get_config(source_id)
+        try:
+            runs = repo.list_runs_by_source(source_id, limit=limit, offset=offset)
+            cfg = repo.get_config(source_id)
+        except Exception:  # noqa: BLE001
+            # Fonte sem config/ingestão: responder vazio (200) para não poluir logs da UI
+            runs = []
+            cfg = None
         summaries = [
             RunSummary(
                 id=run.id,
@@ -125,6 +154,7 @@ if APIRouter is not None:  # pragma: no cover
                 items_processed=run.items_processed,
                 error_code=run.error_code,
                 error_message=run.error_message,
+                meta=run.meta or {},
             )
             for run in runs
         ]
@@ -149,6 +179,7 @@ if APIRouter is not None:  # pragma: no cover
             items_processed=run.items_processed,
             error_code=run.error_code,
             error_message=run.error_message,
+            meta=run.meta or {},
             payload_ref=run.payload_ref,
         )
 else:  # pragma: no cover

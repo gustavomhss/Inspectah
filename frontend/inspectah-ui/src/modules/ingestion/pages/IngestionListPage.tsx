@@ -46,7 +46,13 @@ function IngestionListPage() {
           ? 'Já existe uma ingestão em andamento para esta fonte.'
           : status === 404
             ? 'Fonte ou ingestão não encontrada.'
-            : 'Não foi possível iniciar a ingestão. Tente novamente.';
+            : status === 429
+              ? 'Fonte externa limitou requisições (429). Aguarde e tente novamente.'
+              : status && status >= 500
+                ? 'Erro na fonte externa (5xx). Tente após alguns minutos.'
+                : status && status >= 400
+                  ? 'Erro na fonte externa (4xx). Verifique limites ou credenciais.'
+                  : 'Não foi possível iniciar a ingestão. Tente novamente.';
       setMessage({ tone: 'danger', text: base });
     } finally {
       setRunningIds((prev) => {
@@ -79,9 +85,19 @@ function IngestionListPage() {
 
   return (
     <div className="space-y-4">
-      <PageHeader title="Ingestão" subtitle="Status de ingestão por fonte" />
+      <PageHeader title="Ingestão" subtitle="Status de ingestão por fonte (histórico só leitura; retry opcional em falha)" />
       <PageContainer>
         <div className="flex flex-col gap-3">
+          <div className="rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200">
+            <p className="font-semibold text-white">newsdata_br</p>
+            <p className="text-xs text-slate-300">
+              CTA ops_ingest aciona pipeline real (size 50 dividido em requisições de 10). Mensagens dedicadas para 429/5xx/4xx; histórico global é apenas leitura,
+              com retry opcional em falha.
+            </p>
+            <p className="mt-1 text-xs text-slate-300">
+              Fontes derivadas: os domínios carregados pelo provedor aparecem como derivadas (somente leitura). Use o detalhe do provedor newsdata_br para ver a lista.
+            </p>
+          </div>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <IngestionFiltersBar
               types={types}

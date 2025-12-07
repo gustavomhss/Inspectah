@@ -1,4 +1,4 @@
 # Bloco 4 — Escopo, fronteiras e riscos imediatos
-- **IN:** rollout governado (canary/teste percentual) + limites/flags; catálogo versionado/assinado + CLI/CI; contratos `flow_version_id`/políticas; OracleOps v3 de rollout; pilotos notícias/contestação v0 com evidências.
-- **OUT:** editor visual avançado; inteligência de agentes (Programa 2); Truth-DB profunda; multi-tenant/quotas; roteamento condicional complexo; canary auto-adaptativo.
-- **Riscos:** incidente por canary sem limites; drift de catálogo entre ambientes; promoções sem dados suficientes; integração lógica/Truth atrasar; mitigação via gates G1–G4, limites, hash obrigatório, evidências reais e rollback rápido.
+- **IN:** limites aplicados (tempo/percentual/rollbacks), SLO/alertas vivos, catálogo assinado e comparado em runtime, RBAC obrigatório, eventos OracleOps/Truth, pilotos reais news_v2/contestacao_v0 (API/UI/metrics), evidência de alert firing + `slo_breach` gravado.
+- **OUT:** editor visual, lógica de agentes, contestação/Truth avançada, blockchain/blocos, multi-tenant/quotas, canary auto-adaptativo, roteamento condicional avançado.
+- **Riscos imediatos:** repetição de placeholders em G3/G4; falta de IdP travar actor obrigatório; ambientes sem Prometheus/Alertmanager real; painéis sem dados por falta de tráfego; hash divergente entre catálogo e runtime. Mitigação: gates proibindo placeholder, smoke HTTP + promtool obrigatórios, modo de fallback com mocks explícitos e marcados como NO-GO, bundle com hashes comparados.

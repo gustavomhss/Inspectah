@@ -92,8 +92,13 @@ export type AdminSourceType =
 
 export interface AdminSource {
   id: string;
+  slug?: string;
   name: string;
   type: AdminSourceType;
+  provider_id?: string | null;
+  provider_kind?: string | null;
+  derived_from?: string | null;
+  meta?: Record<string, unknown>;
   category?: string;
   state: AdminSourceState;
   ingestion_mode?: IngestionMode | null;
@@ -182,7 +187,7 @@ export interface AdminHealth {
 }
 
 // Ingestão 2.0 (Sprint 22)
-export type IngestionMode = 'MANUAL_ONLY' | 'AUTOMATIC';
+export type IngestionMode = 'MANUAL_ONLY' | 'AUTOMATIC' | 'DERIVED';
 export type IngestionStatus = 'PENDING' | 'RUNNING' | 'SUCCESS' | 'PARTIAL_SUCCESS' | 'FAIL';
 
 export interface IngestionConfig {
@@ -208,6 +213,7 @@ export interface IngestionRun {
   error_code?: string | null;
   error_message?: string | null;
   payload_ref?: string | null;
+  meta?: Record<string, unknown>;
 }
 
 export interface IngestionRunsResponse {

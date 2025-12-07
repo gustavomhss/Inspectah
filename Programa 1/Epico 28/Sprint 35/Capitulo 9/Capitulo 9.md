@@ -14,10 +14,11 @@
 - **Segurança por design:** rollback e promoção pedem confirmação e mostram impacto (modo atual → modo destino).
 
 ### 9.3 Estados visuais críticos
-- **Canary/teste:** badge colorida + percentual + tempo restante; card de critérios com status (pass/fail/pending).
-- **Promoção bloqueada:** botão desabilitado com tooltip “Drift de catálogo” ou “Alertas ativos”; linha da tabela mostra ícone de bloqueio.
-- **Rollback em andamento:** linha sombreada, spinner; toast “Rollback acionado (op-123)” com opção de ver timeline.
-- **Drift de catálogo:** banner persistente no painel; badge vermelho na lista; CTA para abrir runbook/CLI.
+- **Canary/teste:** badge colorida + percentual + tempo restante; card de critérios com status (pass/fail/pending); info de `actor` + `operation_id`.
+- **Promoção bloqueada:** botão desabilitado com tooltip “Drift de catálogo”, “Alertas ativos” ou “Actor ausente”; linha da tabela mostra ícone de bloqueio e link para evidência/alerta.
+- **Rollback em andamento:** linha sombreada, spinner; toast “Rollback acionado (op-123)” com opção de ver timeline e alert firing.
+- **Drift de catálogo:** banner persistente no painel; badge vermelho na lista; CTA para abrir runbook/CLI; bloqueio claro das ações.
+- **SLO breach simulada (G3/G4):** badge laranja “SLO breach (simulação)”, card com PromQL usado, link para evidência; desaparece só após resolução real.
 - **Erro de API:** mensagem inline “Falha ao iniciar canary: percentual > limite”; usuário pode editar e reenviar.
 
 ### 9.4 Motion, microcopy e acessibilidade

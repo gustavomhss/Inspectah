@@ -8,17 +8,18 @@ OUT_DIR="out/scorecards"
 EVIDENCE_DIR="out/evidence/S35_metrics_summary"
 SCORECARD_PATH="$OUT_DIR/S35_metrics_summary.json"
 LOG="$EVIDENCE_DIR/run.log"
+OUT_LOG="out/logs/SF1_bin_s35_metrics_summary.log"
 
-mkdir -p "$OUT_DIR" "$EVIDENCE_DIR"
+mkdir -p "$OUT_DIR" "$EVIDENCE_DIR" out/logs
 
-echo "[S35_metrics_summary] Gerando resumo de métricas de rollout" | tee "$LOG"
+echo "[S35_metrics_summary] Gerando resumo de métricas de rollout" | tee "$LOG" "$OUT_LOG"
 
 PYTHON_BIN="${PYTHON_BIN:-.venv/bin/python}"
 if [ ! -x "$PYTHON_BIN" ]; then
   PYTHON_BIN="python3"
 fi
 
-$PYTHON_BIN - <<'PY' 2>&1 | tee -a "$LOG"
+$PYTHON_BIN - <<'PY' 2>&1 | tee -a "$LOG" "$OUT_LOG"
 import json
 import os
 from pathlib import Path
@@ -56,4 +57,4 @@ Path(SCORECARD_PATH).write_text(json.dumps({
 }, indent=2))
 PY
 
-echo "[S35_metrics_summary] Resumo salvo em $SCORECARD_PATH" | tee -a "$LOG"
+echo "[S35_metrics_summary] Resumo salvo em $SCORECARD_PATH" | tee -a "$LOG" "$OUT_LOG"

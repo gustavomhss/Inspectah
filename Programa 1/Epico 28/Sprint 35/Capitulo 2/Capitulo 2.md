@@ -1,27 +1,51 @@
 # Inspectah — Sprint 35 — Capítulo 2
-## Objetivos, Gates, Métricas & DoD (Governança avançada de fluxo)
+## Objetivos, Gates, Métricas & DoD (Governança avançada de rollout)
 
-### 2.1 Objetivos ↔ Gates (ver Matriz de Cobertura)
-- O1 — Rollout governado com promoção/rollback auditável → **G1**, **G2**.
-- O2 — Catálogo versionado/assinado com CLI/CI e uso em runtime → **G0**, **G1**, **G3**.
-- O3 — Contratos expostos (`flow_version_id` + políticas) para lógica/Truth e OracleOps → **G2**, **G4**.
-- O4 — Observabilidade/alertas por modo (teste/canary/ativo) e bundle de evidências → **G3**, **G4**, **G5**.
+### 2.1 Objetivos ↔ Gates (Matriz)
+- O1 — Rollout governado com limites aplicados e bloqueio automático → **G1**, **G2**.
+- O2 — Catálogo versionado/assinado carregado em runtime com hash comparado → **G0**, **G1**, **G3**.
+- O3 — SLO/alerta e OracleOps/Truth integrados (eventos e métricas reais) → **G3**, **G4**.
+- O4 — Pilotos reais (API/UI/metrics) com promo/rollback e bundle auditável → **G4**, **G5**.
+- O5 — RBAC/auditoria obrigatórios (actor + operação) → **G2**, **G4**, **G5**.
 
-### 2.2 Gates G0–G5 (testáveis)
-- **G0 — Escopo & Catálogo pronto:** 24 arquivos 6×4 completos; catálogo inicial `config/flow_catalog/*.yaml` (news_v2, contestacao_v0) com hash/assinatura; `bin/s35_g0_scope.sh` PASS.
-- **G1 — Modelo/rollout habilitado:** migração `0036_s35_flow_governance_advanced.py` aplicada; modos teste/canary/ativo suportados; limites/flags ativos; políticas carregadas do catálogo sem erro; rollback/promoção bloqueiam violações; `bin/s35_g1_model.sh` PASS.
-- **G2 — Console/API rollout:** rotas e UI para iniciar canary/teste, promover e rollback com RBAC; estado/diffs visíveis; auditoria completa (`flow_id`, `flow_version_id`, `mode`, `operation_id`, `actor`); `bin/s35_g2_console.sh` PASS.
-- **G3 — Observabilidade rollout:** métricas/logs/alertas por fluxo/versão/mode; painel `s35_flow_rollout_overview` não vazio; alertas disparam; `bin/s35_g3_obs.sh` PASS.
-- **G4 — Pilotos rollout:** fluxos de notícias e contestação v0 executam canary/teste → promoção/rollback evidenciados; catálogo publicado e consumido; bundle multi-fluxo gerado; `bin/s35_g4_pilotos.sh` PASS.
-- **G5 — ORR/DoD:** review G0–G4 + `S35_metrics_summary.json`; GO/NO-GO com riscos/flags; runbooks ensaiados; bundle `inspectah_s35_evidence_bundle.zip` gerado.
+### 2.2 Gates G0–G5 (testáveis e proibem placeholder)
+- **G0 — Escopo & Catálogo blindado**
+  - 9×4 completo, s35_slos.md carregado como fonte única de SLO.
+  - Catálogo inicial `config/flow_catalog/*.yaml` (news_v2, contestacao_v0) assinado + hash calculado; CLI/CI `bin/s35_bundle.sh` gera manifest e comparação.
+  - Falha se qualquer entry sem assinatura/hash ou se hash runtime ≠ publicado.
+- **G1 — Modelo/rollout com limites aplicados**
+  - Migração `0036_s35_flow_governance_advanced.py` aplicada; modos teste/canary/ativo.
+  - Limites `max_canary_duration_minutes`, `operation_timeout_seconds`, `max_rollbacks_per_hour`, `max_test_percentual` aplicados e testados com casos negativos.
+  - Promo/rollback bloqueiam se SLO/alerta negativo ou se catálogo diverge; evidência em logs + métrica `flow_policy_violations_total`.
+  - Script `bin/s35_g1_model.sh` roda unidades felizes + negativas (tempo, percentual, ausência de actor).
+- **G2 — Console/API rollout com RBAC obrigatório**
+  - Rotas e UI para start/promo/rollback exigem `actor`; chamadas sem actor retornam 4xx e logam tentativa.
+  - Auditoria completa (`flow_id`, `flow_version_id`, `mode`, `operation_id`, `actor`, `catalog_hash`, `request_id`); diffs/estado visíveis no console.
+  - `bin/s35_g2_console.sh` inclui testes HTTP de erro (sem actor, catálogo divergente) + sucesso com evidências de auditoria.
+- **G3 — Observabilidade real (sem placeholders)**
+  - Métricas `inspectah_flow_*` expostas e consultadas via `curl /metrics` + `promtool`.
+  - Alertas definidos para SLO/limites e simulados (forçar `flow_rollout_rollback_total` e `flow_policy_violations_total`); evidência de firing/resolve.
+  - Painel `s35_flow_rollout_overview` renderizado com dados reais; export JSON/PNG incluído.
+  - `bin/s35_g3_obs.sh` falha se métricas não aparecem, se promtool quebra, ou se alerta não dispara.
+- **G4 — Pilotos reais (API/UI/metrics)**
+  - news_v2 e contestacao_v0 executados com canary/teste percentual via API/UI; rollback e promoção exercitados.
+  - Uso de catálogo assinado publicado; script checa hash consumo vs publicação.
+  - Evidências: logs de API, métricas coletadas, screenshots reais (Playwright ou grab) do console, alert firing em piloto, registro de `slo_breach` simulado.
+  - `bin/s35_g4_pilotos.sh` falha se detectar fixtures duplicados/placeholders.
+- **G5 — ORR/DoD + decisão**
+  - Review G0–G4, `S35_metrics_summary.json`, `inspectah_s35_evidence_bundle.zip`.
+  - GO/NO-GO explícito com riscos e flags; se qualquer gate teve mock/placeholder, resultado é NO-GO.
+  - Runbooks ensaiados para rollback rápido e freeze de catálogo.
 
 ### 2.3 Métricas e alertas chave
-- Métricas de rollout: `flow_rollout_requests_total{flow_id,flow_version_id,mode}`, `flow_rollout_success_total`, `flow_rollout_rollback_total`, `flow_rollout_duration_seconds`, `flow_policy_violations_total`.
-- Métricas de execução: `flow_exec_total{flow_id,flow_version_id,mode}`, `flow_exec_latency_p95`, `flow_exec_error_total`.
-- Alertas: `rollbacks_rate_gt_threshold` (canary), `slo_breach_mode` (teste/ativo), `catalog_hash_drift`, `policy_violation_canary`, `canary_stuck_duration`.
+- Métricas rollout: `flow_rollout_requests_total`, `flow_rollout_success_total`, `flow_rollout_rollback_total`, `flow_rollout_duration_seconds`, `flow_policy_violations_total`, `flow_catalog_hash_mismatch_total`, sempre com labels `{flow_id,flow_version_id,mode}`.
+- SLOs (fonte: s35_slos.md) aplicados em código e alertas: duração canary/teste, violações de política, rollback_rate, disponibilidade API rollout, freshness do painel.
+- Alertas mínimos: `rollbacks_rate_gt_threshold`, `slo_breach_mode`, `catalog_hash_drift`, `policy_violation_canary`, `canary_stuck_duration`, `api_rollout_unavailable`.
+- Evidência obrigatória: print do firing/resolution, query PromQL com séries não vazias, hash comparado (publish vs runtime).
 
 ### 2.4 Invariantes & DoD
-- Toda operação de rollout/promoção/rollback é auditada com `flow_id`, `flow_version_id`, `mode`, `operation_id`, `actor`, `catalog_hash`.
-- Catálogo publicado (hash/assinatura) é o mesmo carregado em runtime; divergência falha **G1/G3**.
-- Canary/teste percentual respeitam limites (`max_test_percentual`, `max_rollbacks_per_hour`, `max_canary_duration_minutes`) e bloqueiam promoção se SLO/alertas negativos.
-- **DoD:** G0–G5 PASS; catálogo versionado e publicado; rollout governado nos dois pilotos com evidências (logs, métricas, timeline, screenshots, bundle); OracleOps exibe estado de rollout e SLO/alertas por modo; contratos com `flow_version_id` expostos.
+- `actor` obrigatório em toda operação; ausência = 4xx + log de tentativa.
+- Catálogo publicado (assinatura + hash) = catálogo carregado; divergência bloqueia operação e marca `policy_violation`.
+- Limites de tempo/percentual/rollbacks aplicados em runtime; promoção/rollback só ocorre se SLO/alertas verdes.
+- `_derive_slo_status` grava `operacao='slo_breach'` em log/métrica quando simulado; eventos OracleOps/Truth recebem `flow_id/flow_version_id/mode`.
+- **DoD:** G0–G5 PASS sem placeholders; pilotos reais completos; bundle com logs, métricas, hashes, screenshots reais; painel/alertas comprovados; OracleOps/Truth recebendo eventos; scorecard de gates não tem “PASS sintético”.

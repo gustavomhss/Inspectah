@@ -10,7 +10,10 @@ except ModuleNotFoundError:  # pragma: no cover
     CORSMiddleware = None  # type: ignore[misc]
 
 from .explore.api import build_router
-from .ui.consultation_api import router as consultation_router
+try:  # pragma: no cover
+    from .ui.consultation_api import router as consultation_router
+except ModuleNotFoundError:  # pragma: no cover
+    consultation_router = None
 # Routers carregados individualmente para que uma falha não silencie as demais rotas admin
 try:  # pragma: no cover
     from app.admin.routes import dashboard_router, router as admin_router
@@ -74,6 +77,10 @@ try:  # pragma: no cover
     from app.api.ops_cockpit_routes import router as ops_cockpit_router
 except ModuleNotFoundError:  # pragma: no cover
     ops_cockpit_router = None
+try:  # pragma: no cover
+    from app.api.newsdata_ingest_routes import router as newsdata_router
+except ModuleNotFoundError:  # pragma: no cover
+    newsdata_router = None
 
 
 def _add_cors(app: FastAPI, origins: Iterable[str]) -> None:
@@ -131,6 +138,9 @@ def build_app():  # pragma: no cover
         app.include_router(providers_router, tags=["providers"])
     if ops_cockpit_router is not None:
         app.include_router(ops_cockpit_router)
+    if newsdata_router is not None:
+        # Router já define prefixo /api/ingest/newsdata; não aplicar prefixo extra
+        app.include_router(newsdata_router, tags=["ingestion"])
     if copiloto_fontes_router is not None:
         app.include_router(copiloto_fontes_router, prefix="/admin/copiloto-fontes", tags=["admin-copiloto-fontes"])
     if auth_router is not None:

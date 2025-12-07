@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -30,6 +30,7 @@ class RunSummary(BaseModel):
     items_processed: int = 0
     error_code: Optional[str] = None
     error_message: Optional[str] = None
+    meta: Dict[str, Any] = Field(default_factory=dict)
 
 
 class RunDetail(RunSummary):
@@ -61,6 +62,21 @@ class TriggerRunResponse(BaseModel):
     run_id: str
     status: IngestionStatus
     trigger: IngestionTrigger
+
+
+class NewsdataRunRequest(BaseModel):
+    trigger_origin: str = "ops_api"
+    size: int = 50
+    throttle_seconds: float = 1.0
+    max_attempts: int = 3
+
+
+class NewsdataRunResponse(BaseModel):
+    run_id: str
+    status: IngestionStatus
+    items_processed: int
+    payload_ref: Optional[str] = None
+    meta: dict = Field(default_factory=dict)
 
 
 class ErrorResponse(BaseModel):

@@ -154,6 +154,7 @@ class FlowOperationRead(BaseModel):
     mode: Optional[str] = None
     actor: Optional[str] = None
     catalog_hash: Optional[str] = None
+    operation_id: Optional[str] = None
     created_at: datetime
     updated_at: datetime
 
@@ -174,7 +175,9 @@ class FlowRolloutRequest(BaseModel):
     mode: str
     test_percentual: int
     criteria: Dict = Field(default_factory=dict)
-    actor: Optional[str] = None
+    actor: str
+    operation_id: str
+    catalog_hash: str
 
 
 class FlowRolloutStatus(BaseModel):
@@ -184,6 +187,7 @@ class FlowRolloutStatus(BaseModel):
     test_version_id: Optional[str] = None
     rollout_mode: Optional[str] = None
     rollout_state: Optional[str] = None
+    operation_id: Optional[str] = None
     catalog_hash: Optional[str] = None
     catalog_signature: Optional[str] = None
     rollout_started_at: Optional[datetime] = None

@@ -44,7 +44,16 @@ def catalog_index_by_template(base_dir: Path | str = Path("config/flow_catalog")
     index: Dict[str, Dict] = {}
     for entry in load_catalog_entries(base_dir):
         template_ref = str(entry.get("template_ref") or "")
-        index[template_ref] = entry
+        if not template_ref:
+            continue
+        current = index.get(template_ref)
+        if current:
+            cur_ver = str(current.get("flow_version_id") or current.get("version") or "")
+            new_ver = str(entry.get("flow_version_id") or entry.get("version") or "")
+            if new_ver and new_ver > cur_ver:
+                index[template_ref] = entry
+        else:
+            index[template_ref] = entry
     return index
 
 

@@ -4,7 +4,8 @@ import { useLogger } from '../../../app/providers/LoggerProvider';
 import type { IngestionMode, IngestionRun } from '../../../core/api/api-types';
 import { getRun, getRunsBySource } from '../api/ingestionApi';
 
-export function useIngestionRuns(sourceId: string) {
+export function useIngestionRuns(sourceId: string, opts: { enabled?: boolean } = {}) {
+  const { enabled = true } = opts;
   const { token } = useAuth();
   const { logEvent } = useLogger();
   const [runs, setRuns] = useState<IngestionRun[]>([]);
@@ -15,6 +16,12 @@ export function useIngestionRuns(sourceId: string) {
 
   const load = useMemo(
     () => async () => {
+      if (!enabled) {
+        setLoading(false);
+        setRuns([]);
+        setConfigMode(null);
+        return;
+      }
       setLoading(true);
       setError(null);
       try {
@@ -30,14 +37,19 @@ export function useIngestionRuns(sourceId: string) {
         setLoading(false);
       }
     },
-    [sourceId, token, logEvent],
+    [sourceId, token, logEvent, enabled],
   );
 
   useEffect(() => {
-    void load();
-  }, [load]);
+    if (enabled) {
+      void load();
+    } else {
+      setLoading(false);
+    }
+  }, [load, enabled]);
 
   useEffect(() => {
+    if (!enabled) return undefined;
     const hasRunning = runs.some((run) => run.status === 'RUNNING');
     if (hasRunning && !pollRef.current) {
       pollRef.current = setInterval(() => {
@@ -54,7 +66,7 @@ export function useIngestionRuns(sourceId: string) {
         pollRef.current = null;
       }
     };
-  }, [runs, load]);
+  }, [runs, load, enabled]);
 
   return { runs, configMode, loading, error, reload: load };
 }

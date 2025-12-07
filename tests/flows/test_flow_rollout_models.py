@@ -31,6 +31,24 @@ def test_start_rollout_enforces_limits_and_catalog(tmp_path):
     assert ops.catalog_hash
 
 
+def test_start_rollout_requires_actor(tmp_path):
+    service = _service(tmp_path)
+    service._limits_cache = {"max_test_percentual": 20, "max_rollbacks_per_hour": 2, "max_canary_duration_minutes": 60}
+    service._flags_cache = {
+        "s34_flow_multidomain_enabled": True,
+        "s35_flow_rollout_enabled": True,
+        "s35_flow_catalog_enforced": True,
+        "s35_flow_logic_contract_enabled": True,
+    }
+    flow = service.create_flow_from_template("news_v2", "Fluxo News v2", "flow_news_v2")
+
+    with pytest.raises(ValueError):
+        service.start_rollout(flow.id, mode="canary", test_percentual=5, criteria={"slo_id": "slo_news"})
+
+    rollout = service.start_rollout(flow.id, mode="canary", test_percentual=5, criteria={"slo_id": "slo_news"}, actor="ops_user")
+    assert rollout.rollout_mode == "canary"
+
+
 def test_rollback_rollout_respects_limit_and_logs(tmp_path):
     service = _service(tmp_path)
     service._limits_cache = {"max_test_percentual": 20, "max_rollbacks_per_hour": 2, "max_canary_duration_minutes": 60}
@@ -51,3 +69,21 @@ def test_rollback_rollout_respects_limit_and_logs(tmp_path):
 
     with pytest.raises(ValueError):
         service.rollback_rollout(flow.id, target_version_id=base_version, actor="ops_admin")
+
+
+def test_promote_blocks_on_catalog_drift(tmp_path):
+    service = _service(tmp_path)
+    service._limits_cache = {"max_test_percentual": 20, "max_rollbacks_per_hour": 2, "max_canary_duration_minutes": 60}
+    service._flags_cache = {
+        "s34_flow_multidomain_enabled": True,
+        "s35_flow_rollout_enabled": True,
+        "s35_flow_catalog_enforced": True,
+        "s35_flow_logic_contract_enabled": True,
+    }
+    flow = service.create_flow_from_template("news_v2", "Fluxo News v2", "flow_news_v2")
+    service.start_rollout(flow.id, mode="canary", test_percentual=5, criteria={"slo_id": "slo_news"}, actor="ops_user")
+    # força drift de catálogo alterando cache para hash diferente
+    service._catalog_cache = {"config/flow_templates/news_v2.yaml": {"hash": "drifted", "flow_id": "flow_news_v2"}}
+
+    with pytest.raises(ValueError):
+        service.promote_rollout(flow.id, actor="ops_admin")

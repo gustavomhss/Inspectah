@@ -53,6 +53,11 @@ export function FlowVersionHistory({ versions, operations, onRollback, rollbackD
                   </div>
                   <p className="text-xs text-slate-400">Versão: {op.flow_version_id || '—'}</p>
                   <p className="text-[11px] text-slate-500 break-words">Resultado: {op.resultado}</p>
+                  {op.operation_id && (
+                    <p className="text-[11px] text-emerald-400 break-words">
+                      op_id: {op.operation_id} {op.catalog_hash ? `hash: ${op.catalog_hash}` : ''}
+                    </p>
+                  )}
                 </div>
               ))}
             </div>

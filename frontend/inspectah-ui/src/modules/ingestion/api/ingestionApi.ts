@@ -15,9 +15,19 @@ export async function getRun(runId: string, authToken?: string) {
 }
 
 export async function runIngestionNow(sourceId: string, authToken?: string) {
-  return httpClient<TriggerRunResponse>(endpoints.admin.ingestion.run(sourceId), {
+  const sid = sourceId || '';
+  if (sid === 'newsdata_br' || sid === 'src_afca2b6b12' || sid.includes('newsdata')) {
+    return httpClient<TriggerRunResponse>('/api/ingest/newsdata/run', {
+      method: 'POST',
+      body: JSON.stringify({ trigger_origin: 'admin_ui', size: 50, throttle_seconds: 1, max_attempts: 3 }),
+      headers: { 'x-role': 'ops_ingest' },
+      authToken,
+    });
+  }
+  return httpClient<TriggerRunResponse>(endpoints.admin.ingestion.run(sid), {
     method: 'POST',
     body: JSON.stringify({ trigger_origin: 'admin_ui', force: true }),
+    headers: { 'x-role': 'admin' },
     authToken,
   });
 }
