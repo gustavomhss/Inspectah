@@ -2,11 +2,12 @@
 ## Riscos, Trade-offs & Futuro da Sprint
 
 ### 7.1 Riscos críticos (prioridade)
-- **R1 Incidente de canary mal protegido:** percentuais/limites errados ou rollback lento causam impacto em produção.
-- **R2 Drift de catálogo/config:** hash divergente entre publicado e runtime leva a decisões baseadas em políticas diferentes.
-- **R3 Falta de dados reais em pilotos:** promoção sem evidências sólidas gera falsa sensação de segurança.
-- **R4 Integração lógica/Truth incompleta:** ausência de `flow_version_id`/políticas quebra rastreabilidade de incidentes.
-- **R5 Observabilidade insuficiente:** métricas/logs sem labels de modo/versão/operation inviabilizam auditoria e alertas.
+- **R1 GO falso por placeholders:** repetição de G3/G4 simulados (SQLite, screenshots falsas) → produção sem validação real.
+- **R2 Incidente por limites/SLO não aplicados:** canary infinito ou promoção com SLO quebrado → impacto em produção.
+- **R3 Drift de catálogo/config:** hash divergente entre publicado e runtime leva a políticas diferentes e promoções erradas.
+- **R4 RBAC/auditoria falha:** operações sem actor/operation_id inviabilizam investigação e compliance.
+- **R5 Observabilidade/alerta vazios:** métricas inexistentes ou alertas sem firing → OracleOps cego, Truth sem eventos.
+- **R6 Pilotos sem tráfego real:** datasets duplicados ou ausência de API/UI real distorcem resultados.
 
 ### 7.2 Trade-offs e escolhas de design
 - **Simplicidade vs poder:** optar por rollout percentual simples (sem auto-tuning) para entregar governança rápida; dívida de automação fica registrada.

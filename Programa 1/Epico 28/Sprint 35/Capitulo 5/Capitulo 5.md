@@ -1,22 +1,26 @@
 # Inspectah — Sprint 35 — Capítulo 5
-## Fluxos & Jornadas (Operadores, Fluxos, OracleOps, Lógica/Truth)
+## Fluxos & Jornadas (Operadores, Observabilidade, OracleOps/Truth)
 
-### 5.1 Jornada 1 — Iniciar canary/teste percentual
-1) Operador abre OracleOps (lista multi-fluxo) → vê fluxo `fluxo_noticias_v2` com status `ativo`, hash de catálogo OK.  
-2) Clica em “Iniciar canary/teste” → dialog (`FlowRolloutDialog`) preenche defaults do catálogo (percentual, critérios, duração).  
-3) Operador ajusta percentuais/critério e confirma (RBAC) → API cria `operation_id`, grava auditoria e liga alertas.  
-4) OracleOps mostra estado `canary`, percentuais, progresso e SLO/alertas ao vivo. Logs/metrics começam a marcar mode=canary.
+### 5.1 Jornada 1 — Iniciar canary/teste percentual (com actor obrigatório)
+1) Operador (autenticado) abre Console → lista multi-fluxo mostra `news_v2` ativo, hash de catálogo = publicado, sem alertas.  
+2) Clica em “Iniciar canary/teste” → dialog pré-preenche percentuais/limites do catálogo; exige `actor` e `operation_id`.  
+3) AO confirmar, API valida hash vs publish, limites e SLO iniciais; grava auditoria (`flow_id`, `flow_version_id`, `mode=canary`, `actor`, `catalog_hash`) e liga alertas.  
+4) Painel muda para `canary`, mostra deadline, percentuais, SLO/alertas ao vivo; métricas `flow_rollout_*` começam a registrar mode=canary.
 
-### 5.2 Jornada 2 — Promoção ou rollback governado
-1) Com canary em andamento, painel exibe SLO/alertas/diffs; operador vê timeline de execuções e violações.  
-2a) **Promoção:** critério atende; botão “Promover” habilita; operação grava auditoria, atualiza `mode=ativo`, encerra canary e anexa timeline ao bundle.  
-2b) **Rollback:** alerta/SLO breach; botão “Rollback” exige razão; operação marca `rollback` com `operation_id` e retorna fluxo ao modo anterior; bundle registra evento.  
-3) OracleOps exibe badges de sucesso/rollback, atualiza hash de catálogo e timeline.
+### 5.2 Jornada 2 — Promoção governada ou rollback
+1) Com canary rodando, painel exibe SLO, alertas, policy violations e timeline de execuções.  
+2a) **Promoção:** SLO/alertas verdes, limites ok → botão “Promover” habilita; API compara hash novamente, grava auditoria, envia evento OracleOps/Truth e muda para `ativo`; timeline e métricas atualizadas.  
+2b) **Rollback:** alerta/SLO breach ou limite estourado → botão “Rollback” exige razão; API grava `operation_id`, `actor`, registra `slo_breach` e retorna a versão anterior; alerta de rollback dispara; timeline/bundle capturam evento.
 
-### 5.3 Jornada 3 — Catálogo e drift
-1) Arquiteto publica novo catálogo via CLI/CI (`bin/s35_catalog_publish.sh`) → hash/assinatura salvos.  
-2) Operador vê na lista badge “Drift detectado” se runtime != publicado; promoção fica bloqueada e alerta dispara.  
-3) Operador aciona “Sincronizar catálogo” (quando permitido) ou abre runbook para corrigir; gates G1/G3 falham se drift persistir.
+### 5.3 Jornada 3 — Drift de catálogo detectado
+1) Arquiteto publica catálogo via CLI/CI (hash/assinatura salvos).  
+2) Operador vê badge “Drift detectado” se runtime hash ≠ publicado; painel bloqueia promoção/start; alerta `catalog_hash_drift` dispara.  
+3) Operador segue runbook: sincroniza catálogo ou abre incidente; G1/G3 falham enquanto drift persistir; bundle registra hash publish/runtime.
+
+### 5.4 Jornada 4 — Simulação de SLO breach (teste negativo obrigatório)
+1) Operador executa script de simulação (G3/G4) que eleva `flow_policy_violations_total` ou `flow_rollout_rollback_total`.  
+2) Alertas disparam; painel mostra badge “SLO breach”; `ops_integration` grava evento `slo_breach` com `flow_id/flow_version_id/mode`.  
+3) Operador valida que promoção fica bloqueada; rollback é permitido; evidências incluem firing/resolution + log de `slo_breach`.
 
 ### 5.4 Jornada 4 — Integração com lógica/Truth (E40.5)
 1) Execução de fluxo inclui `flow_version_id` e políticas; lógica/Truth consome dados e pode contestar.  

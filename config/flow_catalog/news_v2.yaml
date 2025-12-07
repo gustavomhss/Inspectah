@@ -13,5 +13,5 @@ rollout_defaults:
   max_canary_duration_minutes: 45
   promote_on_slo_pass: true
   rollback_on_policy_violation: true
-hash: c1096b3d99226b5b4bcf688e50e1cdb09dd69c88566c088c24594d82b78743c7
+hash: 11360318be404f28911cda635a55fa1d633cd6056ec3e44b375cee9c6f5670cd
 signature: ops_catalog_v1

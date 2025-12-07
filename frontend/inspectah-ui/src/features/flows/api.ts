@@ -13,6 +13,7 @@ import type {
   FlowReprocessPayload,
   FlowTemplate,
   FlowUpdateStatePayload,
+  NewsdataRun,
 } from './types';
 
 export async function listFlows(): Promise<Flow[]> {
@@ -124,21 +125,29 @@ export async function listFlowCatalog(): Promise<FlowCatalogEntry[]> {
   return httpClient<FlowCatalogEntry[]>(endpoints.admin.flows.catalog) ?? [];
 }
 
-export async function startFlowRollout(flowId: string, payload: { mode: string; test_percentual: number; criteria?: Record<string, unknown>; actor?: string }): Promise<Flow> {
+export async function startFlowRollout(
+  flowId: string,
+  payload: { mode: string; test_percentual: number; criteria?: Record<string, unknown>; actor: string; operation_id: string; catalog_hash: string },
+): Promise<Flow> {
+  const opId = payload.operation_id;
   return httpClient<Flow>(endpoints.admin.flows.rollout(flowId), {
     method: 'POST',
     body: JSON.stringify(payload),
+    headers: opId ? { 'x-operation-id': opId } : undefined,
   });
 }
 
-export async function promoteFlowRollout(flowId: string, payload: { actor?: string }): Promise<Flow> {
+export async function promoteFlowRollout(flowId: string, payload: { actor: string; operation_id: string; catalog_hash: string }): Promise<Flow> {
   return httpClient<Flow>(endpoints.admin.flows.rolloutPromote(flowId), {
     method: 'POST',
     body: JSON.stringify(payload),
   });
 }
 
-export async function rollbackFlowRollout(flowId: string, payload: { flow_version_id?: string | null; actor?: string }): Promise<Flow> {
+export async function rollbackFlowRollout(
+  flowId: string,
+  payload: { flow_version_id?: string | null; actor: string; operation_id: string; catalog_hash: string },
+): Promise<Flow> {
   return httpClient<Flow>(endpoints.admin.flows.rolloutRollback(flowId), {
     method: 'POST',
     body: JSON.stringify(payload),
@@ -157,4 +166,12 @@ export async function listOpsCockpitFlows() {
   return httpClient<
     { id: string; slug: string; domain?: string; flow_version_id?: string | null; slos?: { id: string; status?: string }[] }[]
   >(endpoints.admin.opsCockpit.flows);
+}
+
+export async function runNewsdataIngest(): Promise<NewsdataRun> {
+  return httpClient<NewsdataRun>(endpoints.admin.newsdata.run, {
+    method: 'POST',
+    headers: { 'x-role': 'ops_ingest' },
+    body: JSON.stringify({ trigger_origin: 'ui_console', size: 50, throttle_seconds: 1, max_attempts: 3 }),
+  });
 }

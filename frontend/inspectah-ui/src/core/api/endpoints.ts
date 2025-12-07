@@ -65,7 +65,7 @@ export const endpoints = {
       rollback: (flowId: string, versionId: string) =>
         `/api/flows/${encodeURIComponent(flowId)}/versions/${encodeURIComponent(versionId)}/rollback`,
       operations: (flowId: string) => `/api/flows/${encodeURIComponent(flowId)}/ops`,
-      catalog: `/api/flows/catalog`,
+      catalog: `/api/flows/catalog/list`,
       rollout: (flowId: string) => `/api/flows/${encodeURIComponent(flowId)}/rollout`,
       rolloutPromote: (flowId: string) => `/api/flows/${encodeURIComponent(flowId)}/promote`,
       rolloutRollback: (flowId: string) => `/api/flows/${encodeURIComponent(flowId)}/rollback_rollout`,
@@ -76,6 +76,9 @@ export const endpoints = {
       components: '/api/ops/cockpit/components',
       incidents: '/api/ops/cockpit/incidents',
       flows: '/api/ops/cockpit/flows',
+    },
+    newsdata: {
+      run: '/api/ingest/newsdata/run',
     },
   },
 };

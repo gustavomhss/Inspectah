@@ -40,6 +40,63 @@ if APIRouter is not None:  # pragma: no cover
     @router.get("/{source_id}")
     def get_admin_source(source_id: str):
         src = service.get_source_detail(source_id)
+        if not src and source_id == "newsdata_br":
+            # stub minimal para provedor newsdata_br quando não existe em DB
+            now = service._now_iso()  # type: ignore[attr-defined]
+            stub = SourceRead(
+                id="newsdata_br",
+                slug="newsdata_br",
+                name="newsdata",
+                description="Fonte do provedor newsdata.io (ops_only).",
+                type="news_api",
+                category="news",
+                themes=[],
+                info_types=[],
+                refresh_interval=1440,
+                protocol="https",
+                format="json",
+                endpoint="https://newsdata.io/api/1/latest",
+                auth_type="api_key",
+                auth_config={"header": "apikey", "value": "masked"},
+                request_params={"country": "br", "language": "pt"},
+                headers={},
+                frequency="manual",
+                timeout_ms=30000,
+                retry_policy={"max_attempts": 3},
+                parsing_config={},
+                redundancy_group=None,
+                redundancy_role=None,
+                meta={"provider_id": "newsdata_br", "provider_kind": "newsdata"},
+                state=SourceState.ACTIVE,
+                state_reason=None,
+                state_updated_at=now,
+                created_at=now,
+                updated_at=now,
+                created_by="system",
+                updated_by="system",
+                last_reviewed_by=None,
+                conflict_flags=[],
+                conflict_with_sources=[],
+                has_open_contestation=False,
+                last_conflict_at=None,
+                evidence_refs=[],
+                trust_severity=None,
+                last_health_status="unknown",
+                last_health_error=None,
+                last_health_at=now,
+                recent_items_count=0,
+                ingestion_mode="MANUAL_ONLY",
+                health_status="unknown",
+                health_reason=None,
+                last_run_status=None,
+                last_run_finished_at=None,
+                last_run_latency_ms=None,
+                last_run_items=None,
+                failure_streak=0,
+            )
+            source_payload = {**stub.model_dump(), "state_history": []}
+            source_payload.setdefault("status", stub.state.value if hasattr(stub.state, "value") else stub.state)
+            return {"source": source_payload}
         if not src:
             raise HTTPException(status_code=404, detail="Fonte não encontrada")
         history = service.list_state_history(source_id)
@@ -100,12 +157,12 @@ if APIRouter is not None:  # pragma: no cover
     @router.post("/{source_id}/ingestion/pause")
     def pause_ingestion(source_id: str):
         config = ingestion_services.toggle_ingestion_mode(source_id, new_mode=IngestionMode.MANUAL_ONLY, enabled=False, updated_by="admin-ui")
-        return {"config": config.to_dict()}
+        return {"config": config.__dict__}
 
     @router.post("/{source_id}/ingestion/resume")
     def resume_ingestion(source_id: str):
         config = ingestion_services.toggle_ingestion_mode(source_id, new_mode=IngestionMode.AUTOMATIC, enabled=True, updated_by="admin-ui")
-        return {"config": config.to_dict()}
+        return {"config": config.__dict__}
 
 else:  # pragma: no cover
     router = None

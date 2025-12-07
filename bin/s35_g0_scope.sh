@@ -7,16 +7,17 @@ cd "$ROOT_DIR"
 EVIDENCE_DIR="out/evidence/S35_G0_scope_and_catalog"
 SCORECARD_PATH="out/scorecards/S35_G0_scope.json"
 LOG="$EVIDENCE_DIR/run.log"
+OUT_LOG="out/logs/SF1_bin_s35_g0_scope.log"
 PYTHON_BIN="${PYTHON_BIN:-.venv/bin/python}"
 if [ ! -x "$PYTHON_BIN" ]; then
   PYTHON_BIN="python3"
 fi
 
-mkdir -p "$EVIDENCE_DIR" out/scorecards
+mkdir -p "$EVIDENCE_DIR" out/scorecards out/logs
 
-echo "[S35_G0] Validando escopo (24 arquivos), catálogo/limites/flags e mapa de SLOs" | tee "$LOG"
+echo "[S35_G0] Validando escopo (24 arquivos), catálogo/limites/flags e mapa de SLOs" | tee "$LOG" "$OUT_LOG"
 
-$PYTHON_BIN - <<'PY' 2>&1 | tee -a "$LOG"
+$PYTHON_BIN - <<'PY' 2>&1 | tee -a "$LOG" "$OUT_LOG"
 import datetime
 import json
 import pathlib

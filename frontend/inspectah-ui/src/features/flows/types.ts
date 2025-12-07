@@ -62,6 +62,7 @@ export interface FlowOperation {
   mode?: string | null;
   actor?: string | null;
   catalog_hash?: string | null;
+  operation_id?: string | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -158,10 +159,38 @@ export interface FlowRolloutStatus {
   test_version_id?: string | null;
   rollout_mode?: string | null;
   rollout_state?: string | null;
+  operation_id?: string | null;
   catalog_hash?: string | null;
   catalog_signature?: string | null;
   rollout_started_at?: string | null;
   rollout_criteria?: Record<string, unknown>;
   alerts?: string[];
   policy_violations?: string[];
+}
+
+export interface NewsdataItem {
+  id: string;
+  title: string;
+  link: string;
+  pubDate: string;
+  source_id: string;
+  category?: string[];
+  description?: string;
+  hash?: string;
+}
+
+export interface NewsdataRun {
+  run_id: string;
+  status: string;
+  items_processed: number;
+  payload_ref?: string | null;
+  meta?: {
+    fetched?: number;
+    deduped?: number;
+    duplicates?: number;
+    throttle_seconds?: number;
+    max_attempts?: number;
+    items_sample?: NewsdataItem[];
+    duration_seconds?: number;
+  };
 }

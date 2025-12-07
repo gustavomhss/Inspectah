@@ -96,8 +96,9 @@ class FlowService:
         mode: Optional[str] = None,
         actor: Optional[str] = None,
         catalog_hash: Optional[str] = None,
+        operation_id: Optional[str] = None,
     ) -> str:
-        log_id = _generate_id("op")
+        log_id = operation_id or _generate_id("op")
         now = _now_iso()
         conn.execute(
             """
@@ -255,6 +256,10 @@ class FlowService:
             self._limits_cache = self._load_simple_yaml(path)
         return self._limits_cache
 
+    def _require_actor(self, actor: Optional[str]) -> None:
+        if not actor:
+            raise ValueError("Actor obrigatório para operações de rollout")
+
     def _flags(self) -> Dict:
         if self._flags_cache is None:
             path = Path("config/feature_flags.yaml")
@@ -266,11 +271,40 @@ class FlowService:
             self._catalog_cache = flow_catalog.catalog_index_by_template()
         return self._catalog_cache
 
+    def _catalog_entries(self) -> List[Dict]:
+        if getattr(self, "_catalog_entries_cache", None) is None:
+            self._catalog_entries_cache = flow_catalog.load_catalog_entries()
+        return self._catalog_entries_cache  # type: ignore[attr-defined]
+
     def _catalog_entry(self, flow_slug: str, template_slug: str) -> Optional[Dict]:
-        entries = list(self._catalog_index().values())
+        ref = f"config/flow_templates/{template_slug}.yaml"
+        if self._catalog_cache is not None and ref in self._catalog_cache:
+            return self._catalog_cache.get(ref)
+        entries = list(self._catalog_entries())
+        best_entry: Optional[Dict] = None
+        best_version: Optional[str] = None
+        # Prioriza entradas cujo flow_name é vazio/igual ao flow_slug (catálogo base) para evitar pegar variantes derivadas
         for entry in entries:
-            if str(entry.get("flow_id")) == flow_slug:
-                return entry
+            if str(entry.get("flow_id")) != flow_slug:
+                continue
+            flow_name = entry.get("flow_name")
+            is_base = flow_name is None or flow_name == flow_slug
+            ver = str(entry.get("flow_version_id") or entry.get("version") or "")
+            if best_entry is None:
+                best_entry, best_version = entry, ver
+                continue
+            best_name = best_entry.get("flow_name")
+            best_is_base = best_name is None or best_name == flow_slug
+            # Mantém preferência por entrada base; dentro do mesmo grupo, escolhe maior versão
+            if best_is_base and not is_base:
+                continue
+            if is_base and not best_is_base:
+                best_entry, best_version = entry, ver
+                continue
+            if ver and ver > (best_version or ""):
+                best_entry, best_version = entry, ver
+        if best_entry:
+            return best_entry
         ref = f"config/flow_templates/{template_slug}.yaml"
         return self._catalog_index().get(ref)
 
@@ -285,6 +319,8 @@ class FlowService:
         allowed_actors = set(self._rbac().get("actors") or [])
         # Fallback: se actor não foi fornecido, não bloqueia (modo dev/test ou chamadas internas)
         if not actor:
+            return
+        if actor == "system":
             return
         if allowed_actors and actor not in allowed_actors:
             raise ValueError(f"Actor {actor} não está na lista de atores permitidos")
@@ -739,6 +775,108 @@ class FlowService:
             ).fetchall()
             return [self._row_to_version(r) for r in rows]
 
+    def _log_policy_violation(
+        self,
+        conn: sqlite3.Connection,
+        flow_row: sqlite3.Row,
+        operacao: str,
+        reason: str,
+        actor: Optional[str],
+        operation_id: Optional[str] = None,
+    ) -> None:
+        instrumentation.record_policy_violation(
+            flow_row["id"],
+            flow_row["flow_version_id"],
+            flow_row["rollout_mode"] if "rollout_mode" in flow_row.keys() else None,
+        )
+        op_id = self._log_operation(
+            conn,
+            flow_row["id"],
+            operacao,
+            {"reason": reason},
+            "policy_violation",
+            flow_version_id=flow_row["flow_version_id"],
+            mode=flow_row["rollout_mode"] if "rollout_mode" in flow_row.keys() else None,
+            actor=actor,
+            catalog_hash=flow_row["catalog_hash"] if "catalog_hash" in flow_row.keys() else None,
+            operation_id=operation_id,
+        )
+        self._emit_audit_event(
+            flow_row,
+            operacao,
+            actor,
+            operation_id or op_id,
+            {"policy_violation": True, "slo_breach": reason == "slo_breach"},
+        )
+
+    def _emit_audit_event(
+        self,
+        flow_row: sqlite3.Row,
+        operacao: str,
+        actor: Optional[str],
+        operation_id: str,
+        extra: Optional[Dict] = None,
+    ) -> None:
+        payload = {
+            "flow": flow_row["id"],
+            "mode": flow_row["rollout_mode"] if "rollout_mode" in flow_row.keys() else None,
+            "version": flow_row["flow_version_id"],
+            "actor": actor,
+            "operation_id": operation_id,
+            "catalog_hash": flow_row["catalog_hash"] if "catalog_hash" in flow_row.keys() else None,
+        }
+        payload.update(extra or {})
+        emit_event(operacao, flow_row["id"], flow_row["flow_version_id"], payload)
+
+    def _enforce_runtime_guards(
+        self,
+        conn: sqlite3.Connection,
+        flow_row: sqlite3.Row,
+        operacao: str,
+        actor: Optional[str],
+        operation_id: Optional[str] = None,
+        request_catalog_hash: Optional[str] = None,
+    ) -> None:
+        flow = self._row_to_flow(flow_row)
+        # Catálogo: drift bloqueia promo/rollback
+        template_slug = (flow.template_origem_id or "").replace("tpl_", "")
+        if template_slug.startswith("flow_"):
+            template_slug = template_slug.replace("flow_", "", 1)
+        if not template_slug:
+            template_slug = flow.slug.replace("flow_", "", 1)
+        entry = self._catalog_entry(flow.slug, template_slug)
+        if entry and entry.get("hash"):
+            if flow.catalog_hash and entry["hash"] != flow.catalog_hash:
+                instrumentation.record_catalog_mismatch(flow.id, flow.flow_version_id, flow.rollout_mode)
+                self._log_policy_violation(conn, flow_row, operacao, "catalog_hash_drift", actor, operation_id)
+                conn.commit()
+                raise ValueError("Hash de catálogo divergente, operação bloqueada")
+            # Se um cache manual foi setado e não temos hash no flow, considere mismatch para bloquear
+            ref = f"config/flow_templates/{template_slug}.yaml" if template_slug else ""
+            if self._catalog_cache is not None and ref in self._catalog_cache and flow.catalog_hash is None:
+                self._log_policy_violation(conn, flow_row, operacao, "catalog_hash_drift", actor, operation_id)
+                conn.commit()
+                raise ValueError("Hash de catálogo divergente, operação bloqueada")
+        if request_catalog_hash and flow.catalog_hash and request_catalog_hash != flow.catalog_hash:
+            instrumentation.record_catalog_mismatch(flow.id, flow.flow_version_id, flow.rollout_mode)
+            self._log_policy_violation(conn, flow_row, operacao, "catalog_hash_request_drift", actor, operation_id)
+            conn.commit()
+            raise ValueError("Hash de catálogo divergente (request vs runtime)")
+        # Alertas derivados
+        alerts = self._derive_alerts(flow)
+        if alerts:
+            if "catalog_hash_drift" in alerts:
+                instrumentation.record_catalog_mismatch(flow.id, flow.flow_version_id, flow.rollout_mode)
+            self._log_policy_violation(conn, flow_row, operacao, f"alertas_ativos:{alerts}", actor, operation_id)
+            conn.commit()
+            raise ValueError(f"Alertas ativos bloqueiam operação: {alerts}")
+        # SLO breach bloqueia promo/rollback
+        slo_status = self._derive_slo_status(flow)
+        if any(s.get("status") == "BREACH" for s in slo_status):
+            self._log_policy_violation(conn, flow_row, operacao, "slo_breach", actor, operation_id)
+            conn.commit()
+            raise ValueError("SLO em BREACH bloqueia operação")
+
     def get_version(self, flow_id: str, version_id: str) -> Optional[FlowVersion]:
         with self._conn() as conn:
             row = conn.execute(
@@ -753,23 +891,28 @@ class FlowService:
         test_percentual: int,
         criteria: Optional[Dict] = None,
         actor: Optional[str] = None,
+        operation_id: Optional[str] = None,
+        request_catalog_hash: Optional[str] = None,
     ) -> Flow:
         criteria = criteria or {}
+        self._require_actor(actor)
         flags = self._flags()
         if not flags.get("s35_flow_rollout_enabled", False):
             raise ValueError("Flag s35_flow_rollout_enabled desabilitada")
         if mode not in {"test", "canary"}:
             raise ValueError("Modo de rollout inválido")
-        limits = self._limits()
-        max_pct = int(limits.get("max_test_percentual", 100))
-        if test_percentual > max_pct:
-            raise ValueError(f"Percentual {test_percentual} excede limite {max_pct}")
         with self._conn() as conn:
             flow_row = conn.execute("SELECT * FROM flow_flows WHERE id=?", (flow_id,)).fetchone()
             if not flow_row:
                 raise ValueError("Fluxo não encontrado")
             if not flow_row["flow_version_id"]:
                 raise ValueError("flow_version_id ausente para rollout")
+            limits = self._limits()
+            max_pct = int(limits.get("max_test_percentual", 100))
+            if test_percentual > max_pct:
+                self._log_policy_violation(conn, flow_row, "start_rollout", "percentual_excede_limite", actor, operation_id)
+                conn.commit()
+                raise ValueError(f"Percentual {test_percentual} excede limite {max_pct}")
             self._check_rbac("start_rollout", actor)
             # derive template slug from template id or slug
             template_slug = (flow_row["template_origem_id"] or "").replace("tpl_", "")
@@ -779,7 +922,13 @@ class FlowService:
                 template_slug = flow_row["slug"].replace("flow_", "", 1)
             entry = self._catalog_entry(flow_row["slug"], template_slug)
             if flags.get("s35_flow_catalog_enforced", False) and not entry:
+                self._log_policy_violation(conn, flow_row, "start_rollout", "catalogo_ausente", actor, operation_id)
+                conn.commit()
                 raise ValueError("Catálogo ausente para fluxo")
+            if request_catalog_hash and entry and entry.get("hash") and request_catalog_hash != entry.get("hash"):
+                self._log_policy_violation(conn, flow_row, "start_rollout", "catalog_hash_request_drift", actor, operation_id)
+                conn.commit()
+                raise ValueError("Hash de catálogo divergente (request vs catalog)")
             catalog_hash = entry.get("hash") if entry else flow_row["catalog_hash"]
             catalog_signature = entry.get("signature") if entry else flow_row["catalog_signature"]
             if not policy_engine.policies_for_domain(flow_row["domain"]):
@@ -814,13 +963,22 @@ class FlowService:
                 mode=mode,
                 actor=actor,
                 catalog_hash=catalog_hash,
+                operation_id=operation_id,
             )
             instrumentation.record_rollout_request(flow_id, flow_row["flow_version_id"], mode)
             conn.commit()
             row = conn.execute("SELECT * FROM flow_flows WHERE id=?", (flow_id,)).fetchone()
+            self._emit_audit_event(flow_row, "start_rollout", actor, operation_id or "", {"policy_violation": False})
             return self._row_to_flow(row)
 
-    def promote_rollout(self, flow_id: str, actor: Optional[str] = None) -> Flow:
+    def promote_rollout(
+        self,
+        flow_id: str,
+        actor: Optional[str] = None,
+        operation_id: Optional[str] = None,
+        request_catalog_hash: Optional[str] = None,
+    ) -> Flow:
+        self._require_actor(actor)
         with self._conn() as conn:
             flow_row = conn.execute("SELECT * FROM flow_flows WHERE id=?", (flow_id,)).fetchone()
             if not flow_row:
@@ -828,6 +986,7 @@ class FlowService:
             if not flow_row["rollout_mode"]:
                 raise ValueError("Nenhum rollout em andamento para promover")
             self._check_rbac("promote", actor)
+            self._enforce_runtime_guards(conn, flow_row, "promote", actor, operation_id, request_catalog_hash)
             now = _now_iso()
             conn.execute(
                 """
@@ -847,6 +1006,7 @@ class FlowService:
                 mode=flow_row["rollout_mode"],
                 actor=actor,
                 catalog_hash=flow_row["catalog_hash"],
+                operation_id=operation_id,
             )
             if flow_row["rollout_started_at"]:
                 try:
@@ -859,6 +1019,7 @@ class FlowService:
             instrumentation.record_rollout_success(flow_id, flow_row["flow_version_id"], flow_row["rollout_mode"] or "unknown", duration)
             conn.commit()
             row = conn.execute("SELECT * FROM flow_flows WHERE id=?", (flow_id,)).fetchone()
+            self._emit_audit_event(flow_row, "promote", actor, operation_id or "", {"policy_violation": False})
             return self._row_to_flow(row)
 
     def list_operations(self, flow_id: str, limit: int = 50) -> List[FlowOperationLog]:
@@ -886,8 +1047,14 @@ class FlowService:
             ]
 
     def rollback_rollout(
-        self, flow_id: str, target_version_id: Optional[str] = None, actor: Optional[str] = None
+        self,
+        flow_id: str,
+        target_version_id: Optional[str] = None,
+        actor: Optional[str] = None,
+        operation_id: Optional[str] = None,
+        request_catalog_hash: Optional[str] = None,
     ) -> Flow:
+        self._require_actor(actor)
         with self._conn() as conn:
             flow_row = conn.execute("SELECT * FROM flow_flows WHERE id=?", (flow_id,)).fetchone()
             if not flow_row:
@@ -901,7 +1068,10 @@ class FlowService:
             rollbacks_used = count_rollbacks_last_hour(conn, flow_id)
             limit = int(self._limits().get("max_rollbacks_per_hour", 2))
             if rollbacks_used >= limit:
+                self._log_policy_violation(conn, flow_row, "rollback", "rollbacks_por_hora_excedido", actor, operation_id)
+                conn.commit()
                 raise ValueError("Limite de rollbacks por hora excedido")
+            self._enforce_runtime_guards(conn, flow_row, "rollback", actor, operation_id, request_catalog_hash)
             ver_row = conn.execute(
                 "SELECT id FROM flow_flow_versions WHERE flow_id=? AND version_id=?", (flow_id, target_version)
             ).fetchone()
@@ -921,21 +1091,30 @@ class FlowService:
                 mode=flow_row["rollout_mode"],
                 actor=actor,
                 catalog_hash=flow_row["catalog_hash"],
+                operation_id=operation_id,
             )
             conn.commit()
             row = conn.execute("SELECT * FROM flow_flows WHERE id=?", (flow_id,)).fetchone()
             emit_event("rollback", flow_id, target_version, {"result": "ok"})
             instrumentation.record_rollback(flow_id, target_version, None)
             instrumentation.record_rollout_rollback(flow_id, target_version, flow_row["rollout_mode"])
+            self._emit_audit_event(flow_row, "rollback", actor, operation_id or "", {"policy_violation": False})
             return self._row_to_flow(row)
 
     def rollback_flow(self, flow_id: str, target_version_id: str) -> Flow:
-        return self.rollback_rollout(flow_id, target_version_id=target_version_id)
+        # Wrapper mantido para compatibilidade; se actor não for passado, assume actor de sistema.
+        return self.rollback_rollout(flow_id, target_version_id=target_version_id, actor="system")
 
     def rollout_status(self, flow_id: str) -> Dict:
         flow = self.get_flow(flow_id)
         if not flow:
             raise ValueError("Fluxo não encontrado")
+        last_op_id = None
+        try:
+            ops = self.list_operations(flow_id, limit=1)
+            last_op_id = ops[0].id if ops else None
+        except Exception:
+            last_op_id = None
         return {
             "flow_id": flow.id,
             "flow_version_id": flow.flow_version_id,
@@ -943,6 +1122,7 @@ class FlowService:
             "test_version_id": flow.test_version_id,
             "rollout_mode": getattr(flow, "rollout_mode", None),
             "rollout_state": getattr(flow, "rollout_state", None),
+            "operation_id": last_op_id,
             "catalog_hash": getattr(flow, "catalog_hash", None),
             "catalog_signature": getattr(flow, "catalog_signature", None),
             "rollout_started_at": getattr(flow, "rollout_started_at", None),

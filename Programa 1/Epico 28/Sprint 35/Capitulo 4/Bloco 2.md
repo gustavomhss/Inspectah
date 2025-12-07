@@ -1,8 +1,8 @@
 # Bloco 2 — Estrutura e decomposição de requisitos
-- **Modelagem:** entidades/colunas de rollout, políticas e catálogo; validação de limites/flags em serviço.
-- **Catálogo:** esquema YAML, assinatura/hash, validação CLI, publicação/Sync entre ambientes, diffs runtime vs publicado.
-- **Políticas e critérios:** engine que avalia SLO/alertas e bloqueia promoções; suporte a regras por domínio/mode.
-- **Contratos e APIs:** rotas REST + schemas; erros padronizados; RBAC; contratos para lógica/Truth (labels + `flow_version_id`).
-- **Observabilidade:** instrumentação (metrics/logs), painéis, alertas; SLOs rollout; dumps de evidência.
-- **FE/Console:** componentes para lista, painel, timeline, dialogs de operações; estados de drift/alerta; confirmações/locks.
-- **CI/ORR:** scripts de gate, workflow CI, bundle, scorecards; runbooks ensaiados; flags/limites configuráveis por ambiente.
+- **Modelagem:** rollout com deadlines, `operation_id`, `actor`, `catalog_hash`; contadores de rollback/violações; registro `slo_breach`. Limites aplicados no serviço.
+- **Catálogo:** schema YAML com hash/assinatura; CLI para publicar/validar; comparação publish vs runtime; drift bloqueia operações e registra métrica.
+- **Políticas e critérios:** engine avalia SLO/alertas; regras por domínio/mode; produz eventos e métricas; suporta testes negativos (limite tempo/percentual/rollbacks).
+- **Contratos e APIs:** rotas REST exigem actor + hash; erros padronizados; hooks de auditoria; eventos para Truth/OracleOps com flow/mode/version.
+- **Observabilidade:** instrumentação real; painel com dados; alertas testados; promtool obrigatório; fontes de SLO = s35_slos.md.
+- **FE/Console:** lista/painel/dialogs/timeline; estados drift/alerta/SLO breach; bloqueio sem actor; confirmações para promo/rollback; coleta de screenshots reais.
+- **CI/ORR:** scripts de gate rodando negativos, promtool, smoke HTTP; workflow CI; bundle + scorecards; runbooks ensaiados; flags/limites versionados.

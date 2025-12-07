@@ -6,13 +6,15 @@ import type { IngestionRun, IngestionConfig, IngestionMode } from '../../../core
 import { fetchSources } from '../../admin/api';
 import { getRunsBySource, runIngestionNow, toggleIngestionMode } from '../api/ingestionApi';
 
-export type IngestionHealth = 'OK' | 'Falhando' | 'Parada' | 'Em andamento';
+export type IngestionHealth = 'OK' | 'Falhando' | 'Parada' | 'Em andamento' | 'Derivada';
 
 export interface IngestionSourceRow {
   source: AdminSource;
   lastRun?: IngestionRun;
   health: IngestionHealth;
   mode: IngestionMode;
+  isProvider: boolean;
+  isDerived: boolean;
 }
 
 function deriveHealth(lastRun?: IngestionRun, now: Date = new Date()): IngestionHealth {
@@ -42,17 +44,33 @@ export function useIngestionSources() {
       setLoading(true);
       setError(null);
       try {
-        const sources = await fetchSources(token || undefined);
-        const runsPromises = sources.map(async (source) => {
+        const baseSources = await fetchSources(token || undefined);
+        const runsPromises = baseSources.map(async (source) => {
+          const key = source.slug || source.id;
+          const metaProvider = (source.meta as Record<string, unknown> | undefined)?.provider_id;
+          const providerId = source.provider_id || metaProvider;
+          const isProvider = key === 'newsdata_br' || source.slug === 'newsdata_br' || source.id === 'newsdata_br';
+          const hasConfig = Boolean(source.ingestion_mode && source.ingestion_mode !== 'DERIVED');
+          const isDerived = !isProvider && (providerId === 'newsdata_br' || source.ingestion_mode === 'DERIVED' || !hasConfig);
+          if (isDerived) {
+            return {
+              source,
+              lastRun: undefined,
+              health: 'Derivada',
+              mode: 'DERIVED' as IngestionMode,
+              isProvider,
+              isDerived,
+            } as IngestionSourceRow;
+          }
           try {
             const resp = await getRunsBySource(source.id, { limit: 1 }, token || undefined);
             const lastRun = resp.runs?.[0];
             const mode = resp.config_mode || source.ingestion_mode || 'MANUAL_ONLY';
-            return { source, lastRun, health: deriveHealth(lastRun), mode } as IngestionSourceRow;
+            return { source, lastRun, health: deriveHealth(lastRun), mode, isProvider, isDerived } as IngestionSourceRow;
           } catch (err) {
             logEvent('admin.ingestion.load_error', { source: source.id, message: (err as Error).message });
             const fallbackMode = source.ingestion_mode || 'MANUAL_ONLY';
-            return { source, lastRun: undefined, health: 'Parada', mode: fallbackMode } as IngestionSourceRow;
+            return { source, lastRun: undefined, health: 'Parada', mode: fallbackMode, isProvider, isDerived } as IngestionSourceRow;
           }
         });
         const results = await Promise.all(runsPromises);

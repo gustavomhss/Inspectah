@@ -1,6 +1,6 @@
 # Bloco 1 — Mapa de escopo por área
-- **Backend:** modos rollout (teste/canary/ativo) + engine de políticas/limites + catálogo versionado/assinado + auditoria.
-- **APIs:** rotas de catálogo/rollout/promote/rollback/status com RBAC, payloads completos (`flow_id`, `flow_version_id`, `mode`, `operation_id`, `catalog_hash`, `actor`).
-- **Observabilidade:** métricas/logs/alertas por modo; painel rollout; SLOs; integração com lógica/Truth via labels.
-- **Frontend (OracleOps v3):** listagem multi-fluxo com estado/hash; painel e timeline de rollout; diffs; ações seguras.
-- **CI/ORR & Evidências:** scripts `bin/s35_*`, workflow `s35-gates.yml`, bundle com scorecards e dumps; runbooks operacionais 24/7.
+- **Backend:** modos rollout com deadlines; engine de limites/políticas; catálogo assinado com hash comparado; `_derive_slo_status` real; eventos OracleOps/Truth; auditoria completa.
+- **APIs:** catálogo/rollout/promote/rollback/status com actor obrigatório, hash requerido, erros padronizados; testes negativos para actor ausente, hash divergente, limite violado.
+- **Observabilidade:** métricas/alertas por mode com labels `{flow_id,flow_version_id,mode}`; promtool + firing; painel rollout com dados reais.
+- **Frontend (OracleOps v3):** lista multi-fluxo com badges de SLO/alertas/hash; dialogs com validação; timeline/diffs; bloqueio sem actor; screenshots reais.
+- **CI/ORR & Evidências:** scripts `bin/s35_*`, workflow `s35-gates.yml` rodando negativos + promtool + pilotos; bundle com hashes comparados, logs, métricas, screenshots reais e scorecards.

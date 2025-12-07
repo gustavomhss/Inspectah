@@ -1,0 +1,374 @@
+sprint: SF1
+programa: Programa 1
+epico: Fix
+ace_resumo: |
+  Hardening do rollout S35: catálogo assinado (manifest/hash publish/runtime), limites/SLO/alertas em runtime, RBAC e auditoria completa, observabilidade real e pilotos news_v2/contestacao_v0 via API/UI sem placeholders. Decisão GO/NO-GO explícita.
+waves:
+  - id: W0
+    nome: Baseline e Manifesto
+    ace_context:
+      spec_refs: [Cap2, Cap3, Cap6]
+      resumo: Filemap/migração 0036 ok, s35_slos.md fonte única, manifest assinado com hashes publish/runtime.
+  - id: W1
+    nome: Policies e Limites
+    ace_context:
+      spec_refs: [Cap2, Cap3, Cap4]
+      resumo: Limites em runtime, negativos e policy_violation/hash drift bloqueando promo/rollback.
+  - id: W2
+    nome: API/Console & RBAC
+    ace_context:
+      spec_refs: [Cap2, Cap4, Cap5, Cap8, Cap9]
+      resumo: actor/operation_id/catalog_hash obrigatórios, 4xx padronizados, auditoria completa, UI com polling curto e RBAC efetivo.
+  - id: W3
+    nome: Observabilidade Real
+    ace_context:
+      spec_refs: [Cap2, Cap3, Cap6, Cap7]
+      resumo: /metrics + promtool, firing/resolution de alertas críticos, painel export JSON/PNG, script s35_g3_obs.sh sólido.
+  - id: W4
+    nome: Pilotos Reais
+    ace_context:
+      spec_refs: [Cap4, Cap5, Cap8, Cap9]
+      resumo: news_v2 e contestacao_v0 via API/UI com promo/rollback, slo_breach simulado e hashes comparados.
+  - id: W5
+    nome: ORR e GO/NO-GO
+    ace_context:
+      spec_refs: [Cap2, Cap4, Cap6, Cap7]
+      resumo: Scorecards, S35_metrics_summary, bundle completo, decisão GO/NO-GO (mocks/infra ausente => NO-GO).
+tasks:
+  - id: SF1-INF-001
+    wave: W0
+    area: infra
+    descricao: Checar filemap crítico e migração 0036
+    arquivos_alvo:
+      - app/flows/models.py
+      - migrations/0036_*
+      - config/flow_catalog/*.yaml
+      - config/flows_limits.yaml
+      - config/feature_flags.yaml
+      - observability/*
+      - bin/s35_*
+    gates: [G0, G1, G2, G3, G4, G5]
+    ace_context:
+      spec_refs: [Cap3, Cap4]
+  - id: SF1-OPS-002
+    wave: W0
+    area: ops
+    descricao: Sanear scripts bin/s35_* para não ignorar rc e logar saídas
+    arquivos_alvo:
+      - bin/s35_g0_scope.sh
+      - bin/s35_bundle.sh
+      - bin/s35_g1_model.sh
+      - bin/s35_g2_console.sh
+      - bin/s35_g3_obs.sh
+      - bin/s35_g4_pilotos.sh
+      - bin/s35_metrics_summary.sh
+    gates: [G0, G1, G2, G3, G4, G5]
+    ace_context:
+      spec_refs: [Cap4]
+  - id: SF1-BE-003
+    wave: W0
+    area: backend
+    descricao: Manifesto assinado e hash publish/runtime (bin/s35_bundle.sh)
+    arquivos_alvo:
+      - bin/s35_bundle.sh
+      - config/flow_catalog/*.yaml
+      - out/evidence/S35_*
+    gates: [G0]
+    ace_context:
+      spec_refs: [Cap2, Cap6]
+  - id: SF1-BE-004
+    wave: W0
+    area: backend
+    descricao: s35_slos.md como fonte única no bundle
+    arquivos_alvo:
+      - s35_slos.md
+      - bin/s35_bundle.sh
+    gates: [G0, G3]
+    ace_context:
+      spec_refs: [Cap2, Cap6]
+  - id: SF1-DATA-005
+    wave: W0
+    area: dados
+    descricao: Catálogos e template newsdata reais
+    arquivos_alvo:
+      - config/flow_catalog/newsdata_br_v1.yaml
+      - config/flow_catalog/contestacao_newsdata_v1.yaml
+      - templates HTTP/JSON (newsdata.latest)
+    gates: [G0, G4]
+    ace_context:
+      spec_refs: [Cap2, Cap3, Cap4]
+  - id: SF1-DATA-006
+    wave: W1
+    area: dados
+    descricao: Client/ingest newsdata (ops-only) com throttling/backoff, dedup e persistência
+    arquivos_alvo:
+      - app/flows/catalog.py
+      - app/flows/service.py
+      - app/flows/ops_integration.py
+      - config/feature_flags.yaml
+      - config/secrets/newsdata_api_key
+    gates: [G1, G4]
+    ace_context:
+      spec_refs: [Cap2, Cap3, Cap4]
+  - id: SF1-DATA-007
+    wave: W1
+    area: dados
+    descricao: Agendamento diário e política de retries/quotas para ingest newsdata
+    arquivos_alvo:
+      - config/feature_flags.yaml
+      - app/flows/service.py
+      - app/flows/logs.py
+    gates: [G1, G4]
+    ace_context:
+      spec_refs: [Cap2, Cap4]
+  - id: SF1-BE-010
+    wave: W1
+    area: backend
+    descricao: Limites runtime + policy_violation
+    arquivos_alvo:
+      - app/flows/rollout.py
+      - app/flows/policy_engine.py
+      - config/flows_limits.yaml
+    gates: [G1]
+    ace_context:
+      spec_refs: [Cap2, Cap4]
+  - id: SF1-TST-011
+    wave: W1
+    area: testes
+    descricao: Negativos limite/timeout/percentual/rollbacks/actor/hash
+    arquivos_alvo:
+      - bin/s35_g1_model.sh
+      - tests/*
+    gates: [G1]
+    ace_context:
+      spec_refs: [Cap4]
+  - id: SF1-BE-012
+    wave: W1
+    area: backend
+    descricao: Bloqueio promo/rollback com SLO/alerta vermelho
+    arquivos_alvo:
+      - app/flows/service.py
+      - app/flows/rollout.py
+    gates: [G1, G2]
+    ace_context:
+      spec_refs: [Cap2, Cap4]
+  - id: SF1-BE-013
+    wave: W1
+    area: backend
+    descricao: Hash drift bloqueia operações + métricas
+    arquivos_alvo:
+      - app/flows/rollout.py
+      - app/flows/catalog.py
+    gates: [G1, G2, G3]
+    ace_context:
+      spec_refs: [Cap2, Cap3]
+  - id: SF1-BE-014
+    wave: W2
+    area: backend
+    descricao: Auditoria OracleOps/Truth com campos completos
+    arquivos_alvo:
+      - app/flows/ops_integration.py
+      - app/flows/logs.py
+    gates: [G2, G4]
+    ace_context:
+      spec_refs: [Cap2, Cap4, Cap5]
+  - id: SF1-SEC-015
+    wave: W2
+    area: infra
+    descricao: RBAC enforcement rollout/promo/rollback
+    arquivos_alvo:
+      - config/feature_flags.yaml
+      - app/api/flow_console_routes.py
+    gates: [G2]
+    ace_context:
+      spec_refs: [Cap2, Cap4]
+  - id: SF1-API-016
+    wave: W2
+    area: backend
+    descricao: actor/operation_id/catalog_hash obrigatórios + erros padronizados
+    arquivos_alvo:
+      - app/api/flow_console_routes.py
+      - app/flows/schemas.py
+    gates: [G2]
+    ace_context:
+      spec_refs: [Cap2, Cap4, Cap5]
+  - id: SF1-UX-017
+    wave: W2
+    area: frontend
+    descricao: UI rollout com polling curto e estados de erro claros + dados reais
+    arquivos_alvo:
+      - frontend/inspectah-ui/src/features/flows/*
+    gates: [G2, G4]
+    ace_context:
+      spec_refs: [Cap5, Cap8, Cap9]
+  - id: SF1-OBS-018
+    wave: W3
+    area: observabilidade
+    descricao: /metrics com séries rollout e ingest completas
+    arquivos_alvo:
+      - app/flows/instrumentation.py
+    gates: [G3]
+    ace_context:
+      spec_refs: [Cap2, Cap6]
+  - id: SF1-OBS-019
+    wave: W3
+    area: observabilidade
+    descricao: promtool regras/alertas s35 (inclui ingest)
+    arquivos_alvo:
+      - observability/alerts/s35/*.yaml
+    gates: [G3]
+    ace_context:
+      spec_refs: [Cap2, Cap6]
+  - id: SF1-OBS-020
+    wave: W3
+    area: observabilidade
+    descricao: Firing/resolution + painel export JSON/PNG
+    arquivos_alvo:
+      - observability/dashboards/s35_flow_rollout_overview.json
+    gates: [G3]
+    ace_context:
+      spec_refs: [Cap2, Cap6]
+  - id: SF1-API-028
+    wave: W3
+    area: backend
+    descricao: Router FastAPI ops-only /api/ingest/newsdata/run montado no app principal
+    arquivos_alvo:
+      - app/main.py
+      - app/api/router.py
+      - app/api/ingest_newsdata_router.py
+    gates: [G2]
+    ace_context:
+      spec_refs: [Cap3, Cap4]
+  - id: SF1-DB-029
+    wave: W3
+    area: dados
+    descricao: Registrar source newsdata_br (e contestacao se aplicável) na tabela sources para UI admin
+    arquivos_alvo:
+      - migrations/0036_*
+      - app/flows/models.py
+    gates: [G2]
+    ace_context:
+      spec_refs: [Cap3, Cap4]
+  - id: SF1-API-030
+    wave: W3
+    area: backend
+    descricao: Adaptar handler /admin/ingestion/{source_id}/run para newsdata_br
+    arquivos_alvo:
+      - app/api/ingestion_admin_routes.py
+      - app/flows/service.py
+    gates: [G2, G4]
+    ace_context:
+      spec_refs: [Cap3, Cap4]
+  - id: SF1-UX-031
+    wave: W3
+    area: frontend
+    descricao: Alinhar página /admin/ingestion para mostrar newsdata_br e acionar ingest real
+    arquivos_alvo:
+      - frontend/inspectah-ui/src/features/admin/ingestion/*
+    gates: [G2, G4]
+    ace_context:
+      spec_refs: [Cap5, Cap8, Cap9]
+  - id: SF1-UX-032
+    wave: W3
+    area: frontend
+    descricao: Ajustar IA de Admin e renomear “Providers v2” para “Perfis de Fonte”
+    arquivos_alvo:
+      - frontend/inspectah-ui/src/features/admin/*
+    gates: [G2]
+    ace_context:
+      spec_refs: [Cap5, Cap8, Cap9]
+  - id: SF1-UX-033
+    wave: W3
+    area: frontend
+    descricao: Perfil da Fonte para newsdata_br com CTA e histórico embutido
+    arquivos_alvo:
+      - frontend/inspectah-ui/src/features/admin/ingestion/*
+    gates: [G2, G4]
+    ace_context:
+      spec_refs: [Cap5, Cap8, Cap9]
+  - id: SF1-UX-034
+    wave: W3
+    area: frontend
+    descricao: Ingestão (Histórico Global) só leitura + retry opcional
+    arquivos_alvo:
+      - frontend/inspectah-ui/src/features/admin/ingestion/*
+    gates: [G2]
+    ace_context:
+      spec_refs: [Cap5, Cap8, Cap9]
+  - id: SF1-API-035
+    wave: W3
+    area: backend
+    descricao: CTA de rollout aciona pipeline newsdata_br e atualiza históricos
+    arquivos_alvo:
+      - app/flows/service.py
+      - app/api/flow_console_routes.py
+      - app/flows/logs.py
+    gates: [G2, G4]
+    ace_context:
+      spec_refs: [Cap3, Cap4]
+  - id: SF1-OPS-021
+    wave: W3
+    area: ops
+    descricao: Endurecer/rodar bin/s35_g3_obs.sh
+    arquivos_alvo:
+      - bin/s35_g3_obs.sh
+    gates: [G3]
+    ace_context:
+      spec_refs: [Cap4]
+  - id: SF1-INT-022
+    wave: W4
+    area: integracao
+    descricao: Pilotos API news_v2/contestacao_v0 com fonte real newsdata (apikey), promo/rollback e slo_breach
+    arquivos_alvo:
+      - bin/s35_g4_pilotos.sh
+      - app/flows/*
+    gates: [G4]
+    ace_context:
+      spec_refs: [Cap4, Cap5]
+  - id: SF1-UX-023
+    wave: W4
+    area: frontend
+    descricao: Pilotos UI com screenshots reais
+    arquivos_alvo:
+      - frontend/inspectah-ui/src/features/flows/*
+    gates: [G4]
+    ace_context:
+      spec_refs: [Cap5, Cap8, Cap9]
+  - id: SF1-OBS-024
+    wave: W4
+    area: observabilidade
+    descricao: Métricas/alertas durante pilotos
+    arquivos_alvo:
+      - observability/dashboards/s35_flow_rollout_overview.json
+    gates: [G3, G4]
+    ace_context:
+      spec_refs: [Cap6]
+  - id: SF1-QA-025
+    wave: W5
+    area: quality
+    descricao: Scorecards + S35_metrics_summary com PASS REAL/NO-GO
+    arquivos_alvo:
+      - out/scorecards/S35_*
+      - out/evidence/S35_metrics_summary.json
+    gates: [G5]
+    ace_context:
+      spec_refs: [Cap2, Cap4]
+  - id: SF1-OPS-026
+    wave: W5
+    area: ops
+    descricao: Montar inspectah_s35_evidence_bundle.zip
+    arquivos_alvo:
+      - inspectah_s35_evidence_bundle.zip
+      - out/evidence/S35_*
+    gates: [G5]
+    ace_context:
+      spec_refs: [Cap4]
+  - id: SF1-GOV-027
+    wave: W5
+    area: governance
+    descricao: Revisão G0–G4 e decisão GO/NO-GO
+    arquivos_alvo:
+      - out/logs/SF1_gov.md
+    gates: [G5]
+    ace_context:
+      spec_refs: [Cap2, Cap7]

@@ -9,7 +9,7 @@ import { useToast } from '@/ui/admin/hooks';
 import { useProvidersList, useProviderDetail, useSaveProfile, useSaveProvider, useRunProfile } from './providersHooks';
 import type { IngestionProfile, Provider } from './providersTypes';
 
-const PROVIDER_HELP = 'Providers são integrações externas (news/social). Mantenha limites e status coerentes antes de ativar perfis.';
+const PROVIDER_HELP = 'Perfis de fonte representam integrações externas (news/social). Mantenha limites e status coerentes antes de ativar perfis.';
 const PROFILE_HELP =
   'Perfis definem filtros e budgets. Só ative perfis com budgets e escopo claros. Use "Rodar agora" para testar ingestão.';
 
@@ -187,8 +187,8 @@ export default function ProvidersPage() {
   return (
     <div className="space-y-4">
       <PageHeader
-        title="Console de Providers e Perfis"
-        subtitle="Modele provedores externos, vincule perfis com budgets claros e monitore execuções. Use as ajudas para entender cada parâmetro."
+        title="Perfis de Fonte"
+        subtitle="Modele fontes externas e perfis de ingestão com budgets claros. Use as ajudas para entender cada parâmetro."
       />
       {toasts.length ? (
         <div className="fixed right-4 top-20 z-[90] space-y-2">
@@ -208,7 +208,7 @@ export default function ProvidersPage() {
           <div className="lg:col-span-4 space-y-4">
             <div className="rounded-xl border border-white/10 bg-white/5 p-4">
               <div className="flex items-center justify-between gap-2">
-                <h3 className="text-lg font-semibold text-white">Providers</h3>
+                <h3 className="text-lg font-semibold text-white">Perfis e fontes</h3>
                 <span className="text-xs text-slate-300">{PROVIDER_HELP}</span>
               </div>
               <input

@@ -1,0 +1,38 @@
+flow_id: flow_contestacao_v0
+flow_name: contestacao_newsdata_v1
+domain: contestacao
+version: 1.1.0
+flow_version_id: v1.1.0
+template_ref: config/flow_templates/contestacao_v0.yaml
+policies:
+  min_confidence: 0.6
+  max_latency_ms: 90000
+  block_on_missing_entities: true
+  source: newsdata.io
+  filters:
+    country: br
+    language: pt
+    domainurl:
+      - g1.globo.com
+      - folha.uol.com.br
+      - estadao.com.br
+      - valor.globo.com
+      - infomoney.com.br
+      - agenciabrasil.ebc.com.br
+      - correiobraziliense.com.br
+      - gazetadopovo.com.br
+      - nsctotal.com.br
+      - correiodopovo.com.br
+      - diariodonordeste.verdesmares.com.br
+      - atarde.com.br
+      - diariodopara.dol.com.br
+      - adrenaline.com.br
+      - lance.com.br
+rollout_defaults:
+  mode: test
+  test_percentual: 15
+  max_canary_duration_minutes: 60
+  promote_on_slo_pass: true
+  rollback_on_policy_violation: true
+hash: 734c3f07a5b690792f100fa3b47d0329beddaf68c6d258c682fe1c9dc8f03047
+signature: ops_catalog_v1
