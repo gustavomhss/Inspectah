@@ -1,7 +1,10 @@
-alert: S34_FlowRollbacksHigh
-expr: sum by(flow_id,flow_version_id) (inspectah_flow_rollbacks_total) > 1
-for: 15m
-labels:
-  severity: warning
-annotations:
-  summary: "Rollbacks elevados no fluxo {{ $labels.flow_id }} versão {{ $labels.flow_version_id }}"
+groups:
+  - name: s34_rollbacks
+    rules:
+      - alert: S34_FlowRollbacksHigh
+        expr: sum by(flow_id,flow_version_id) (inspectah_flow_rollbacks_total) > 1
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Rollbacks elevados no fluxo {{ $labels.flow_id }} versão {{ $labels.flow_version_id }}"

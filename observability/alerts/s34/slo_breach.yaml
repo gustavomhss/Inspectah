@@ -1,7 +1,10 @@
-alert: S34_FlowSLOBreach
-expr: sum by(flow_id,flow_version_id,slo_id) (inspectah_flow_slo_breach_total) > 0
-for: 10m
-labels:
-  severity: critical
-annotations:
-  summary: "SLO breach no fluxo {{ $labels.flow_id }} versão {{ $labels.flow_version_id }} ({{ $labels.slo_id }})"
+groups:
+  - name: s34_slo_breach
+    rules:
+      - alert: S34_FlowSLOBreach
+        expr: sum by(flow_id,flow_version_id,slo_id) (inspectah_flow_slo_breach_total) > 0
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: "SLO breach no fluxo {{ $labels.flow_id }} versão {{ $labels.flow_version_id }} ({{ $labels.slo_id }})"

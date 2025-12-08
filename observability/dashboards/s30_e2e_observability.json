@@ -1,0 +1,76 @@
+{
+  "title": "S30 E2E Observability",
+  "tags": ["sf2", "s30", "rollout"],
+  "timezone": "utc",
+  "panels": [
+    {
+      "title": "Rollout requests/success/rollback",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "sum by(flow_id, flow_version_id, mode) (increase(inspectah_flow_rollout_requests_total[5m]))",
+          "legendFormat": "{{flow_id}} {{flow_version_id}} {{mode}} requests"
+        },
+        {
+          "expr": "sum by(flow_id, flow_version_id, mode) (increase(inspectah_flow_rollout_success_total[5m]))",
+          "legendFormat": "{{flow_id}} {{flow_version_id}} {{mode}} success"
+        },
+        {
+          "expr": "sum by(flow_id, flow_version_id, mode) (increase(inspectah_flow_rollout_rollback_total[5m]))",
+          "legendFormat": "{{flow_id}} {{flow_version_id}} {{mode}} rollback"
+        }
+      ]
+    },
+    {
+      "title": "Policy violations & catalog drift",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "sum by(flow_id, flow_version_id, mode) (increase(flow_policy_violations_total[10m]))",
+          "legendFormat": "{{flow_id}} {{flow_version_id}} {{mode}} policy_violation"
+        },
+        {
+          "expr": "sum by(flow_id, flow_version_id, mode) (increase(flow_catalog_hash_mismatch_total[10m]))",
+          "legendFormat": "{{flow_id}} {{flow_version_id}} {{mode}} hash_drift"
+        }
+      ]
+    },
+    {
+      "title": "SLO breach",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "sum by(flow_id, flow_version_id, slo_id) (increase(inspectah_flow_slo_breach_total[15m]))",
+          "legendFormat": "{{flow_id}} {{flow_version_id}} {{slo_id}}"
+        }
+      ]
+    },
+    {
+      "title": "Ingestão newsdata",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "sum by(source_id) (increase(newsdata_ingest_requests_total[15m]))",
+          "legendFormat": "{{source_id}} requests"
+        },
+        {
+          "expr": "sum by(source_id,type) (increase(newsdata_ingest_errors_total[15m]))",
+          "legendFormat": "{{source_id}} {{type}} errors"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum by (le, source_id) (rate(newsdata_ingest_duration_seconds_bucket[15m])))",
+          "legendFormat": "{{source_id}} p95"
+        }
+      ]
+    }
+  ],
+  "templating": {
+    "list": []
+  },
+  "annotations": {
+    "list": []
+  },
+  "refresh": "30s",
+  "schemaVersion": 27,
+  "version": 1
+}

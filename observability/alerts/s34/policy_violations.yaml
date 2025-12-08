@@ -1,7 +1,10 @@
-alert: S34_FlowPolicyViolations
-expr: sum by(flow_id,flow_version_id) (inspectah_flow_policy_violations_total) > 0
-for: 5m
-labels:
-  severity: critical
-annotations:
-  summary: "Violações de política em fluxo {{ $labels.flow_id }} versão {{ $labels.flow_version_id }}"
+groups:
+  - name: s34_policy_violations
+    rules:
+      - alert: S34_FlowPolicyViolations
+        expr: sum by(flow_id,flow_version_id) (inspectah_flow_policy_violations_total) > 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Violações de política em fluxo {{ $labels.flow_id }} versão {{ $labels.flow_version_id }}"
