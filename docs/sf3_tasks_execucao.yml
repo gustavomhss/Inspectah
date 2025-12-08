@@ -1,0 +1,289 @@
+sprint: SF3
+programa: Programa 1
+epico: Fix E36
+ace_resumo: |
+  Revalidação S20–S29 sem placeholders: auth/Admin e ingest com RBAC real, smoke API/UI e métricas,
+  truth/promotion exercitados em dados concretos, PromQL/alertas/painéis reais, rc estrito,
+  scorecards rerun com PASS REAL/NO-GO e bundle inspectah_sf3_evidence_bundle.zip auditável.
+waves:
+  - id: W0
+    nome: Baseline & Deps
+    ace_context:
+      spec_refs: [Cap1, Cap2, Cap7]
+      resumo: Scripts s20–s29/sf3 executáveis com rc estrito; IdP OIDC RS256/JWKS, Prom/Alertmanager e Playwright vivos; fixtures auth/truth/ingest congeladas com hash/commit.
+  - id: W1
+    nome: Auth/RBAC
+    ace_context:
+      spec_refs: [Cap2, Cap3, Cap5]
+      resumo: Smoke 401/403/200 com JWT RS256 (iss=inspectah-idp, aud=inspectah-api), actor/role/op_id obrigatórios, auditoria JSON, métricas auth_requests_total/latency.
+  - id: W2
+    nome: Consoles/Admin/Ingest
+    ace_context:
+      spec_refs: [Cap2, Cap4, Cap5, Cap8, Cap9]
+      resumo: npm ci + build/test, smoke API/UI real (fontes/ingest/admin) com RBAC e estados happy/erro/empty, sem mocks.
+  - id: W3
+    nome: Truth/Promotion
+    ace_context:
+      spec_refs: [Cap2, Cap3, Cap5]
+      resumo: State machine truth/promo com fixture real (trajeto válido + inválido), métricas e auditoria; negativos falham.
+  - id: W4
+    nome: Observabilidade & UI Evidence
+    ace_context:
+      spec_refs: [Cap2, Cap6, Cap8, Cap9]
+      resumo: /metrics não vazias, promtool alertas s20–s29/sf3 com PromQL arquivada, firing/resolution dos alertas chave, painéis export, screenshots Playwright happy/erro/RBAC/429/5xx/empty/promo inválida.
+  - id: W5
+    nome: ORR & Bundle
+    ace_context:
+      spec_refs: [Cap2, Cap7]
+      resumo: Scorecards S20–S29 rerun (PASS REAL/NO-GO), bundle inspectah_sf3_evidence_bundle.zip com manifest/README, ata GO/NO-GO.
+tasks:
+  - id: SF3-INF-001
+    wave: W0
+    area: infra
+    descricao: Baseline de scripts/deps (s20–s29 + sf3), rc estrito, ambiente pronto; fixtures congeladas com hash/commit
+    arquivos_alvo:
+      - "bin/s20*_g*.sh"
+      - "bin/s21*_g*.sh"
+      - "bin/s22*_g*.sh"
+      - "bin/s23*_g*.sh"
+      - "bin/s24*_g*.sh"
+      - "bin/s25*_g*.sh"
+      - "bin/s26*_g*.sh"
+      - "bin/s27*_g*.sh"
+      - "bin/s28*_g*.sh"
+      - "bin/s29*_g*.sh"
+      - "bin/sf3_*"
+      - config/feature_flags.yaml
+      - observability/alerts
+      - observability/dashboards
+    gates: [G0]
+    criterios_done: Scripts com set -euo pipefail e executáveis; checklist Prom/Alertmanager/IdP/JWKS/Playwright (endpoints, versões, portas) preenchido; falha explícita se faltar componente crítico; hashes/commits das fixtures anotados
+    evidencias:
+      - out/logs/SF3_baseline.md
+      - out/evidence/SF3_G0/fixtures_hashes.txt
+    ace_context:
+      spec_refs: [Cap1, Cap2, Cap7]
+  - id: SF3-OPS-002
+    wave: W0
+    area: ops
+    descricao: Endurecer scripts de gate s20–s29 e sf3_* (rc não mascarado, logs claros, caminhos de evidência padronizados)
+    arquivos_alvo:
+      - "bin/s20*_g*.sh"
+      - "bin/s21*_g*.sh"
+      - "bin/s22*_g*.sh"
+      - "bin/s23*_g*.sh"
+      - "bin/s24*_g*.sh"
+      - "bin/s25*_g*.sh"
+      - "bin/s26*_g*.sh"
+      - "bin/s27*_g*.sh"
+      - "bin/s28*_g*.sh"
+      - "bin/s29*_g*.sh"
+      - bin/sf3_g1_auth.sh
+      - bin/sf3_g2_console.sh
+      - bin/sf3_g3_truth.sh
+      - bin/sf3_g4_obs.sh
+      - bin/sf3_g5_bundle.sh
+    gates: [G0, G1, G2, G3, G4, G5]
+    criterios_done: Sem "|| true"; rc != 0 falha; logs em out/logs/SF3_G*.log; dry-run mostra rc propagado; cria diretórios de evidência (out/evidence/SF3_G*); scripts usam tokens reais nos smokes
+    evidencias:
+      - out/logs/SF3_scripts_dry_run.log
+    ace_context:
+      spec_refs: [Cap2, Cap4]
+  - id: SF3-SEC-010
+    wave: W1
+    area: infra
+    descricao: Smoke auth/RBAC 401/403/200 em rotas protegidas com auditoria/metrics
+    arquivos_alvo:
+      - app/api/auth.py
+      - app/middlewares/*
+      - config/feature_flags.yaml
+      - bin/sf3_g1_auth.sh
+    gates: [G1]
+    criterios_done: JWT RS256 (iss=inspectah-idp, aud=inspectah-api, TTL 15m, JWKS `/.well-known/jwks.json`); claims sub/role/op_id/exp/iat/iss/aud(+request_id); 401 sem token, 403 role errada, 200 role correta; logs com actor/role/op_id/request_id; métricas auth_requests_total{status,role} e auth_latency_seconds; rc estrito; 200 sem role = FAIL; IdP ausente = fail-closed
+    evidencias:
+      - out/evidence/SF3_G1/auth_http.log
+      - out/evidence/SF3_G1/auth_metrics.txt
+      - out/logs/sf3_audit.log
+    ace_context:
+      spec_refs: [Cap2, Cap3]
+  - id: SF3-SEC-011
+    wave: W1
+    area: testes
+    descricao: Negativos auth: rota protegida aceita sem role? rota pública não exige auth?
+    arquivos_alvo:
+      - tests/auth/*
+      - bin/sf3_g1_auth.sh
+    gates: [G1]
+    criterios_done: Casos inválidos falham (rc != 0); auditoria registra tentativas; métricas refletem 401/403; inclui tentativa com role parcial; header X-Op-Id opcional correlacionado
+    evidencias:
+      - out/evidence/SF3_G1/auth_negative_tests.log
+      - out/evidence/SF3_G1/auth_metrics.txt
+      - out/logs/sf3_audit.log
+    ace_context:
+      spec_refs: [Cap2, Cap5]
+  - id: SF3-FE-020
+    wave: W2
+    area: frontend
+    descricao: npm ci + build/test + Playwright smoke Admin (fontes/ingest/truth) sem mocks
+    arquivos_alvo:
+      - frontend/inspectah-ui/**
+      - tests/e2e/**
+      - bin/sf3_g2_console.sh
+    gates: [G2]
+    criterios_done: rc estrito; smoke cobre happy/erro/empty/RBAC/429/5xx/promo inválida; sem node_modules prévio/mocks; screenshots nomeadas com request_id; logs de build/test salvos; token JWT real
+    evidencias:
+      - out/evidence/SF3_G2/build_test.log
+      - out/evidence/SF3_G2/screenshots/*
+    ace_context:
+      spec_refs: [Cap2, Cap4, Cap8, Cap9]
+  - id: SF3-API-021
+    wave: W2
+    area: backend
+    descricao: Smoke API fontes/ingest/admin com fixture real (sem mocks) e RBAC aplicado
+    arquivos_alvo:
+      - app/api/ingestion_admin_routes.py
+      - app/flows/*
+      - app/api/admin/*
+      - bin/sf3_g2_console.sh
+    gates: [G2]
+    criterios_done: Chamadas retornam dados/erros esperados; 401/403 sem role; sem fixture falsa; métricas ingest_* não vazias; rc estrito; incluir rota vazia/erro para estados empty/erro; registrar hash/commit da fixture
+    evidencias:
+      - out/evidence/SF3_G2/api_smoke.log
+      - out/evidence/SF3_G2/ingest_metrics.txt
+      - out/evidence/SF3_G2/fixtures_hashes.txt
+    ace_context:
+      spec_refs: [Cap2, Cap3, Cap5]
+  - id: SF3-UX-022
+    wave: W2
+    area: frontend
+    descricao: Estados RBAC/erro/empty visíveis na UI Admin
+    arquivos_alvo:
+      - frontend/inspectah-ui/src/modules/admin/**
+    gates: [G2]
+    criterios_done: Mensagens específicas 401/403/429/5xx; botões desabilitados com motivo; empty state claro; sem CTA ativa em RBAC negado; screenshots por estado; request_id/op_id visíveis quando disponíveis
+    evidencias:
+      - out/evidence/SF3_G2/ui_states.png
+    ace_context:
+      spec_refs: [Cap5, Cap8, Cap9]
+  - id: SF3-TRU-030
+    wave: W3
+    area: backend
+    descricao: Executar state machine truth/promo com fixture (trajetória válida + inválida)
+    arquivos_alvo:
+      - app/truth/*
+      - app/api/truth/*
+      - bin/sf3_g3_truth.sh
+    gates: [G3]
+    criterios_done: Caminho válido completa transições e métricas truth_promotion_transitions_total; caminho inválido falha com 4xx/409 e métrica truth_promotion_failures_total{reason}; audit com actor/role/op_id/hash_manifest; latency em truth_promotion_latency_seconds buckets; rc estrito
+    evidencias:
+      - out/evidence/SF3_G3/truth_flow.log
+      - out/evidence/SF3_G3/truth_metrics.txt
+      - out/logs/sf3_audit.log
+    ace_context:
+      spec_refs: [Cap2, Cap3, Cap5]
+  - id: SF3-TST-031
+    wave: W3
+    area: testes
+    descricao: Casos negativos/invariantes truth (estado proibido, actor ausente)
+    arquivos_alvo:
+      - tests/truth/*
+      - bin/sf3_g3_truth.sh
+    gates: [G3]
+    criterios_done: rc != 0 em inválidos; auditoria registra; métricas refletem falha; sem mocks; inclui payload inconsistente e hash_manifest faltante
+    evidencias:
+      - out/evidence/SF3_G3/truth_negative_tests.log
+      - out/logs/sf3_audit.log
+    ace_context:
+      spec_refs: [Cap2, Cap5]
+  - id: SF3-OBS-040
+    wave: W4
+    area: observabilidade
+    descricao: /metrics não vazias (auth/ingest/admin/truth); promtool em alertas s20–s29/sf3 com PromQL arquivada
+    arquivos_alvo:
+      - app/obs/*
+      - observability/alerts/*
+      - bin/sf3_g4_obs.sh
+    gates: [G4]
+    criterios_done: curl /metrics com séries; promtool sem erros; alertas para auth_401_spike, protected_route_unprotected, ingest_errors_rate_gt_5, ingest_requests_zero_30m, admin_ui_5xx, truth_promotion_failures, dashboard_freshness>300s; PromQL salva; rc estrito
+    evidencias:
+      - out/evidence/SF3_G4/metrics_dump.txt
+      - out/evidence/SF3_G4/promtool.log
+      - out/evidence/SF3_G4/alerts_list.txt
+      - out/evidence/SF3_G4/promql.txt
+    ace_context:
+      spec_refs: [Cap2, Cap6]
+  - id: SF3-OBS-041
+    wave: W4
+    area: observabilidade
+    descricao: Export de painel + firing/resolution simulado
+    arquivos_alvo:
+      - observability/dashboards/sf3_obs_overview.json
+    gates: [G4]
+    criterios_done: Painel export JSON/PNG com séries não vazias; firing/resolution registrados (ingest_requests_zero_30m, auth_401_spike, truth_promotion_failures, dashboard_freshness>300s) com timestamp e PromQL usada
+    evidencias:
+      - out/evidence/SF3_G4/painel.json
+      - out/evidence/SF3_G4/painel.png
+      - out/evidence/SF3_G4/alerts_firing.log
+    ace_context:
+      spec_refs: [Cap2, Cap6]
+  - id: SF3-UX-042
+    wave: W4
+    area: frontend
+    descricao: Screenshots Playwright (happy/erro/RBAC/429/5xx/empty/promo inválida) para Admin/ingest/truth
+    arquivos_alvo:
+      - tests/e2e/**
+      - bin/sf3_g4_obs.sh
+    gates: [G4]
+    criterios_done: Capturas com timestamp + request_id; estados sucesso, 401/403, 429/5xx, empty, promo inválida; sem mocks; nomear por estado/rota
+    evidencias:
+      - out/evidence/SF3_G4/screenshots/*
+    ace_context:
+      spec_refs: [Cap5, Cap8, Cap9]
+  - id: SF3-QA-050
+    wave: W5
+    area: quality
+    descricao: Rerun scorecards S20–S29 com PASS REAL/NO-GO
+    arquivos_alvo:
+      - out/scorecards/S20_*_rerun.json
+      - out/scorecards/S21_*_rerun.json
+      - out/scorecards/S22_*_rerun.json
+      - out/scorecards/S23_*_rerun.json
+      - out/scorecards/S24_*_rerun.json
+      - out/scorecards/S25_*_rerun.json
+      - out/scorecards/S26_*_rerun.json
+      - out/scorecards/S27_*_rerun.json
+      - out/scorecards/S28_*_rerun.json
+      - out/scorecards/S29_*_rerun.json
+    gates: [G5]
+    criterios_done: Scorecards atualizados com data/commit/hash e rótulo PASS REAL/NO-GO + motivo e paths das evidências
+    evidencias:
+      - out/scorecards/*
+    ace_context:
+      spec_refs: [Cap2, Cap7]
+  - id: SF3-OPS-051
+    wave: W5
+    area: ops
+    descricao: Montar inspectah_sf3_evidence_bundle.zip com manifest/README
+    arquivos_alvo:
+      - out/evidence/SF3_G*
+      - out/scorecards
+      - out/bundles/inspectah_sf3_evidence_bundle.zip
+      - bin/sf3_g5_bundle.sh
+    gates: [G5]
+    criterios_done: Bundle com manifest/hash, logs HTTP, promtool, PromQL, alert logs, painel PNG/JSON, auditoria, screenshots, scripts; README/índice com limitações/NO-GO/GO_WITH_RISKS; zip validado
+    evidencias:
+      - out/bundles/inspectah_sf3_evidence_bundle.zip
+    ace_context:
+      spec_refs: [Cap2, Cap7]
+  - id: SF3-GOV-052
+    wave: W5
+    area: governance
+    descricao: Ata GO/NO-GO de SF3 (ausência de ambiente => NO-GO ou GO_WITH_RISKS registrado)
+    arquivos_alvo:
+      - out/logs/SF3_gov.md
+    gates: [G5]
+    criterios_done: Decisão registrada com motivos e limitações; gates não verdes apontados; GO_WITH_RISKS se necessário; links para bundle/scorecards
+    evidencias:
+      - out/logs/SF3_gov.md
+    ace_context:
+      spec_refs: [Cap2, Cap7]

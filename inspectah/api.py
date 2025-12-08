@@ -5,9 +5,15 @@ from typing import Iterable
 try:  # pragma: no cover
     from fastapi import FastAPI
     from fastapi.middleware.cors import CORSMiddleware
+    from fastapi.responses import Response
+    from prometheus_client import CONTENT_TYPE_LATEST, generate_latest  # type: ignore
 except ModuleNotFoundError:  # pragma: no cover
     FastAPI = None  # type: ignore[misc]
     CORSMiddleware = None  # type: ignore[misc]
+    Response = None  # type: ignore[misc]
+    CONTENT_TYPE_LATEST = "text/plain; version=0.0.4"
+    def generate_latest():  # type: ignore[misc]
+        return b""
 
 from .explore.api import build_router
 try:  # pragma: no cover
@@ -98,55 +104,81 @@ def _add_cors(app: FastAPI, origins: Iterable[str]) -> None:
 def build_app():  # pragma: no cover
     if FastAPI is None:
         return None
-    app = FastAPI(title="Inspectah API")
-    _add_cors(app, origins=("http://localhost:5173", "http://127.0.0.1:5173"))
+    api_app = FastAPI(title="Inspectah API")
+    _add_cors(api_app, origins=("http://localhost:5173", "http://127.0.0.1:5173"))
+
+    # Semeia métricas admin/obs
+    try:  # pragma: no cover
+        import app.obs.metrics  # noqa: F401
+    except Exception:
+        pass
+
+    # Middleware de auth/RBAC com JWT RS256 (fail-closed)
+    try:  # pragma: no cover
+        from app.middlewares.auth import AuthJWTMiddleware
+        api_app.add_middleware(AuthJWTMiddleware)
+    except Exception:  # pragma: no cover
+        pass
 
     explore_router = build_router()
     if explore_router is not None:
-        app.include_router(explore_router)
+        api_app.include_router(explore_router)
 
     if consultation_router is not None:
-        app.include_router(consultation_router, prefix="/api", tags=["consultation"])
+        api_app.include_router(consultation_router, prefix="/api", tags=["consultation"])
 
     if sources_router is not None:
-        app.include_router(sources_router)
+        api_app.include_router(sources_router)
     if admin_router is not None:
-        app.include_router(admin_router)
+        api_app.include_router(admin_router)
     if dashboard_router is not None:
-        app.include_router(dashboard_router)
+        api_app.include_router(dashboard_router)
     if ingestion_router is not None:
-        app.include_router(ingestion_router)
+        api_app.include_router(ingestion_router)
     if agents_router is not None:
-        app.include_router(agents_router)
+        api_app.include_router(agents_router)
     if agent_flows_admin_router is not None:
-        app.include_router(agent_flows_admin_router)
+        api_app.include_router(agent_flows_admin_router)
     if debunk_router is not None:
-        app.include_router(debunk_router, prefix="/api", tags=["debunk"])
+        api_app.include_router(debunk_router, prefix="/api", tags=["debunk"])
     if cases_router is not None:
-        app.include_router(cases_router, prefix="/api", tags=["cases"])
+        api_app.include_router(cases_router, prefix="/api", tags=["cases"])
     if collections_router is not None:
-        app.include_router(collections_router, prefix="/api", tags=["collections"])
+        api_app.include_router(collections_router, prefix="/api", tags=["collections"])
     if truth_router is not None:
-        app.include_router(truth_router)
+        api_app.include_router(truth_router)
     if console_router is not None:
-        app.include_router(console_router)
+        api_app.include_router(console_router)
     if flows_router is not None:
-        app.include_router(flows_router)
+        api_app.include_router(flows_router)
     if catalog_router is not None:
-        app.include_router(catalog_router)
+        api_app.include_router(catalog_router)
     if providers_router is not None:
-        app.include_router(providers_router, tags=["providers"])
+        api_app.include_router(providers_router, tags=["providers"])
     if ops_cockpit_router is not None:
-        app.include_router(ops_cockpit_router)
+        api_app.include_router(ops_cockpit_router)
     if newsdata_router is not None:
         # Router já define prefixo /api/ingest/newsdata; não aplicar prefixo extra
-        app.include_router(newsdata_router, tags=["ingestion"])
+        api_app.include_router(newsdata_router, tags=["ingestion"])
     if copiloto_fontes_router is not None:
-        app.include_router(copiloto_fontes_router, prefix="/admin/copiloto-fontes", tags=["admin-copiloto-fontes"])
+        api_app.include_router(copiloto_fontes_router, prefix="/admin/copiloto-fontes", tags=["admin-copiloto-fontes"])
     if auth_router is not None:
-        app.include_router(auth_router)
+        api_app.include_router(auth_router)
 
-    return app
+    @api_app.get("/metrics")
+    def metrics():  # pragma: no cover
+        return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
+
+    @api_app.get("/.well-known/jwks.json")
+    def jwks():  # pragma: no cover
+        path = ".well-known/jwks.json"
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                return Response(f.read(), media_type="application/json")
+        except FileNotFoundError:
+            return Response(status_code=404)
+
+    return api_app
 
 
 # ASGI entrypoint expected by uvicorn

@@ -1,0 +1,17 @@
+{
+  "title": "SF3 Observability Overview",
+  "description": "Painel SF3 com métricas de auth, ingest, truth e admin UI.",
+  "panels": [
+    { "title": "Auth requests", "metric": "auth_requests_total", "labels": ["status", "role"] },
+    { "title": "Auth latency", "metric": "auth_latency_seconds_bucket", "labels": ["route", "le"] },
+    { "title": "Ingest requests", "metric": "ingest_requests_total", "labels": ["status", "source"] },
+    { "title": "Ingest errors", "metric": "ingest_errors_total", "labels": ["type", "source"] },
+    { "title": "Ingest items", "metric": "ingest_items_ingested_total", "labels": ["source"] },
+    { "title": "Ingest latency", "metric": "ingest_duration_seconds_bucket", "labels": ["source", "le"] },
+    { "title": "Truth transitions", "metric": "truth_promotion_transitions_total", "labels": ["from", "to", "result", "role"] },
+    { "title": "Truth failures", "metric": "truth_promotion_failures_total", "labels": ["reason"] },
+    { "title": "Truth latency", "metric": "truth_promotion_latency_seconds_bucket", "labels": ["from", "to", "le"] },
+    { "title": "Admin UI", "metric": "admin_ui_requests_total", "labels": ["route", "status"] },
+    { "title": "Dashboard freshness", "metric": "dashboard_freshness_seconds", "labels": ["dashboard"] }
+  ]
+}

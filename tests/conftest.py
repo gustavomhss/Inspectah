@@ -3,6 +3,11 @@ from __future__ import annotations
 from typing import Dict
 
 import pytest
+import jwt
+from pathlib import Path
+import uuid
+import time
+import httpx
 
 from app.gpt_client.client import GptAnswer
 
@@ -44,4 +49,40 @@ def _gpt_stub(monkeypatch):
         )
 
     monkeypatch.setattr("app.core.pipeline.gpt_run_query", _fake_gpt)
+    yield
+
+
+@pytest.fixture(autouse=True)
+def _auth_header(monkeypatch):
+    """
+    Injeta Authorization: Bearer <token> em todas as requisições do TestClient/httpx,
+    para não quebrar com o middleware JWT fail-closed.
+    """
+
+    key_path = Path("config/dev_jwt_private.pem")
+    key = key_path.read_text()
+    now = int(time.time())
+    payload = {
+        "iss": "inspectah-idp",
+        "aud": "inspectah-api",
+        "iat": now,
+        "nbf": now,
+        "exp": now + 900,
+        "sub": "admin-user",
+        "role": "admin",
+        "op_id": str(uuid.uuid4()),
+        "request_id": str(uuid.uuid4()),
+    }
+    token = jwt.encode(payload, key, algorithm="RS256", headers={"kid": "sf3-dev"})
+
+    original_build_request = httpx.Client.build_request
+
+    def _with_auth(self, method, url, *args, **kwargs):
+        headers = kwargs.pop("headers", {}) or {}
+        # Só adiciona se não houver Authorization explícito.
+        headers.setdefault("Authorization", f"Bearer {token}")
+        kwargs["headers"] = headers
+        return original_build_request(self, method, url, *args, **kwargs)
+
+    monkeypatch.setattr(httpx.Client, "build_request", _with_auth)
     yield

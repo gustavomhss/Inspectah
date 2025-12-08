@@ -1,0 +1,12 @@
+{
+  "keys": [
+    {
+      "kty": "RSA",
+      "kid": "sf3-dev",
+      "alg": "RS256",
+      "use": "sig",
+      "n": "5Y_lg1iT0s4TgCoEbSwmtSa42hyLckUp_vSG8S_RdbJWkGGBxv6wveNf4VTYGXKlgC6Y75Yct7XeDWFArQ6AF--gQxfTRTgON6AmZ6un4mXhhVwTfh2JTQnwfBtT2oX62s2TT0gxYe5LkgLdpyyoEB4aNjIWHW7_mH3YrT_RYydvdfDwYg2bgee3Rd4D5RuGzVSzWkE4msds-1gncB6Lbf0tceWlCWtB8tzoT4aTtvB1gkrMoUCeX_mtx5D1A4_RW4iUE9qtxZcrNlPLpCXIg9mBPUXy_CKwI0K4ExwO8Ls5z_cvaLCadPaLsl_9mDT6uX5slJQFxLIlPHolzHYs4w",
+      "e": "AQAB"
+    }
+  ]
+}

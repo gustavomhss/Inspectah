@@ -7,7 +7,8 @@ from typing import List
 
 from app.ingestion.models import IngestionRun, IngestionStatus
 from app.ingestion.repository import IngestionRepository
-from metrics import ingestion_s22 as metrics
+from metrics import ingestion_s22 as metrics  # legado
+from metrics import ingest as ingest_metrics
 
 LOG_PATH_DEFAULT = Path("out/evidence/S22_G6_observability/ingestion_runs.log")
 
@@ -30,6 +31,7 @@ def log_run_start(run: IngestionRun, log_path: Path = LOG_PATH_DEFAULT) -> None:
         log_path=log_path,
     )
     metrics.record_run(run.source_id, run.status.value, run.trigger.value)
+    ingest_metrics.record_request(status=run.status.value, source=run.source_id)
 
 
 def log_run_end(run: IngestionRun, log_path: Path = LOG_PATH_DEFAULT) -> None:
@@ -53,10 +55,14 @@ def log_run_end(run: IngestionRun, log_path: Path = LOG_PATH_DEFAULT) -> None:
     metrics.record_run(run.source_id, run.status.value, run.trigger.value)
     if latency_ms is not None:
         metrics.record_latency(run.source_id, latency_ms)
+        ingest_metrics.record_request(status=run.status.value, source=run.source_id, duration_seconds=latency_ms / 1000.0)
+    if run.items_processed:
+        ingest_metrics.record_items(run.source_id, run.items_processed)
     if run.status == IngestionStatus.SUCCESS:
         metrics.mark_success(run.source_id, datetime.utcnow().timestamp())
     if run.status in {IngestionStatus.FAIL, IngestionStatus.PARTIAL_SUCCESS}:
         metrics.mark_failure(run.source_id, datetime.utcnow().timestamp())
+        ingest_metrics.record_error(error_type=run.error_code or "error", source=run.source_id)
 
 
 def sources_without_recent_runs(repo: IngestionRepository, threshold_minutes: int = 1440) -> List[str]:

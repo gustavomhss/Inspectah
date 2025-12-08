@@ -29,6 +29,7 @@ import SourcesNotFoundPage from '../features/sources/pages/SourcesNotFoundPage';
 import AgentFlowsPage from '../features/agent-flows/AgentFlowsPage';
 import ProvidersPage from '../features/providers/ProvidersPage';
 import OpsCockpitPage from '../modules/ops/pages/OpsCockpitPage';
+import HowToPage from '../modules/admin/pages/HowToPage';
 
 export function AppRoutes() {
   return (
@@ -74,6 +75,7 @@ export function AppRoutes() {
           <Route path="debunker" element={<SourcesDebunkerPage />} />
           <Route path="*" element={<SourcesNotFoundPage />} />
         </Route>
+        <Route path="/admin/howto" element={<HowToPage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />
