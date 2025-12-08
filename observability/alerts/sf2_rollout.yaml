@@ -1,0 +1,86 @@
+groups:
+  - name: sf2_rollout_alerts
+    rules:
+      - alert: SF2_RollbackRateHigh
+        expr: sum by(flow_id, flow_version_id, mode) (increase(inspectah_flow_rollout_rollback_total[15m])) > 0
+        for: 1m
+        labels:
+          severity: warning
+          gate: G1
+        annotations:
+          summary: "Rollbacks detectados (SF2)"
+          description: "flow={{ $labels.flow_id }} version={{ $labels.flow_version_id }} mode={{ $labels.mode }} rollback em 15m"
+
+      - alert: SF2_PolicyViolation
+        expr: sum by(flow_id, flow_version_id, mode) (increase(flow_policy_violations_total[10m])) > 0
+        for: 1m
+        labels:
+          severity: critical
+          gate: G1
+        annotations:
+          summary: "Policy violation em rollout (SF2)"
+          description: "flow={{ $labels.flow_id }} version={{ $labels.flow_version_id }} mode={{ $labels.mode }}"
+
+      - alert: SF2_CatalogDrift
+        expr: sum by(flow_id, flow_version_id, mode) (increase(flow_catalog_hash_mismatch_total[10m])) > 0
+        for: 1m
+        labels:
+          severity: critical
+          gate: G1
+        annotations:
+          summary: "Hash drift detectado (SF2)"
+          description: "flow={{ $labels.flow_id }} version={{ $labels.flow_version_id }} mode={{ $labels.mode }}"
+
+      - alert: SF2_SloBreach
+        expr: sum by(flow_id, flow_version_id) (increase(inspectah_flow_slo_breach_total[15m])) > 0
+        for: 1m
+        labels:
+          severity: critical
+          gate: G3
+        annotations:
+          summary: "SLO breach detectado (SF2)"
+          description: "flow={{ $labels.flow_id }} version={{ $labels.flow_version_id }} slo breach em 15m"
+
+      - alert: SF2_IngestErrorsHigh
+        expr: |
+          sum by(source_id) (increase(newsdata_ingest_errors_total[15m]))
+          /
+          clamp_min(sum by(source_id) (increase(newsdata_ingest_requests_total[15m])), 1)
+          > 0.05
+        for: 2m
+        labels:
+          severity: warning
+          gate: G1
+        annotations:
+          summary: "Taxa de erro de ingestão >5% (SF2)"
+          description: "source={{ $labels.source_id }} erros >5% em 15m"
+
+      - alert: SF2_IngestRequestsZero
+        expr: sum by(source_id) (increase(newsdata_ingest_requests_total[30m])) == 0
+        for: 2m
+        labels:
+          severity: warning
+          gate: G1
+        annotations:
+          summary: "Ingestão sem requests em 30m (SF2)"
+          description: "source={{ $labels.source_id }} sem ingest requests em 30m"
+
+      - alert: SF2_IngestItemsFlat
+        expr: sum by(source_id) (increase(newsdata_items_ingested_total[30m])) == 0
+        for: 2m
+        labels:
+          severity: warning
+          gate: G1
+        annotations:
+          summary: "Itens ingeridos zerados em 30m (SF2)"
+          description: "source={{ $labels.source_id }} sem itens em 30m"
+
+      - alert: SF2_DashboardFreshness
+        expr: time() - max without() (timestamp(inspectah_flow_rollout_requests_total)) > 300
+        for: 1m
+        labels:
+          severity: warning
+          gate: G1
+        annotations:
+          summary: "Painel/metricas desatualizadas (SF2)"
+          description: "Último scrape /metrics >5m"

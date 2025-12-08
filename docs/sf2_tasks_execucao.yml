@@ -1,0 +1,317 @@
+sprint: SF2
+programa: Programa 1
+epico: Fix E36
+ace_resumo: |
+  Revalidação S30–S34 sem placeholders: observabilidade real (PromQL/alertas firing),
+  pilotos API/UI news_v2 e contestacao_v0 com catálogo assinado e hash publish/runtime,
+  SLO breach registrado, RC/RBAC/actor obrigatórios, contestação com fixture real,
+  scorecards rerun e bundle inspectah_sf2_evidence_bundle.zip com GO/NO-GO explícito.
+waves:
+  - id: W0
+    nome: Baseline & Deps
+    ace_context:
+      spec_refs: [Cap1, Cap2, Cap7]
+      resumo: Prom/Alertmanager/Playwright/IdP/datasets ok, scripts s30–s34/sf2 com rc estrito, hashes publish calculados.
+  - id: W1
+    nome: Observabilidade real
+    ace_context:
+      spec_refs: [Cap2, Cap3, Cap4, Cap6]
+      resumo: /metrics por flow/version, promtool/alertas ok, firing+resolution registrados, painel exportado.
+  - id: W2
+    nome: Pilotos E2E reais
+    ace_context:
+      spec_refs: [Cap2, Cap4, Cap5, Cap8, Cap9]
+      resumo: start→canary→promo→rollback via API/UI news_v2 e contestacao_v0, hash publish/runtime comparados, métricas/screenshots reais.
+  - id: W3
+    nome: SLO/OracleOps
+    ace_context:
+      spec_refs: [Cap2, Cap3, Cap6]
+      resumo: SLOs s33/s34 avaliados, slo_breach sintético gera métrica + evento OracleOps, painel SLO exportado.
+  - id: W4
+    nome: Console/RBAC/rc
+    ace_context:
+      spec_refs: [Cap2, Cap4, Cap5, Cap8, Cap9]
+      resumo: actor/op_id/catalog_hash obrigatórios, RBAC negativo, npm/vitest/pytest com rc propagado, UI provider/profile cobre estados/erros.
+  - id: W5
+    nome: Contestação/Truth
+    ace_context:
+      spec_refs: [Cap2, Cap3, Cap5]
+      resumo: fixture real percorre state machine, métricas/audit registradas, negativos para invariantes.
+  - id: W6
+    nome: ORR & Bundle
+    ace_context:
+      spec_refs: [Cap2, Cap4, Cap7]
+      resumo: scorecards S30–S34 rerun PASS REAL/NO-GO, evidências out/evidence/SF2_G*, bundle inspectah_sf2_evidence_bundle.zip + ata GO/NO-GO.
+tasks:
+  - id: SF2-INF-001
+    wave: W0
+    area: infra
+    descricao: Checklist de ambiente e deps S30–S34 (Prom/Alertmanager/Playwright/IdP/datasets) + scripts executáveis
+    arquivos_alvo:
+      - "bin/s30_*"
+      - "bin/s31_*"
+      - "bin/s32_*"
+      - "bin/s33_*"
+      - "bin/s34_*"
+      - "bin/sf2_*"
+      - config/flow_catalog/*.yaml
+      - s33_slos.md
+      - s34_slos.md
+    gates: [G0]
+    criterios_done: baseline logado; falta de dep marca FAIL; scripts com permissão e shebang ok
+    evidencias:
+      - out/logs/SF2_baseline.md
+    ace_context:
+      spec_refs: [Cap1, Cap2, Cap7]
+  - id: SF2-OPS-002
+    wave: W0
+    area: ops
+    descricao: Endurecer scripts (set -euo, rc estrito, logs)
+    arquivos_alvo:
+      - "bin/s30_*"
+      - "bin/s31_*"
+      - "bin/s32_*"
+      - bin/s33_g3_slos.sh
+      - "bin/s34_*"
+      - "bin/sf2_*"
+    gates: [G0, G1, G2, G3, G4, G5, G6]
+    criterios_done: rc≠0 quebra; sem “|| true”; dry-run logado
+    evidencias:
+      - logs/dry-run scripts
+    ace_context:
+      spec_refs: [Cap2, Cap4]
+  - id: SF2-DATA-003
+    wave: W0
+    area: dados
+    descricao: Calcular/registrar hash publish de catálogos e SLOs
+    arquivos_alvo:
+      - config/flow_catalog/*.yaml
+      - s33_slos.md
+      - s34_slos.md
+      - bin/sf2_bundle.sh
+    gates: [G0, G2, G3, G6]
+    criterios_done: manifest com hashes salvo; usado em comparações runtime
+    evidencias:
+      - out/evidence/SF2_G0/hashes.md
+    ace_context:
+      spec_refs: [Cap3, Cap4]
+  - id: SF2-OBS-010
+    wave: W1
+    area: observabilidade
+    descricao: Expor métricas reais por fluxo/versão (news_v2, contestacao_v0)
+    arquivos_alvo:
+      - app/flows/instrumentation.py
+      - app/flows/service.py
+    gates: [G1]
+    criterios_done: /metrics com séries não vazias e labels flow_id/version/mode
+    evidencias:
+      - out/evidence/SF2_G1/metrics_dump.txt
+    ace_context:
+      spec_refs: [Cap2, Cap3, Cap4]
+  - id: SF2-OBS-011
+    wave: W1
+    area: observabilidade
+    descricao: promtool e alertas reais (rollback, policy_violation, slo_breach, hash_drift, dashboard_freshness)
+    arquivos_alvo:
+      - observability/alerts/*
+    gates: [G1]
+    criterios_done: promtool ok; regras listadas
+    evidencias:
+      - out/evidence/SF2_G1/promtool.log
+    ace_context:
+      spec_refs: [Cap2, Cap6]
+  - id: SF2-OBS-012
+    wave: W1
+    area: observabilidade
+    descricao: Simular firing/resolution e exportar painéis
+    arquivos_alvo:
+      - observability/dashboards/s34_flow_ops_overview.json
+      - observability/dashboards/s30_e2e_observability.json
+    gates: [G1]
+    criterios_done: firing+resolution registrados; PNG/JSON com séries reais
+    evidencias:
+      - out/evidence/SF2_G1/alerts.log
+      - out/evidence/SF2_G1/painel.png
+    ace_context:
+      spec_refs: [Cap2, Cap6]
+  - id: SF2-INT-020
+    wave: W2
+    area: integracao
+    descricao: Pilotos API start→canary→promo→rollback com catálogo assinado
+    arquivos_alvo:
+      - app/flows/service.py
+      - app/api/flow_console_routes.py
+      - app/flows/catalog.py
+      - bin/sf2_g2_pilotos.sh
+    gates: [G2]
+    criterios_done: news_v2 e contestacao_v0 rodados; hash publish/runtime comparados; policy_violation/hash drift bloqueiam
+    evidencias:
+      - out/evidence/SF2_G2/http_logs.txt
+      - out/evidence/SF2_G2/hash_diff.txt
+    ace_context:
+      spec_refs: [Cap2, Cap4, Cap5]
+  - id: SF2-UX-021
+    wave: W2
+    area: frontend
+    descricao: Playwright/UI cobre fluxos (happy/erro) com screenshots reais
+    arquivos_alvo:
+      - frontend/inspectah-ui/src/modules/flows/**
+      - tests/e2e/**
+    gates: [G2, G4]
+    criterios_done: estados canary/active/rollback, slo_breach, policy_violation, hash drift, 401/403 actor ausente; rc propagado
+    evidencias:
+      - out/evidence/SF2_G2/screenshots/*
+      - out/evidence/SF2_G4/playwright.log
+    ace_context:
+      spec_refs: [Cap5, Cap8, Cap9]
+  - id: SF2-OBS-022
+    wave: W2
+    area: observabilidade
+    descricao: Capturar métricas durante pilotos
+    arquivos_alvo:
+      - observability/dashboards/s34_flow_ops_overview.json
+    gates: [G2, G3]
+    criterios_done: PromQL arquivada; séries não vazias p/ policy_violation/slo_breach/rollback
+    evidencias:
+      - out/evidence/SF2_G2/promql.txt
+      - out/evidence/SF2_G2/graf.png
+    ace_context:
+      spec_refs: [Cap2, Cap6]
+  - id: SF2-OPS-030
+    wave: W3
+    area: ops
+    descricao: Avaliar SLOs s33/s34 via PromQL real
+    arquivos_alvo:
+      - bin/s33_g3_slos.sh
+      - bin/s34_g3_obs.sh
+      - bin/sf2_g3_slos.sh
+    gates: [G3]
+    criterios_done: cada SLO consultado; série ausente = FAIL; rc propagado
+    evidencias:
+      - out/evidence/SF2_G3/slo_results.log
+    ace_context:
+      spec_refs: [Cap2, Cap6]
+  - id: SF2-OPS-031
+    wave: W3
+    area: ops
+    descricao: Injetar slo_breach e registrar métrica + evento OracleOps/Truth
+    arquivos_alvo:
+      - app/flows/ops_integration.py
+      - app/flows/logs.py
+      - bin/sf2_g3_slos.sh
+    gates: [G3]
+    criterios_done: flow_slo_breach_total incrementa; evento estruturado salvo
+    evidencias:
+      - out/evidence/SF2_G3/slo_breach_event.json
+    ace_context:
+      spec_refs: [Cap2, Cap3]
+  - id: SF2-SEC-040
+    wave: W4
+    area: infra
+    descricao: RBAC/actor/catalog_hash obrigatórios em rollout/provider APIs
+    arquivos_alvo:
+      - app/api/flow_console_routes.py
+      - app/api/provider_routes.py
+      - app/flows/schemas.py
+    gates: [G4]
+    criterios_done: chamadas sem actor/role retornam 4xx; válidas auditadas com op_id/hash
+    evidencias:
+      - out/evidence/SF2_G4/rbac_negative.log
+      - out/evidence/SF2_G4/rbac_positive.log
+    ace_context:
+      spec_refs: [Cap2, Cap4]
+  - id: SF2-OPS-041
+    wave: W4
+    area: ops
+    descricao: Propagar rc de npm/vitest/pytest
+    arquivos_alvo:
+      - bin/s31_g3_console_and_observability.sh
+      - bin/sf2_g4_console.sh
+    gates: [G4]
+    criterios_done: rc≠0 falha; logs guardados; sem STATUS=PASS fixo
+    evidencias:
+      - out/evidence/SF2_G4/tests.log
+    ace_context:
+      spec_refs: [Cap2, Cap4]
+  - id: SF2-UX-042
+    wave: W4
+    area: frontend
+    descricao: UI provider/profile cobre ops_only/derived/erros
+    arquivos_alvo:
+      - frontend/inspectah-ui/src/modules/providers/**
+      - hooks/useProviders*
+    gates: [G4]
+    criterios_done: derived sem CTA/fetch; ops_only banner; erros 4xx/5xx/429 exibidos
+    evidencias:
+      - out/evidence/SF2_G4/provider_screens/*.png
+    ace_context:
+      spec_refs: [Cap5, Cap8, Cap9]
+  - id: SF2-BE-050
+    wave: W5
+    area: backend
+    descricao: Contestação fixture real percorre state machine
+    arquivos_alvo:
+      - app/contest/*
+      - tests/contest/*
+      - bin/sf2_g5_contestation.sh
+    gates: [G5]
+    criterios_done: >=2 trajetórias completas; métricas flow_contestation_transitions_total; audit com actor/op_id
+    evidencias:
+      - out/evidence/SF2_G5/contest_logs.txt
+      - out/evidence/SF2_G5/metrics.txt
+    ace_context:
+      spec_refs: [Cap2, Cap5]
+  - id: SF2-TST-051
+    wave: W5
+    area: testes
+    descricao: Negativos/edge contestação/truth
+    arquivos_alvo:
+      - tests/contest/*
+      - bin/sf2_g5_contestation.sh
+    gates: [G5]
+    criterios_done: estados proibidos falham; actor ausente falha; rc propagado
+    evidencias:
+      - out/evidence/SF2_G5/negative_tests.log
+    ace_context:
+      spec_refs: [Cap2, Cap7]
+  - id: SF2-QA-060
+    wave: W6
+    area: quality
+    descricao: Rerun scorecards S30–S34 com PASS REAL/NO-GO
+    arquivos_alvo:
+      - out/scorecards/S30_*_rerun.json
+      - out/scorecards/S31_*_rerun.json
+      - out/scorecards/S32_*_rerun.json
+      - out/scorecards/S33_*_rerun.json
+      - out/scorecards/S34_*_rerun.json
+    gates: [G6]
+    criterios_done: cada scorecard com data/commit/hash + motivo PASS REAL/NO-GO
+    evidencias:
+      - out/scorecards/*
+    ace_context:
+      spec_refs: [Cap2, Cap4]
+  - id: SF2-OPS-061
+    wave: W6
+    area: ops
+    descricao: Montar inspectah_sf2_evidence_bundle.zip completo
+    arquivos_alvo:
+      - out/evidence/SF2_G*
+      - out/bundles/inspectah_sf2_evidence_bundle.zip
+    gates: [G6]
+    criterios_done: bundle com manifest/hash, logs HTTP, promtool, PromQL, alert logs, painéis PNG/JSON, auditoria, screenshots, README limitações
+    evidencias:
+      - out/bundles/inspectah_sf2_evidence_bundle.zip
+    ace_context:
+      spec_refs: [Cap2, Cap4, Cap7]
+  - id: SF2-GOV-062
+    wave: W6
+    area: governance
+    descricao: Ata GO/NO-GO (GO_WITH_RISKS se provider offline/infra faltante)
+    arquivos_alvo:
+      - out/logs/SF2_gov.md
+    gates: [G6]
+    criterios_done: decisão registrada com riscos/gates faltantes; links para evidências
+    evidencias:
+      - out/logs/SF2_gov.md
+    ace_context:
+      spec_refs: [Cap2, Cap7]
