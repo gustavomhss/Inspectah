@@ -1,0 +1,65 @@
+groups:
+  - name: sf3_observability
+    rules:
+      - alert: SF3_auth_401_spike
+        expr: rate(auth_requests_total{status="401"}[5m]) > 5
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Aumento de 401 em rotas protegidas"
+          description: "Auth 401 detectado para role {{ $labels.role }} (verificar IdP/RBAC)."
+
+      - alert: SF3_protected_route_unprotected
+        expr: absent(auth_requests_total{role!=""})
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Rota protegida retornando 200 sem role"
+          description: "Detectado 200 sem role em rotas protegidas."
+
+      - alert: SF3_ingest_errors_rate
+        expr: rate(ingest_errors_total[15m]) / rate(ingest_requests_total[15m]) > 0.05
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Erros de ingestão >5% em 15m"
+          description: "Erros de ingest em 15m ultrapassaram 5% das requisições."
+
+      - alert: SF3_ingest_requests_zero
+        expr: rate(ingest_requests_total[30m]) == 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Ingestão parada"
+          description: "Nenhuma requisição de ingest nos últimos 30m."
+
+      - alert: SF3_admin_ui_5xx
+        expr: rate(admin_ui_requests_total{status=~"5.."}[5m]) > 3
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Erros 5xx na UI/Admin"
+          description: "UI/Admin retornando 5xx acima do limiar."
+
+      - alert: SF3_truth_promotion_failures
+        expr: increase(truth_promotion_failures_total[15m]) > 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Falhas de promoção Truth-DB"
+          description: "Erros em promoções truth/promotion."
+
+      - alert: SF3_dashboard_freshness
+        expr: dashboard_freshness_seconds{dashboard="sf3_obs_overview"} > 300
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Painel desatualizado"
+          description: "Dashboard Admin/UI não atualizado há >10m."

@@ -84,6 +84,9 @@ function MainLayout() {
               <NavLink to="/admin/ops/cockpit" className={navLinkClass}>
                 Ops Cockpit
               </NavLink>
+              <NavLink to="/admin/howto" className={navLinkClass}>
+                HowTo (passo a passo)
+              </NavLink>
             </div>
           </div>
         </section>
