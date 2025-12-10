@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List, Optional
 
 from app.agents.models import AgentRole
@@ -16,8 +16,8 @@ class AgentFlowStep:
     params: Dict[str, object] = field(default_factory=dict)
     required: bool = True
     can_fail_soft: bool = False
-    created_at: datetime = field(default_factory=datetime.utcnow)
-    updated_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 @dataclass
@@ -28,8 +28,8 @@ class AgentFlowConfig:
     description: Optional[str] = None
     is_active: bool = True
     change_reason: Optional[str] = None
-    created_at: datetime = field(default_factory=datetime.utcnow)
-    updated_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     created_by: Optional[str] = None
     updated_by: Optional[str] = None
     steps: List[AgentFlowStep] = field(default_factory=list)

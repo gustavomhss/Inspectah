@@ -59,7 +59,7 @@ def test_official_open_requires_description_and_public_endpoint():
     assert src.refresh_interval == service._default_refresh_interval("official_open")  # type: ignore[attr-defined]
 
     with pytest.raises(ValueError):
-        service.create_source(ok_payload.copy(update={"description": ""}))
+        service.create_source(ok_payload.model_copy(update={"description": ""}))
 
     with pytest.raises(ValueError):
-        service.create_source(ok_payload.copy(update={"auth_type": "token"}))
+        service.create_source(ok_payload.model_copy(update={"auth_type": "token"}))

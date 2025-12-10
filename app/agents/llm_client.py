@@ -6,7 +6,7 @@ as chamadas reais a provedores ficam para sprints futuras.
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 
 from app.agents.models import AgentProfile, ModelUpgradePolicy
@@ -25,5 +25,5 @@ class LLMClient:
             "model": model_used,
             "prompt_preview": prompt[:200],
             "output": "stubbed-response",
-            "ts": datetime.utcnow().isoformat(),
+            "ts": datetime.now(timezone.utc).isoformat(),
         }

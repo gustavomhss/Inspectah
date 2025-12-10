@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, Optional
 
@@ -71,7 +71,7 @@ class IngestionConfig:
             max_attempts=max_attempts,
             timeout_seconds=timeout_seconds,
         )
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         return cls(
             id=id,
             source_id=source_id,
@@ -102,8 +102,8 @@ class IngestionRun:
     error_message: Optional[str]
     payload_ref: Optional[str]
     meta: Dict[str, Any] = field(default_factory=dict)
-    created_at: datetime = field(default_factory=datetime.utcnow)
-    updated_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     @classmethod
     def create(
@@ -126,7 +126,7 @@ class IngestionRun:
             source_id=config.source_id,
             trigger=trigger,
             status=status,
-            started_at=started_at or datetime.utcnow(),
+            started_at=started_at or datetime.now(timezone.utc),
             finished_at=None,
             items_processed=items_processed,
             error_code=None,

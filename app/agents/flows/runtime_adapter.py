@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from datetime import datetime, timezone
 from typing import Dict, List, Optional, Tuple
 
 from app.agents.flows.schemas import AgentFlowConfigOut, AgentFlowStepOut
@@ -59,9 +60,7 @@ def get_executable_flow_plan(domain_key: str, service: Optional[AgentFlowService
     if flow and not fallback:
         return _build_plan(flow, used_fallback=False)
     # fallback plan
-    from datetime import datetime
-
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     fallback_flow = AgentFlowConfigOut(
         id="fallback",
         domain_key=domain_key,

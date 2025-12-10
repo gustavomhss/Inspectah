@@ -5,7 +5,7 @@ import os
 import sqlite3
 import uuid
 from contextlib import contextmanager
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Optional
 
@@ -62,7 +62,7 @@ class AgentFlowService:
         if errors:
             raise AgentFlowValidationError(errors)
         flow_id = _generate_id("afc")
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         flow_dict = payload.model_dump()
         steps_payload = flow_dict.pop("steps", [])
         try:
@@ -97,7 +97,7 @@ class AgentFlowService:
         errors = validate_agent_flow(payload)
         if errors:
             raise AgentFlowValidationError(errors)
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         flow_dict = payload.model_dump()
         steps_payload = flow_dict.pop("steps", [])
         try:

@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.debunk.models import (
     DebunkDecisionType,
@@ -17,6 +17,8 @@ from app.debunk.models import (
 
 
 class DebunkIssueCreate(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
     target_type: DebunkIssueTarget
     target_id: str
     question: str
@@ -26,7 +28,8 @@ class DebunkIssueCreate(BaseModel):
     origin: str
     opened_by: str
 
-    @validator("question", "reason", pre=True)
+    @field_validator("question", "reason", mode="before")
+    @classmethod
     def _strip(cls, v: str) -> str:
         value = (v or "").strip()
         if not value:

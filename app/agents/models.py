@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 from typing import Dict, List, Optional
 
@@ -67,8 +67,8 @@ class AgentProfile:
     top_p: float
     status: AgentStatus
     kb_refs: List[AgentKBRef] = field(default_factory=list)
-    created_at: datetime = field(default_factory=datetime.utcnow)
-    updated_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     created_by: Optional[str] = None
     last_modified_by: Optional[str] = None
 
@@ -100,7 +100,7 @@ class AgentInstructionVersion:
     top_p: float
     kb_snapshot: List[AgentKBRef]
     changelog: str
-    created_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     created_by: Optional[str] = None
 
 
@@ -121,8 +121,8 @@ class AgentCommittee:
     mediator_agent: str
     policy: CommitteePolicy
     status: AgentStatus = AgentStatus.ACTIVE
-    created_at: datetime = field(default_factory=datetime.utcnow)
-    updated_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 @dataclass
@@ -133,7 +133,7 @@ class ModelUpgradePolicy:
     allowed_models: List[str] = field(default_factory=list)
     last_upgrade_at: Optional[datetime] = None
     next_upgrade_at: Optional[datetime] = None
-    updated_at: datetime = field(default_factory=datetime.utcnow)
+    updated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 @dataclass
@@ -145,13 +145,13 @@ class AgentFlowLayer:
     layer_index: int
     agent_ids: List[str]
     mediator_agent_id: str
-    created_at: datetime = field(default_factory=datetime.utcnow)
-    updated_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     def effective_model_for(self, agent: AgentProfile, now: Optional[datetime] = None) -> str:
         if agent.model_name:
             return agent.model_name
-        now = now or datetime.utcnow()
+        now = now or datetime.now(timezone.utc)
         if not self.auto_upgrade_enabled:
             return agent.recommended_model_name or self.global_default_model
         if self.next_upgrade_at and now < self.next_upgrade_at:
@@ -160,9 +160,9 @@ class AgentFlowLayer:
 
     def schedule_next_upgrade(self, new_model: str) -> None:
         self.global_default_model = new_model
-        self.last_upgrade_at = datetime.utcnow()
+        self.last_upgrade_at = datetime.now(timezone.utc)
         self.next_upgrade_at = self.last_upgrade_at + timedelta(days=self.adoption_delay_days)
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(timezone.utc)
 
 
 @dataclass
@@ -176,11 +176,11 @@ class AgentRun:
     error: Optional[str]
     started_at: datetime
     finished_at: Optional[datetime] = None
-    created_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     @classmethod
     def create(cls, *, id: str, committee_id: str, input_ref: Optional[str], payload_snapshot: Dict[str, object]) -> "AgentRun":
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         return cls(
             id=id,
             committee_id=committee_id,

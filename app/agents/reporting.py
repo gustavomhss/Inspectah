@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import asdict, dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
@@ -16,7 +16,7 @@ class AgentReport:
     status: str
     bundle_ref: Optional[str]
     notes: Optional[str]
-    created_at: datetime = datetime.utcnow()
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     payload: Dict[str, Any] = None  # type: ignore[assignment]
 
 
@@ -35,6 +35,6 @@ def log_committee_decision(committee_id: str, run_id: str, outcome: str, disagre
             "run_id": run_id,
             "outcome": outcome,
             "disagreement_score": disagreement_score,
-            "ts": datetime.utcnow().isoformat(),
+            "ts": datetime.now(timezone.utc).isoformat(),
         },
     )

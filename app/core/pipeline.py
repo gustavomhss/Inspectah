@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 import shutil
 from typing import Any, Iterable, List
 
@@ -21,7 +21,7 @@ def run_pipeline(user_query: str) -> UserResponse:
 
     parsed = parse_query(user_query)
     query_id = storage.generate_entity_id("s9_ql")
-    timestamp = datetime.utcnow()
+    timestamp = datetime.now(timezone.utc)
     items: List[Item] = []
     if parsed.query_type != "fora_de_escopo":
         items = search_internal(parsed)

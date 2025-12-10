@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List
 
 from . import storage
@@ -38,7 +38,7 @@ def build_evidence_bundle(parsed: ParsedQuery, items: List[Item]) -> EvidenceBun
         query_filters=parsed.filters,
         items_by_source=items_by_source,
         manifest_paths=manifest_paths,
-        created_at=datetime.utcnow(),
+        created_at=datetime.now(timezone.utc),
         meta={
             "num_sources": len(items_by_source),
             "num_items": sum(len(refs) for refs in items_by_source.values()),

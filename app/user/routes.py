@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 
 from pathlib import Path
@@ -212,7 +212,7 @@ def _persist_s9_artifacts(request: schemas.UserQueryRequest, dto: Dict[str, Any]
         query_filters=request.filters or {},
         items_by_source={src: [] for src in sources},
         manifest_paths={},
-        created_at=datetime.utcnow(),
+        created_at=datetime.now(timezone.utc),
         meta={"scenario_tag": request.scenario_id, "num_sources": len(sources)},
         sources_meta={src: {} for src in sources},
     )
@@ -245,7 +245,7 @@ def _persist_s9_artifacts(request: schemas.UserQueryRequest, dto: Dict[str, Any]
         sources=sources,
         items_used=[],
         gpt_response_ref=None,
-        timestamp=datetime.utcnow(),
+        timestamp=datetime.now(timezone.utc),
         status=dto.get("status", "ok"),
         error_code=None if dto.get("status") == "ok" else "dados_insuficientes",
         meta={"summary_card": dto.get("summary_card", {})},

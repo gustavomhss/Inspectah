@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from app.ingestion import observability
 from app.ingestion.models import (
@@ -67,7 +67,7 @@ def test_success_updates_metrics(tmp_path):
     repo = IngestionRepository(db_path=tmp_path / "ingestion.sqlite")
     cfg = _cfg(repo)
     run = start_ingestion_run(cfg.source_id, repo=repo, source_fetcher=_source_fetcher)
-    run.finished_at = datetime.utcnow()
+    run.finished_at = datetime.now(timezone.utc)
     run.status = IngestionStatus.SUCCESS
     run.items_processed = 5
     observability.log_run_end(run)
@@ -96,7 +96,7 @@ def test_sources_without_recent_runs(tmp_path):
         config=cfg,
         trigger=IngestionTrigger.MANUAL,
         status=IngestionStatus.RUNNING,
-        started_at=datetime.utcnow() - timedelta(days=2),
+        started_at=datetime.now(timezone.utc) - timedelta(days=2),
     )
     run.status = IngestionStatus.SUCCESS
     run.finished_at = run.started_at + timedelta(minutes=1)

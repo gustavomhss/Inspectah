@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import pytest
 
@@ -69,10 +69,10 @@ def test_run_final_requires_finished_at_and_payload():
         config=cfg,
         trigger=IngestionTrigger.MANUAL,
         status=IngestionStatus.RUNNING,
-        started_at=datetime.utcnow() - timedelta(minutes=1),
+        started_at=datetime.now(timezone.utc) - timedelta(minutes=1),
     )
     run.status = IngestionStatus.SUCCESS
-    run.finished_at = datetime.utcnow()
+    run.finished_at = datetime.now(timezone.utc)
     run.payload_ref = "data/ingestion_raw/src_1/run_ok.ndjson"
     validate_run_invariants(run, cfg)
 
@@ -84,10 +84,10 @@ def test_run_final_without_payload_fails():
         config=cfg,
         trigger=IngestionTrigger.MANUAL,
         status=IngestionStatus.RUNNING,
-        started_at=datetime.utcnow() - timedelta(minutes=1),
+        started_at=datetime.now(timezone.utc) - timedelta(minutes=1),
     )
     run.status = IngestionStatus.PARTIAL_SUCCESS
-    run.finished_at = datetime.utcnow()
+    run.finished_at = datetime.now(timezone.utc)
     run.error_code = "partial_missing"
     with pytest.raises(ValueError):
         validate_run_invariants(run, cfg)
@@ -102,7 +102,7 @@ def test_run_with_error_requires_message():
         status=IngestionStatus.RUNNING,
     )
     run.status = IngestionStatus.FAIL
-    run.finished_at = datetime.utcnow()
+    run.finished_at = datetime.now(timezone.utc)
     with pytest.raises(ValueError):
         validate_run_invariants(run, cfg)
 

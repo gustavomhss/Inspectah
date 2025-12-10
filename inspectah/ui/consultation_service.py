@@ -269,7 +269,7 @@ class ConsultationService:
                 "request_id": request_id,
                 "question": question,
                 "risk": report.risk.value,
-                "evidences": [e.dict() for e in evidences],
+                "evidences": [e.model_dump() for e in evidences],
             },
             ensure_ascii=False,
             sort_keys=True,
