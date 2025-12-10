@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Dict, List, Optional
 
@@ -62,7 +62,7 @@ class RecommendedTruthAction(str, Enum):
 
 
 def utcnow() -> datetime:
-    return datetime.utcnow()
+    return datetime.now(timezone.utc)
 
 
 @dataclass

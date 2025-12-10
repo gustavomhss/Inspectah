@@ -5,7 +5,7 @@ import logging
 import os
 import time
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Callable, Dict, List, Optional, Tuple
 
 from app.ingestion import state_machine
@@ -146,7 +146,7 @@ def run_newsdata_ingestion(
     """
     repo = repo or IngestionRepository()
     source_id = "newsdata_br"
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     recent = repo.list_runs_by_source_between(source_id, now - timedelta(minutes=1), now)
     if len(recent) >= 3:
         raise RunInProgressError("Limite de 3 runs/min para newsdata_br excedido")
@@ -330,7 +330,7 @@ def complete_ingestion_run(
         raise InvalidTransitionError("Só é possível completar runs em RUNNING.")
 
     state_machine.apply_event(run, state_machine.IngestionEvent.COMPLETE)
-    run.finished_at = datetime.utcnow()
+    run.finished_at = datetime.now(timezone.utc)
     run.items_processed = items_processed
     run.payload_ref = payload_ref
     validate_run_invariants(run, config)
@@ -367,7 +367,7 @@ def fail_ingestion_run(
 
     event = state_machine.IngestionEvent.PARTIAL_COMPLETE if partial else state_machine.IngestionEvent.ERROR
     state_machine.apply_event(run, event)
-    run.finished_at = datetime.utcnow()
+    run.finished_at = datetime.now(timezone.utc)
     run.error_code = error_code
     run.error_message = error_message
     run.payload_ref = payload_ref
@@ -438,7 +438,7 @@ def toggle_ingestion_mode(
     config.mode = new_mode
     config.enabled = enabled
     config.updated_by = updated_by
-    config.updated_at = datetime.utcnow()
+    config.updated_at = datetime.now(timezone.utc)
     if enabled:
         _ensure_config_allows_trigger(config, IngestionTrigger.MANUAL if new_mode == IngestionMode.MANUAL_ONLY else IngestionTrigger.AUTOMATIC)
     return repo.save_config(config)
@@ -519,7 +519,7 @@ def _run_ingestion_inline(repo: IngestionRepository, run: IngestionRun, source: 
 
 def _mark_run_success(repo: IngestionRepository, run: IngestionRun, *, items_processed: int, payload_ref: Optional[str]) -> IngestionRun:
     state_machine.apply_event(run, state_machine.IngestionEvent.COMPLETE)
-    run.finished_at = datetime.utcnow()
+    run.finished_at = datetime.now(timezone.utc)
     run.items_processed = items_processed
     run.payload_ref = payload_ref
     repo.update_run(run)
@@ -545,7 +545,7 @@ def _mark_run_fail(
     items_processed: int = 0,
 ) -> IngestionRun:
     state_machine.apply_event(run, state_machine.IngestionEvent.ERROR)
-    run.finished_at = datetime.utcnow()
+    run.finished_at = datetime.now(timezone.utc)
     run.error_code = error_code
     run.error_message = error_message
     run.payload_ref = payload_ref

@@ -177,7 +177,7 @@ vi.mock('../../modules/agents/hooks/useModelPolicy', () => {
       return { policy, loading: false, error: null, reload: vi.fn(), save: savePolicy };
     },
   };
-});
+  });
 
 describe('Admin Agents Console', () => {
   it('renderiza lista e cria novo agente', async () => {

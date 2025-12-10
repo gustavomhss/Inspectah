@@ -5,7 +5,7 @@ import os
 import sqlite3
 import uuid
 from contextlib import contextmanager
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
@@ -46,7 +46,7 @@ def _generate_id(prefix: str) -> str:
 
 
 def _now_iso() -> str:
-    return datetime.utcnow().isoformat()
+    return datetime.now(timezone.utc).isoformat()
 
 
 def _serialize(value) -> str:
@@ -115,7 +115,7 @@ def _ensure_lab_ingestion_config(source: Source, updated_by: str) -> None:
         existing.mode = mode
         existing.enabled = enabled
         existing.updated_by = updated_by
-        existing.updated_at = datetime.utcnow()
+        existing.updated_at = datetime.now(timezone.utc)
         repo.save_config(existing)
         return
     cfg = IngestionConfig.create(
@@ -400,7 +400,7 @@ def update_source(source_id: str, payload: SourceUpdate) -> Optional[Source]:
     state_before = source.state
     source = normalize_source_model(source)
     if source.state != state_before:
-        source.state_updated_at = datetime.utcnow()
+        source.state_updated_at = datetime.now(timezone.utc)
     # não muda estado diretamente aqui; usar change_source_state para transições
     with get_connection() as conn:
         _update_source_record(conn, source)
@@ -417,8 +417,8 @@ def _apply_state_transition(conn: sqlite3.Connection, source: Source, target_sta
     prev = source.state
     source.state = target_state
     source.state_reason = reason
-    source.state_updated_at = datetime.utcnow()
-    source.updated_at = datetime.utcnow()
+    source.state_updated_at = datetime.now(timezone.utc)
+    source.updated_at = datetime.now(timezone.utc)
     source.updated_by = changed_by
     _update_source_record(conn, source)
     _insert_state_history(conn, source.id, prev, target_state, reason, changed_by)
@@ -449,7 +449,7 @@ def register_healthcheck(
             source_id=source_id,
             status=status,
             latency_ms=latency_ms,
-            checked_at=datetime.utcnow(),
+            checked_at=datetime.now(timezone.utc),
             error=error,
             meta=meta or {},
         )

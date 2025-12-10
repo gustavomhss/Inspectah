@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional
 
@@ -128,7 +128,7 @@ def trigger_source_test(source_id: str) -> SourceTestResult:
         )
 
     records = _load_fixture_records_for_source(source_id)
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     preview: List[Dict[str, Any]] = []
     ingested = 0
     for record in records:
@@ -266,7 +266,7 @@ def _load_fixture_payload(path: Path) -> tuple[Dict[str, Any], List[Dict[str, An
 
 
 def _ingest_items(source_id: str, items: List[Dict[str, Any]]) -> None:
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     ingested = 0
     for record in items:
         item = Item(

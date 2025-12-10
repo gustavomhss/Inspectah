@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import sqlite3
 from contextlib import contextmanager
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Optional
 
@@ -64,7 +64,7 @@ class ContentRepository:
             )
 
     def save_items(self, items: List[Dict]) -> int:
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         inserted = 0
         with self._conn() as conn:
             for item in items:

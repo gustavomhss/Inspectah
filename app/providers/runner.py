@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import asdict
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
@@ -54,7 +54,7 @@ class ProfileRunner:
                 item["profile_id"] = profile.id
             items_len = len(normalized)
             persisted = self.content_repo.save_items(normalized)
-            evidence_path = self.evidence_dir / f"{profile.slug}_{int(datetime.utcnow().timestamp())}.jsonl"
+            evidence_path = self.evidence_dir / f"{profile.slug}_{int(datetime.now(timezone.utc).timestamp())}.jsonl"
             with evidence_path.open("w", encoding="utf-8") as f:
                 for item in normalized:
                     f.write(json.dumps(item, ensure_ascii=False) + "\n")
@@ -64,7 +64,7 @@ class ProfileRunner:
 
         finished_at = utcnow_iso()
         run = ProfileRun(
-            run_id=f"run_{profile.id}_{int(datetime.utcnow().timestamp())}",
+            run_id=f"run_{profile.id}_{int(datetime.now(timezone.utc).timestamp())}",
             provider_id=profile.provider_id,
             profile_id=profile.id,
             started_at=started_at,

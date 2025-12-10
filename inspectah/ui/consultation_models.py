@@ -6,11 +6,12 @@ from enum import Enum
 from typing import Any, List, Optional, Sequence
 
 try:  # pragma: no cover
-    from pydantic import BaseModel, Field, validator
+    from pydantic import BaseModel, ConfigDict, Field, field_validator
 except ModuleNotFoundError:  # pragma: no cover
     BaseModel = None  # type: ignore[misc]
+    ConfigDict = None  # type: ignore[misc]
     Field = None  # type: ignore[misc]
-    validator = None  # type: ignore[misc]
+    field_validator = None  # type: ignore[misc]
 
 
 class RiskLevel(str, Enum):
@@ -21,20 +22,20 @@ class RiskLevel(str, Enum):
 
 
 class ConsultationRequest(BaseModel):  # type: ignore[misc]
+    model_config = ConfigDict(str_strip_whitespace=True)
+
     question: str = Field(..., min_length=3, max_length=2000, description="Pergunta em linguagem natural")
     locale: Optional[str] = Field(default=None, description="Locale preferido pelo cliente (ex: pt-BR)")
     context: Optional[str] = Field(default=None, description="Contexto adicional fornecido pelo chamador")
     expected_risk: Optional[RiskLevel] = Field(default=None, description="Risco esperado pelo chamador, quando existir")
 
-    @validator("question")  # type: ignore[misc]
+    @field_validator("question")  # type: ignore[misc]
+    @classmethod
     def _strip_and_validate(cls, value: str) -> str:
         trimmed = value.strip()
         if not trimmed:
             raise ValueError("question must not be empty")
         return trimmed
-
-    class Config:
-        anystr_strip_whitespace = True
 
 
 class ConsultationEvidence(BaseModel):  # type: ignore[misc]
@@ -67,6 +68,8 @@ class EvidenceContainer(BaseModel):  # type: ignore[misc]
 
 
 class ConsultationResponse(BaseModel):  # type: ignore[misc]
+    model_config = ConfigDict(str_strip_whitespace=True)
+
     request_id: str = Field(..., description="ID único da consulta")
     answer: str = Field(..., description="Resposta consolidada e legível pela UI")
     risk_level: RiskLevel = Field(..., description="Nível de risco consolidado")
@@ -80,9 +83,6 @@ class ConsultationResponse(BaseModel):  # type: ignore[misc]
     summary_card: Optional[SummaryCard] = Field(default=None)
     notes: Optional[str] = Field(default=None, description="Notas adicionais para UX")
     insufficient_data: bool = Field(default=False, description="True quando não há evidência suficiente")
-
-    class Config:
-        anystr_strip_whitespace = True
 
 
 class ConsultationErrorResponse(BaseModel):  # type: ignore[misc]

@@ -19,9 +19,7 @@ const baseFlow: AgentFlowConfigForm = {
 describe('AgentFlowEditor', () => {
   it('renders steps and allows adding a new one', async () => {
     const user = userEvent.setup();
-    render(
-      <AgentFlowEditor initialFlow={baseFlow} onSave={async () => {}} saving={false} error={null} clearError={() => {}} />,
-    );
+    render(<AgentFlowEditor initialFlow={baseFlow} onSave={async () => {}} saving={false} error={null} clearError={() => {}} />);
 
     expect(screen.getByText('#1')).toBeInTheDocument();
     expect(screen.getByText('#3')).toBeInTheDocument();

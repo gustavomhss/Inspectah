@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
@@ -135,7 +135,7 @@ class Source:
         meta: Optional[Dict[str, Any]] = None,
         refresh_interval: Optional[int] = None,
     ) -> "Source":
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         return cls(
             id=id,
             slug=slug,

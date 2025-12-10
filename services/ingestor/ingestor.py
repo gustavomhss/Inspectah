@@ -8,7 +8,7 @@ import random
 import threading
 import time
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -23,7 +23,7 @@ EVIDENCE_DIR = ROOT / "out/evidence/T3_property"
 class SourceConfig:
     source_id: str
     poll_interval: int
-    last_poll: datetime = field(default_factory=lambda: datetime.utcnow())
+    last_poll: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     jitter: float = 0.15
 
 
@@ -83,7 +83,7 @@ class Ingestor:
         self.write_metrics()
 
     def poll_sources(self) -> None:
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         for source in self.sources:
             jitter = random.uniform(1 - source.jitter, 1 + source.jitter)
             next_allowed = source.last_poll + timedelta(seconds=source.poll_interval * jitter)
@@ -94,7 +94,7 @@ class Ingestor:
                     if dedupe_key not in self.dedupe:
                         self.queue.put(item)
                         self.metrics["items_fetched_total"] += 1
-                        self.dedupe[dedupe_key] = datetime.utcnow()
+                        self.dedupe[dedupe_key] = datetime.now(timezone.utc)
                 source.last_poll = now
         self.metrics_update()
 
@@ -102,7 +102,7 @@ class Ingestor:
         payload_path = VAULT_PAYLOAD
         metadata = json.loads(VAULT_METADATA.read_text())
         metadata["source_id"] = source.source_id
-        metadata["event_time"] = datetime.utcnow().isoformat() + "Z"
+        metadata["event_time"] = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
         meta_path = self.output_dir / "tmp_metadata.json"
         meta_path.write_text(json.dumps(metadata), encoding="utf-8")
         return IngestItem(
@@ -112,7 +112,7 @@ class Ingestor:
             extractor_version="1.0.0",
             payload_path=payload_path,
             metadata_path=meta_path,
-            event_time=datetime.utcnow(),
+            event_time=datetime.now(timezone.utc),
         )
 
     def dedupe_key(self, item: IngestItem) -> str:

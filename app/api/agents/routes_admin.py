@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict, is_dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Optional
 
 try:  # pragma: no cover
@@ -199,7 +199,7 @@ if APIRouter is not None:  # pragma: no cover
             raise HTTPException(status_code=404, detail="Committee not found")
         run.status = AgentRunStatus.SUCCESS
         run.result_bundle_ref = "stub://s23/dry-run"
-        run.finished_at = datetime.utcnow()
+        run.finished_at = datetime.now(timezone.utc)
         repo.update_run(run)
         return AgentRunRead.model_validate(_to_dict(run))
 

@@ -2,7 +2,7 @@ from __future__ import annotations
 import json
 import sqlite3
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
@@ -85,7 +85,7 @@ class EvidenceBundleBuilder:
         try:
             collected_dt = datetime.fromisoformat(observed_at.replace("Z", "+00:00"))
         except ValueError:
-            collected_dt = datetime.utcnow()
+            collected_dt = datetime.now(timezone.utc)
         evidences.append(
             store_evidence(
                 source_id=cfg.id,

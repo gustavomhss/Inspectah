@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import List
 
@@ -59,15 +59,15 @@ def log_run_end(run: IngestionRun, log_path: Path = LOG_PATH_DEFAULT) -> None:
     if run.items_processed:
         ingest_metrics.record_items(run.source_id, run.items_processed)
     if run.status == IngestionStatus.SUCCESS:
-        metrics.mark_success(run.source_id, datetime.utcnow().timestamp())
+        metrics.mark_success(run.source_id, datetime.now(timezone.utc).timestamp())
     if run.status in {IngestionStatus.FAIL, IngestionStatus.PARTIAL_SUCCESS}:
-        metrics.mark_failure(run.source_id, datetime.utcnow().timestamp())
+        metrics.mark_failure(run.source_id, datetime.now(timezone.utc).timestamp())
         ingest_metrics.record_error(error_type=run.error_code or "error", source=run.source_id)
 
 
 def sources_without_recent_runs(repo: IngestionRepository, threshold_minutes: int = 1440) -> List[str]:
     stale: List[str] = []
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     for cfg in repo.list_configs():
         runs = repo.list_runs_by_source(cfg.source_id, limit=1)
         if not runs:

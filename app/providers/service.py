@@ -4,7 +4,7 @@ import json
 import runpy
 import sqlite3
 from contextlib import contextmanager
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Optional
 
@@ -55,7 +55,7 @@ class ProviderService:
         return _row_to_provider(row) if row else None
 
     def save_provider(self, provider: Provider) -> Provider:
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         with self._conn() as conn:
             conn.execute(
                 """
@@ -101,7 +101,7 @@ class ProviderService:
         return _row_to_profile(row) if row else None
 
     def save_profile(self, profile: IngestionProfile) -> IngestionProfile:
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         with self._conn() as conn:
             conn.execute(
                 """

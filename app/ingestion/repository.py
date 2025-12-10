@@ -4,7 +4,7 @@ import json
 import os
 import sqlite3
 from contextlib import contextmanager
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Iterable, List, Optional, Tuple
 
@@ -82,7 +82,7 @@ class IngestionRepository:
         config = self.get_config(source_id)
         if not config:
             raise ConfigNotFoundError(f"Nenhuma config para source {source_id}")
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         config.mode = mode
         config.enabled = enabled
         config.updated_by = updated_by
@@ -93,7 +93,7 @@ class IngestionRepository:
         with self._conn() as conn:
             conn.execute(
                 "UPDATE ingestion_configs SET last_run_id=?, updated_at=? WHERE id=?",
-                (run_id, datetime.utcnow().isoformat(), config_id),
+                (run_id, datetime.now(timezone.utc).isoformat(), config_id),
             )
             conn.commit()
 
@@ -129,7 +129,7 @@ class IngestionRepository:
         return run
 
     def update_run(self, run: IngestionRun) -> IngestionRun:
-        run.updated_at = datetime.utcnow()
+        run.updated_at = datetime.now(timezone.utc)
         with self._conn() as conn:
             conn.execute(
                 """
@@ -165,14 +165,14 @@ class IngestionRepository:
                 (source_id, limit, offset),
             ).fetchall()
         runs = [_row_to_run(row) for row in rows]
-        stale_cutoff = datetime.utcnow() - timedelta(minutes=10)
+        stale_cutoff = datetime.now(timezone.utc) - timedelta(minutes=10)
         healed: List[IngestionRun] = []
         for run in runs:
             if run.status == IngestionStatus.RUNNING and run.started_at < stale_cutoff:
                 run.status = IngestionStatus.FAIL
                 run.error_code = run.error_code or "timeout"
                 run.error_message = run.error_message or "Ingestão excedeu o tempo máximo esperado."
-                run.finished_at = datetime.utcnow()
+                run.finished_at = datetime.now(timezone.utc)
                 self.update_run(run)
                 healed.append(run)
         if healed:
@@ -197,7 +197,7 @@ class IngestionRepository:
 
     # Payload persistence (NDJSON on disk)
     def save_raw_payload(self, run_id: str, source_id: str, items: Iterable[dict], base_dir: Optional[Path] = None) -> str:
-        today = datetime.utcnow()
+        today = datetime.now(timezone.utc)
         root = base_dir or Path(os.environ.get("INSPECTAH_RAW_BASE", "data/ingestion_raw"))
         base = root / source_id / f"{today:%Y}" / f"{today:%m}" / f"{today:%d}"
         base.mkdir(parents=True, exist_ok=True)

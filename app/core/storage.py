@@ -5,7 +5,7 @@ import os
 import uuid
 import unicodedata
 from dataclasses import asdict, is_dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional
 
@@ -153,7 +153,7 @@ def get_item(item_id: str) -> Optional[Item]:
         id=data["id"],
         source_id=data["source_id"],
         payload=data.get("payload", {}),
-        created_at=_parse_datetime(data.get("created_at")) or datetime.utcnow(),
+        created_at=_parse_datetime(data.get("created_at")) or datetime.now(timezone.utc),
     )
 
 
@@ -184,7 +184,7 @@ def list_items_by_filter(
             id=data["id"],
             source_id=data["source_id"],
             payload=data.get("payload", {}),
-            created_at=_parse_datetime(data.get("created_at")) or datetime.utcnow(),
+            created_at=_parse_datetime(data.get("created_at")) or datetime.now(timezone.utc),
         )
         source = sources_map.get(item.source_id)
         if not source:
@@ -252,7 +252,7 @@ def load_evidence_bundle(bundle_id: str) -> Optional[EvidenceBundle]:
         query_filters=data.get("query_filters", {}),
         items_by_source=items_by_source,
         manifest_paths=data.get("manifest_paths", {}),
-        created_at=_parse_datetime(data.get("created_at")) or datetime.utcnow(),
+        created_at=_parse_datetime(data.get("created_at")) or datetime.now(timezone.utc),
         meta=data.get("meta", {}),
         sources_meta=data.get("sources_meta", {}),
     )
@@ -282,7 +282,7 @@ def load_query_log(query_id: str) -> Optional[QueryLog]:
         sources=data.get("sources", []),
         items_used=data.get("items_used", []),
         gpt_response_ref=data.get("gpt_response_ref"),
-        timestamp=_parse_datetime(data.get("timestamp")) or datetime.utcnow(),
+        timestamp=_parse_datetime(data.get("timestamp")) or datetime.now(timezone.utc),
         status=data.get("status", "ok"),
         error_code=data.get("error_code"),
         meta=data.get("meta", {}),
@@ -293,13 +293,13 @@ def save_user_response(response: UserResponse) -> Path:
     path = responses_dir() / f"{response.id}.json"
     payload = _to_serializable(response)
     payload.setdefault("storage_path", str(path))
-    payload.setdefault("created_at", datetime.utcnow().isoformat())
+    payload.setdefault("created_at", datetime.now(timezone.utc).isoformat())
     _write_json(path, payload)
     return path
 
 
 def generate_entity_id(prefix: str) -> str:
-    stamp = datetime.utcnow().strftime("%Y%m%d%H%M%S")
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
     suffix = uuid.uuid4().hex[:6]
     return f"{prefix}_{stamp}_{suffix}"
 

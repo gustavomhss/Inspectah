@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 import pytest
 
@@ -160,7 +160,7 @@ def test_reprocess_run_creates_new_run(tmp_path):
     cfg = _seed_config(repo, source)
     run = IngestionRun.create(id="run_done", config=cfg, trigger=IngestionTrigger.MANUAL, status=IngestionStatus.RUNNING)
     run.status = IngestionStatus.SUCCESS
-    run.finished_at = datetime.utcnow()
+    run.finished_at = datetime.now(timezone.utc)
     run.payload_ref = "data/ingestion_raw/src_1/run_done.ndjson"
     validate_run_invariants(run, cfg)
     repo.insert_run(run)

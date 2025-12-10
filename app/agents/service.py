@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -79,7 +79,7 @@ def update_agent_profile(repo: Optional[AgentsRepository], agent_id: str, update
     for field_name, value in updates.items():
         if hasattr(current, field_name) and value is not None:
             setattr(current, field_name, value)
-    current.updated_at = datetime.utcnow()
+    current.updated_at = datetime.now(timezone.utc)
     _validate_agent(current)
     repo.update_agent(current)
     return current
@@ -123,7 +123,7 @@ def add_instruction_version(
     agent.max_tokens = version.max_tokens
     agent.top_p = version.top_p
     agent.kb_refs = version.kb_snapshot
-    agent.updated_at = datetime.utcnow()
+    agent.updated_at = datetime.now(timezone.utc)
     repo.update_agent(agent)
     return version
 
@@ -143,7 +143,7 @@ def update_committee(repo: Optional[AgentsRepository], committee_id: str, update
     for field_name, value in updates.items():
         if hasattr(current, field_name) and value is not None:
             setattr(current, field_name, value)
-    current.updated_at = datetime.utcnow()
+    current.updated_at = datetime.now(timezone.utc)
     _validate_committee(repo, current)
     repo.update_committee(current)
     return current
@@ -174,7 +174,7 @@ def update_model_policy(
         policy.allowed_models = allowed_models
     if next_upgrade_at is not None:
         policy.next_upgrade_at = next_upgrade_at
-    policy.updated_at = datetime.utcnow()
+    policy.updated_at = datetime.now(timezone.utc)
     repo.save_model_policy(policy)
     return policy
 
@@ -196,7 +196,7 @@ def finalize_committee_run_success(repo: Optional[AgentsRepository], run_id: str
         return None
     matching.status = AgentRunStatus.SUCCESS
     matching.result_bundle_ref = result_bundle_ref
-    matching.finished_at = datetime.utcnow()
+    matching.finished_at = datetime.now(timezone.utc)
     repo.update_run(matching)
     return matching
 
@@ -208,7 +208,7 @@ def finalize_committee_run_fail(repo: Optional[AgentsRepository], run_id: str, e
         return None
     matching.status = AgentRunStatus.FAIL
     matching.error = error
-    matching.finished_at = datetime.utcnow()
+    matching.finished_at = datetime.now(timezone.utc)
     repo.update_run(matching)
     return matching
 

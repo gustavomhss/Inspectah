@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List, Tuple
 
 from app.ingestion.models import IngestionMode
@@ -33,8 +33,8 @@ def normalize_all_sources(changed_by: str = "normalizer") -> Dict[str, int]:
             normalized = normalize_source_model(src)
             if normalized != src:
                 if normalized.state != src.state:
-                    normalized.state_updated_at = datetime.utcnow()
-                    normalized.updated_at = datetime.utcnow()
+                    normalized.state_updated_at = datetime.now(timezone.utc)
+                    normalized.updated_at = datetime.now(timezone.utc)
                     normalized.updated_by = changed_by
                 service._update_source_record(conn, normalized)
                 updated += 1
