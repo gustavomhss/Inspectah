@@ -80,5 +80,27 @@ export const endpoints = {
     newsdata: {
       run: '/api/ingest/newsdata/run',
     },
+    traces: {
+      recent: (domain?: string) => `/api/traces/recent${domain ? `?domain=${encodeURIComponent(domain)}` : ''}`,
+      byDecision: (decisionId: string) => `/api/traces/decision/${encodeURIComponent(decisionId)}`,
+      detail: (traceId: string) => `/api/traces/${encodeURIComponent(traceId)}`,
+      feedbackTrace: '/api/feedback/trace',
+      feedbackDecision: '/api/feedback/decision',
+    },
+    guardian: {
+      decisions: '/api/guardian/decisions',
+      decisionDetail: (decisionId: string) => `/api/guardian/decisions/${encodeURIComponent(decisionId)}`,
+      decisionBlock: (decisionId: string) => `/api/guardian/decisions/${encodeURIComponent(decisionId)}/block`,
+      decisionCommittee: (decisionId: string) => `/api/guardian/decisions/${encodeURIComponent(decisionId)}/committee`,
+      awaitingReview: '/api/guardian/decisions/awaiting-review',
+      awaitingQuorum: '/api/guardian/decisions/awaiting-quorum',
+      submitReview: (decisionId: string) => `/api/guardian/decisions/${encodeURIComponent(decisionId)}/review`,
+      submitVote: (decisionId: string) => `/api/guardian/decisions/${encodeURIComponent(decisionId)}/vote`,
+      reviewQueue: '/api/guardian/review-queue',
+      reviewQueueStats: '/api/guardian/review-queue/stats',
+      metrics: '/api/guardian/metrics',
+      policies: '/api/guardian/policies',
+      policyDetail: (policyName: string) => `/api/guardian/policies/${encodeURIComponent(policyName)}`,
+    },
   },
 };
