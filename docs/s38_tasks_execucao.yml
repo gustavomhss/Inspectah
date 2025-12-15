@@ -1,0 +1,786 @@
+# S38 — Tasks de Execucao v2.0
+# Sprint: S38 — Hardening Dominios
+# Revisao: FINE TUNING SEVERO
+# Total: 82 tasks (delta +52 vs v1.0)
+
+sprint: S38
+title: Hardening Dominios
+revision: v2.0
+total_tasks: 82
+waves: 7
+
+# Wave 0 — Fontes Oficiais, Scrapers e Infraestrutura (G10)
+wave_0:
+  name: Fontes Oficiais, Scrapers e Infraestrutura
+  gate: G10
+  prerequisite: S37 entregue
+  task_count: 14
+  tasks:
+    # Fontes Oficiais
+    - id: S38-BE-001
+      area: backend
+      description: Integrador de fontes oficiais
+      files:
+        - app/sources/official_integrator.py
+        - app/sources/adapters/__init__.py
+      done_condition: Integrador funcional com interface abstrata
+      evidence: Logs de ingestao
+
+    - id: S38-BE-002
+      area: backend
+      description: APIs gov.br e dados.gov
+      files:
+        - app/sources/adapters/gov_br.py
+        - app/sources/adapters/dados_gov.py
+      done_condition: Adapters funcionando e ingerindo
+      evidence: Documentos ingeridos
+
+    - id: S38-BE-002b
+      area: backend
+      description: Adapter TSE dados abertos
+      files:
+        - app/sources/adapters/tse.py
+      done_condition: TSE ingerindo dados eleitorais
+      evidence: Dados eleitorais ingeridos
+
+    # Scrapers
+    - id: S38-BE-003
+      area: backend
+      description: Framework de scrapers
+      files:
+        - app/sources/scrapers/base.py
+        - app/sources/scrapers/config.py
+        - app/sources/scrapers/__init__.py
+      done_condition: Base scraper com interface abstrata
+      evidence: Testes unitarios
+
+    - id: S38-BE-004
+      area: backend
+      description: Scrapers de sites de checagem
+      files:
+        - app/sources/scrapers/aosfatos.py
+        - app/sources/scrapers/lupa.py
+        - app/sources/scrapers/boatos.py
+        - app/sources/scrapers/efarsas.py
+        - app/sources/scrapers/fatooufake.py
+      done_condition: 5+ scrapers funcionais
+      evidence: Conteudo extraido
+
+    - id: S38-BE-005
+      area: backend
+      description: Rate limiting (Token Bucket) e retry
+      files:
+        - app/sources/rate_limiter.py
+        - app/sources/retry_policy.py
+      done_condition: Rate limiting por fonte com backoff
+      evidence: Logs de throttling
+
+    - id: S38-BE-005b
+      area: backend
+      description: Circuit Breaker para APIs externas
+      files:
+        - app/sources/circuit_breaker.py
+      done_condition: Circuit breaker com estados CLOSED/OPEN/HALF_OPEN
+      evidence: Metricas Prometheus circuit_breaker_state
+
+    - id: S38-BE-005c
+      area: backend
+      description: Fallback Manager com cache 24h
+      files:
+        - app/sources/fallback_manager.py
+      done_condition: Fallback funcionando com cache stale
+      evidence: Metricas source_fallback_used_total
+
+    - id: S38-BE-005d
+      area: backend
+      description: Anti-Block Strategy (User-Agent rotation)
+      files:
+        - app/sources/scrapers/anti_block.py
+      done_condition: User-agent rotation + delay com jitter
+      evidence: Logs de rotacao
+
+    - id: S38-BE-006
+      area: backend
+      description: Health monitoring com alertas
+      files:
+        - app/sources/health_monitor.py
+        - app/sources/health_repository.py
+        - app/sources/health_service.py
+      done_condition: Health check periodico (5min)
+      evidence: Dashboard de status
+
+    # Infraestrutura
+    - id: S38-INFRA-001
+      area: ops
+      description: Setup Redis (docker-compose, config)
+      files:
+        - docker-compose.yml
+        - config/redis.conf
+      done_condition: Redis operacional com PING OK
+      evidence: Redis PING respondendo
+
+    - id: S38-INFRA-002
+      area: ops
+      description: Redis health check e metricas
+      files:
+        - app/infra/redis_health.py
+        - observability/alerts/redis.yaml
+      done_condition: Metricas redis_* no Prometheus
+      evidence: Grafana panel
+
+    # Migrations
+    - id: S38-DB-001
+      area: dados/db
+      description: "Migration: source_health table"
+      files:
+        - db/migrations/027_source_health.sql
+      done_condition: Tabela criada com indices
+      evidence: Explain plan
+
+    - id: S38-DB-002
+      area: dados/db
+      description: "Migration: claim_relations table"
+      files:
+        - db/migrations/028_claim_relations.sql
+      done_condition: Tabela criada com constraints
+      evidence: Explain plan
+
+# Wave 1 — Console Fontes v1 (G11)
+wave_1:
+  name: Console Fontes v1
+  gate: G11
+  prerequisite: W0
+  task_count: 12
+  tasks:
+    # Backend APIs
+    - id: S38-BE-010
+      area: backend
+      description: API CRUD de fontes (/api/v1/sources)
+      files:
+        - app/api/routes/sources.py
+        - app/sources/source_service.py
+        - app/sources/source_repository.py
+      done_condition: CRUD completo funcionando
+      evidence: Testes de API
+
+    - id: S38-BE-010b
+      area: backend
+      description: API dry-run (POST /sources/dry-run)
+      files:
+        - app/api/routes/sources.py
+        - app/sources/dry_run_service.py
+      done_condition: Dry-run testando conexao
+      evidence: Response com success/error
+
+    - id: S38-BE-010c
+      area: backend
+      description: API trigger ingestion (POST /sources/{id}/trigger)
+      files:
+        - app/api/routes/sources.py
+      done_condition: Trigger manual funcionando
+      evidence: Job criado e executado
+
+    - id: S38-BE-010d
+      area: backend
+      description: API metrics (GET /sources/{id}/metrics)
+      files:
+        - app/api/routes/sources.py
+        - app/sources/metrics_service.py
+      done_condition: Metricas por periodo (1h, 24h, 7d)
+      evidence: JSON com docs/hora, latencia, success
+
+    - id: S38-BE-010e
+      area: backend
+      description: API history (GET /sources/{id}/history)
+      files:
+        - app/api/routes/sources.py
+      done_condition: Historico paginado
+      evidence: Lista de ingestion runs
+
+    - id: S38-BE-010f
+      area: backend
+      description: API health por fonte (GET /sources/{id}/health)
+      files:
+        - app/api/routes/sources.py
+      done_condition: Health status da fonte
+      evidence: JSON com status, latency, errors
+
+    # Frontend
+    - id: S38-FE-010
+      area: frontend
+      description: SourcesPage + SourceCard
+      files:
+        - frontend/.../sources/pages/SourcesPage.tsx
+        - frontend/.../sources/components/SourceCard.tsx
+        - frontend/.../sources/hooks/useSources.ts
+        - frontend/.../sources/api/sourcesApi.ts
+        - frontend/.../sources/types/index.ts
+      done_condition: Lista de fontes com filtros
+      evidence: Screenshots
+
+    - id: S38-FE-010b
+      area: frontend
+      description: SourceFormModal + validacao
+      files:
+        - frontend/.../sources/components/SourceForm.tsx
+        - frontend/.../sources/components/SourceFormModal.tsx
+      done_condition: CRUD form com dry-run
+      evidence: Screenshots
+
+    - id: S38-FE-010c
+      area: frontend
+      description: SourceDetailPage
+      files:
+        - frontend/.../sources/pages/SourceDetailPage.tsx
+      done_condition: Detalhe com metrics e history
+      evidence: Screenshots
+
+    - id: S38-FE-011
+      area: frontend
+      description: SourceMetrics (graficos recharts)
+      files:
+        - frontend/.../sources/components/SourceMetrics.tsx
+      done_condition: Graficos de metricas
+      evidence: Screenshots
+
+    - id: S38-FE-012
+      area: frontend
+      description: IngestionHistory (timeline)
+      files:
+        - frontend/.../sources/components/IngestionHistory.tsx
+      done_condition: Timeline de ingestao
+      evidence: Screenshots
+
+    # Navegacao
+    - id: S38-FE-NAV-001
+      area: frontend
+      description: Sidebar entry + Router config para /admin/sources
+      files:
+        - frontend/.../layout/Sidebar.tsx
+        - frontend/.../routes/index.tsx
+      done_condition: Navegacao funcional
+      evidence: Video navegacao
+
+# Wave 2 — ClaimGraph Relacoes e Sinais On-Demand (G12)
+wave_2:
+  name: ClaimGraph Relacoes e Sinais On-Demand
+  gate: G12
+  prerequisite: W0
+  parallel_with: W1, W3
+  task_count: 8
+  tasks:
+    # ClaimGraph
+    - id: S38-BE-020
+      area: backend
+      description: Inferencia de relacoes (embedding similarity)
+      files:
+        - app/claims/relation_inference.py
+        - app/claims/relation_types.py
+      done_condition: Relacoes inferidas (supports, contradicts, related)
+      evidence: Grafo com edges
+
+    - id: S38-BE-020b
+      area: backend
+      description: API relacoes (GET /claims/{id}/relations)
+      files:
+        - app/api/routes/claims.py
+      done_condition: Endpoint funcional
+      evidence: JSON com relacoes
+
+    - id: S38-BE-021
+      area: backend
+      description: Algoritmo de clustering v2
+      files:
+        - app/claims/clustering.py
+      done_condition: 30% menos clusters redundantes
+      evidence: Metricas de clustering
+
+    # Sinais On-Demand
+    - id: S38-BE-022
+      area: backend
+      description: API de sinais on-demand
+      files:
+        - app/api/routes/signals.py
+        - app/signals/signal_service.py
+      done_condition: Endpoint GET /signals/{type}
+      evidence: Response time <200ms
+
+    - id: S38-BE-023
+      area: backend
+      description: Cache Redis com TTL por tipo
+      files:
+        - app/signals/cache.py
+        - app/signals/cache_config.py
+      done_condition: Cache funcional com TTL 5-15min
+      evidence: Metricas cache_hit_total
+
+    - id: S38-BE-023b
+      area: backend
+      description: Invalidacao por evento (new_claim, claim_updated)
+      files:
+        - app/signals/cache_invalidator.py
+      done_condition: Invalidacao automatica
+      evidence: Logs de invalidacao
+
+    - id: S38-BE-024
+      area: backend
+      description: Calculo real-time de sinais
+      files:
+        - app/signals/realtime_calculator.py
+      done_condition: Calculo <200ms P95
+      evidence: Metricas signal_latency_seconds
+
+    - id: S38-BE-024b
+      area: backend
+      description: Performance monitor para SLA 200ms
+      files:
+        - app/signals/performance_monitor.py
+      done_condition: SLA monitor ativo
+      evidence: Alertas configurados
+
+# Wave 3 — Policies Versionadas e Memory Controller (G13)
+wave_3:
+  name: Policies Versionadas e Memory Controller
+  gate: G13
+  prerequisite: W0
+  parallel_with: W1, W2
+  task_count: 9
+  tasks:
+    # Policy Versioning
+    - id: S38-BE-030
+      area: backend
+      description: Versionamento de policies
+      files:
+        - app/policies/versioning_service.py
+        - app/policies/version_repository.py
+      done_condition: Versoes salvas e recuperaveis
+      evidence: Historico de versoes
+
+    - id: S38-BE-030b
+      area: backend
+      description: API versoes (GET/POST /policies/{id}/versions)
+      files:
+        - app/api/routes/policies.py
+      done_condition: Endpoints funcionais
+      evidence: Testes de API
+
+    - id: S38-BE-031
+      area: backend
+      description: Diff unificado estilo git
+      files:
+        - app/policies/diff_service.py
+      done_condition: Diff mostrando +/-
+      evidence: Output de diff
+
+    - id: S38-BE-031b
+      area: backend
+      description: Rollback atomico com audit trail
+      files:
+        - app/policies/rollback_service.py
+      done_condition: Rollback <500ms com audit
+      evidence: Testes de rollback
+
+    - id: S38-DB-030
+      area: dados/db
+      description: "Migration: policy_versions + policy_audit_log"
+      files:
+        - db/migrations/029_policy_versions.sql
+      done_condition: Tabelas com indices e constraints
+      evidence: Explain plans
+
+    # Memory Controller
+    - id: S38-BE-032
+      area: backend
+      description: Memory Controller core (paginacao)
+      files:
+        - app/memory/controller.py
+        - app/memory/context_manager.py
+      done_condition: Paginacao basica funcional (8000 tokens)
+      evidence: Logs de paginacao
+
+    - id: S38-BE-032b
+      area: backend
+      description: API context pages (GET /context/{claim_id}/pages)
+      files:
+        - app/api/routes/context.py
+      done_condition: Endpoint funcional
+      evidence: JSON com pages
+
+    - id: S38-BE-033
+      area: backend
+      description: Paginacao por relevancia (BM25/embedding)
+      files:
+        - app/memory/relevance_pager.py
+      done_condition: Ordenacao por relevancia
+      evidence: Scores de relevancia
+
+    - id: S38-BE-033b
+      area: backend
+      description: Token counting com tiktoken
+      files:
+        - app/memory/token_counter.py
+      done_condition: Contagem precisa
+      evidence: Testes de contagem
+
+# Wave 4 — Dashboards, Contratos e Explicabilidade (G14)
+wave_4:
+  name: Dashboards, Contratos e Explicabilidade
+  gate: G14
+  prerequisite: W1, W2, W3
+  task_count: 14
+  tasks:
+    # Dashboard Ops
+    - id: S38-FE-040
+      area: frontend
+      description: OpsDashboard (page + layout 4 paineis)
+      files:
+        - frontend/.../ops/pages/OpsDashboard.tsx
+        - frontend/.../ops/hooks/useOpsMetrics.ts
+      done_condition: Dashboard com layout 2x2
+      evidence: Screenshots
+
+    - id: S38-FE-040b
+      area: frontend
+      description: SourcesPanel (grid de status)
+      files:
+        - frontend/.../ops/components/SourcesPanel.tsx
+      done_condition: Grid de status por fonte
+      evidence: Screenshots
+
+    - id: S38-FE-040c
+      area: frontend
+      description: SignalsPanel (latencia, cache hit)
+      files:
+        - frontend/.../ops/components/SignalsPanel.tsx
+      done_condition: Charts de latencia e cache
+      evidence: Screenshots
+
+    - id: S38-FE-040d
+      area: frontend
+      description: GuardianPanel (decisoes, reversao)
+      files:
+        - frontend/.../ops/components/GuardianPanel.tsx
+      done_condition: Metricas do Guardian
+      evidence: Screenshots
+
+    - id: S38-FE-040e
+      area: frontend
+      description: APIsPanel (requests, error rate)
+      files:
+        - frontend/.../ops/components/APIsPanel.tsx
+      done_condition: Metricas de APIs
+      evidence: Screenshots
+
+    - id: S38-FE-041
+      area: frontend
+      description: WebSocket hook para real-time
+      files:
+        - frontend/.../ops/hooks/useOpsWebSocket.ts
+      done_condition: Updates real-time funcionando
+      evidence: Video de update
+
+    - id: S38-BE-040ws
+      area: backend
+      description: WebSocket endpoint (/ws/ops/metrics)
+      files:
+        - app/api/ws/ops_metrics.py
+      done_condition: WebSocket funcional
+      evidence: Conexao estabelecida
+
+    - id: S38-BE-040api
+      area: backend
+      description: API metrics ops (GET /api/v1/ops/metrics)
+      files:
+        - app/api/routes/ops.py
+      done_condition: Endpoint funcional (polling fallback)
+      evidence: JSON com metricas
+
+    # Navegacao
+    - id: S38-FE-NAV-002
+      area: frontend
+      description: Sidebar entry + Router para /admin/ops
+      files:
+        - frontend/.../layout/Sidebar.tsx
+        - frontend/.../routes/index.tsx
+      done_condition: Navegacao funcional
+      evidence: Video navegacao
+
+    # Contratos
+    - id: S38-BE-041
+      area: backend
+      description: Schema de contratos v1 (OpenAPI + Pydantic)
+      files:
+        - app/contracts/schema.py
+        - app/contracts/models.py
+        - openapi/contracts_v1.yaml
+      done_condition: Schema definido e documentado
+      evidence: Documentacao OpenAPI
+
+    - id: S38-BE-041b
+      area: backend
+      description: Validacao request/response com erros detalhados
+      files:
+        - app/contracts/validator.py
+        - app/contracts/middleware.py
+      done_condition: Validacao com erros claros
+      evidence: Testes de validacao
+
+    # Explicabilidade
+    - id: S38-BE-042
+      area: backend
+      description: Reasoning paths (GET /api/v1/explain/{decision_id})
+      files:
+        - app/explain/reasoning.py
+        - app/explain/path_builder.py
+        - app/api/routes/explain.py
+      done_condition: Paths com >= 3 steps
+      evidence: JSON de reasoning
+
+    - id: S38-FE-042
+      area: frontend
+      description: ReasoningView component
+      files:
+        - frontend/.../explain/components/ReasoningView.tsx
+        - frontend/.../explain/pages/ExplainPage.tsx
+      done_condition: UI de reasoning
+      evidence: Screenshots
+
+    - id: S38-FE-NAV-003
+      area: frontend
+      description: Rota para /explain/{decision_id}
+      files:
+        - frontend/.../routes/index.tsx
+      done_condition: Rota funcional
+      evidence: Navegacao OK
+
+# Wave 5 — Testes + Observabilidade
+wave_5:
+  name: Testes + Observabilidade
+  gate: null
+  prerequisite: W4
+  task_count: 17
+  tasks:
+    # Testes Unitarios
+    - id: S38-TEST-001
+      area: qa_testes
+      description: "Unit tests: fontes oficiais"
+      files:
+        - tests/unit/sources/test_official_integrator.py
+        - tests/unit/sources/test_adapters.py
+      done_condition: Cobertura >80% fontes
+      evidence: Coverage report
+
+    - id: S38-TEST-002
+      area: qa_testes
+      description: "Unit tests: scrapers + rate limiter"
+      files:
+        - tests/unit/sources/test_scrapers.py
+        - tests/unit/sources/test_rate_limiter.py
+      done_condition: Cobertura >80% scrapers
+      evidence: Coverage report
+
+    - id: S38-TEST-003
+      area: qa_testes
+      description: "Unit tests: sinais on-demand"
+      files:
+        - tests/unit/signals/test_signal_service.py
+        - tests/unit/signals/test_cache.py
+      done_condition: Cobertura >80% sinais
+      evidence: Coverage report
+
+    - id: S38-TEST-004
+      area: qa_testes
+      description: "Unit tests: Memory Controller"
+      files:
+        - tests/unit/memory/test_controller.py
+        - tests/unit/memory/test_pager.py
+      done_condition: Cobertura >80% memory
+      evidence: Coverage report
+
+    - id: S38-TEST-005
+      area: qa_testes
+      description: "Unit tests: Policy versioning/rollback"
+      files:
+        - tests/unit/policies/test_versioning.py
+        - tests/unit/policies/test_rollback.py
+      done_condition: Cobertura >80% policies
+      evidence: Coverage report
+
+    # Testes E2E
+    - id: S38-TEST-006
+      area: qa_testes
+      description: "E2E Playwright: Console Fontes"
+      files:
+        - tests/e2e/sources/console_fontes.spec.ts
+      done_condition: Todos os cenarios passando
+      evidence: Playwright report
+
+    - id: S38-TEST-007
+      area: qa_testes
+      description: "E2E Playwright: Dashboard Ops"
+      files:
+        - tests/e2e/ops/dashboard_ops.spec.ts
+      done_condition: Todos os cenarios passando
+      evidence: Playwright report
+
+    - id: S38-TEST-008
+      area: qa_testes
+      description: "E2E Playwright: Explicabilidade"
+      files:
+        - tests/e2e/explain/reasoning_view.spec.ts
+      done_condition: Cenarios basicos passando
+      evidence: Playwright report
+
+    # Testes Integracao
+    - id: S38-TEST-009
+      area: qa_testes
+      description: "Integration: Circuit Breaker + Fallback"
+      files:
+        - tests/integration/test_circuit_breaker.py
+        - tests/integration/test_fallback_manager.py
+      done_condition: Fluxo completo testado
+      evidence: Test report
+
+    - id: S38-TEST-010
+      area: qa_testes
+      description: "Contract tests: APIs v1"
+      files:
+        - tests/contract/test_sources_api.py
+        - tests/contract/test_signals_api.py
+        - tests/contract/test_policies_api.py
+      done_condition: Contratos validados
+      evidence: Contract test report
+
+    # Testes Performance
+    - id: S38-TEST-011
+      area: qa_testes
+      description: "Load test: sinais on-demand (k6)"
+      files:
+        - tests/performance/k6_signals.js
+      done_condition: P95 <200ms sob carga
+      evidence: k6 report
+
+    # Observabilidade
+    - id: S38-OBS-001
+      area: ops
+      description: "Dashboard Grafana: fontes e scrapers"
+      files:
+        - observability/dashboards/s38_sources.json
+      done_condition: Dashboard funcional
+      evidence: Screenshot Grafana
+
+    - id: S38-OBS-002
+      area: ops
+      description: "Dashboard Grafana: sinais on-demand"
+      files:
+        - observability/dashboards/s38_signals.json
+      done_condition: Dashboard funcional
+      evidence: Screenshot Grafana
+
+    - id: S38-OBS-003
+      area: ops
+      description: Alertas Prometheus (s38_risks.yaml)
+      files:
+        - observability/alerts/s38_risks.yaml
+      done_condition: Alertas ativos
+      evidence: Alerta disparando em teste
+
+    # Runbooks
+    - id: S38-RUN-001
+      area: ops
+      description: "Runbook R1: API oficial indisponivel"
+      files:
+        - docs/runbooks/R1_official_api.md
+      done_condition: Runbook documentado
+      evidence: Arquivo criado
+
+    - id: S38-RUN-002
+      area: ops
+      description: "Runbook R2: Scraper bloqueado"
+      files:
+        - docs/runbooks/R2_scraper_blocked.md
+      done_condition: Runbook documentado
+      evidence: Arquivo criado
+
+    - id: S38-RUN-003
+      area: ops
+      description: "Runbook R3: Latencia sinais"
+      files:
+        - docs/runbooks/R3_signal_latency.md
+      done_condition: Runbook documentado
+      evidence: Arquivo criado
+
+# Wave 6 — ORR (G10-G14)
+wave_6:
+  name: ORR e GO/NO-GO
+  gate: ORR
+  prerequisite: W5
+  task_count: 8
+  tasks:
+    # Scripts de Gate
+    - id: S38-GATE-010
+      area: ops
+      description: Script bin/s38_g10_sources.sh
+      files:
+        - bin/s38_g10_sources.sh
+      done_condition: Gate G10 executavel
+      evidence: Log de execucao
+
+    - id: S38-GATE-011
+      area: ops
+      description: Script bin/s38_g11_console.sh
+      files:
+        - bin/s38_g11_console.sh
+      done_condition: Gate G11 executavel
+      evidence: Log de execucao
+
+    - id: S38-GATE-012
+      area: ops
+      description: Script bin/s38_g12_signals.sh
+      files:
+        - bin/s38_g12_signals.sh
+      done_condition: Gate G12 executavel
+      evidence: Log de execucao
+
+    - id: S38-GATE-013
+      area: ops
+      description: Script bin/s38_g13_policies.sh
+      files:
+        - bin/s38_g13_policies.sh
+      done_condition: Gate G13 executavel
+      evidence: Log de execucao
+
+    - id: S38-GATE-014
+      area: ops
+      description: Script bin/s38_g14_dashboards.sh
+      files:
+        - bin/s38_g14_dashboards.sh
+      done_condition: Gate G14 executavel
+      evidence: Log de execucao
+
+    # Metricas e ORR
+    - id: S38-QA-050
+      area: qa_testes
+      description: Metricas consolidadas
+      files:
+        - scripts/metrics/s38_consolidated_metrics.py
+      done_condition: Metricas de todos os gates
+      evidence: JSON output
+
+    - id: S38-OPS-050
+      area: ops
+      description: Checklist e script ORR (bin/s38_orr.sh)
+      files:
+        - bin/s38_orr.sh
+        - docs/runbooks/S38_orr_checklist.md
+      done_condition: ORR executavel
+      evidence: Arquivos criados
+
+    - id: S38-OPS-051
+      area: ops
+      description: Executar ORR e GO/NO-GO
+      files:
+        - out/scorecards/S38_ORR.json
+        - out/evidence/S38_ORR_summary.txt
+      done_condition: GO/NO-GO documentado
+      evidence: Scorecard final

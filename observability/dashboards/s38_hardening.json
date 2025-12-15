@@ -1,0 +1,261 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "description": "S38 Hardening Dominios - Dashboard Operacional",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": "${DS_PROMETHEUS}",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 0.5 },
+              { "color": "red", "value": 0.7 }
+            ]
+          }
+        }
+      },
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+      "id": 1,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        }
+      },
+      "targets": [
+        {
+          "expr": "signal_value{signal_type=\"mentiras_em_circulacao\"}",
+          "legendFormat": "Mentiras em Circulação"
+        }
+      ],
+      "title": "Mentiras em Circulação",
+      "type": "stat"
+    },
+    {
+      "datasource": "${DS_PROMETHEUS}",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 0.5 },
+              { "color": "red", "value": 0.8 }
+            ]
+          }
+        }
+      },
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
+      "id": 2,
+      "targets": [
+        {
+          "expr": "signal_value{signal_type=\"campo_batalha\"}",
+          "legendFormat": "Campo de Batalha"
+        }
+      ],
+      "title": "Campo de Batalha",
+      "type": "stat"
+    },
+    {
+      "datasource": "${DS_PROMETHEUS}",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" }
+        }
+      },
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
+      "id": 3,
+      "targets": [
+        {
+          "expr": "count(source_health_status{status=\"HEALTHY\"})",
+          "legendFormat": "Healthy"
+        },
+        {
+          "expr": "count(source_health_status{status=\"DEGRADED\"})",
+          "legendFormat": "Degraded"
+        },
+        {
+          "expr": "count(source_health_status{status=\"UNHEALTHY\"})",
+          "legendFormat": "Unhealthy"
+        }
+      ],
+      "title": "Source Health Status",
+      "type": "stat"
+    },
+    {
+      "datasource": "${DS_PROMETHEUS}",
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
+      "id": 4,
+      "targets": [
+        {
+          "expr": "rate(signal_cache_hits_total[5m]) / (rate(signal_cache_hits_total[5m]) + rate(signal_cache_misses_total[5m]))",
+          "legendFormat": "Cache Hit Rate"
+        }
+      ],
+      "title": "Signal Cache Hit Rate",
+      "type": "gauge",
+      "options": {
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      },
+      "fieldConfig": {
+        "defaults": {
+          "max": 1,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 0.5 },
+              { "color": "green", "value": 0.8 }
+            ]
+          },
+          "unit": "percentunit"
+        }
+      }
+    },
+    {
+      "datasource": "${DS_PROMETHEUS}",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+      "id": 5,
+      "targets": [
+        {
+          "expr": "signal_value{signal_type=~\"mentiras_em_circulacao|campo_batalha|radar_silencio|fragilidade_narrativa\"}",
+          "legendFormat": "{{ signal_type }}"
+        }
+      ],
+      "title": "Sinais do Mercado de Verdade",
+      "type": "timeseries",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10
+          },
+          "max": 1,
+          "min": 0
+        }
+      }
+    },
+    {
+      "datasource": "${DS_PROMETHEUS}",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+      "id": 6,
+      "targets": [
+        {
+          "expr": "rate(source_ingestion_documents_total[1h])",
+          "legendFormat": "{{ source_id }}"
+        }
+      ],
+      "title": "Ingestion Rate by Source (docs/hour)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "${DS_PROMETHEUS}",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 12 },
+      "id": 7,
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, rate(signal_calculation_duration_seconds_bucket[5m]))",
+          "legendFormat": "P50"
+        },
+        {
+          "expr": "histogram_quantile(0.95, rate(signal_calculation_duration_seconds_bucket[5m]))",
+          "legendFormat": "P95"
+        },
+        {
+          "expr": "histogram_quantile(0.99, rate(signal_calculation_duration_seconds_bucket[5m]))",
+          "legendFormat": "P99"
+        }
+      ],
+      "title": "Signal Calculation Latency",
+      "type": "timeseries",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        }
+      }
+    },
+    {
+      "datasource": "${DS_PROMETHEUS}",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 12 },
+      "id": 8,
+      "targets": [
+        {
+          "expr": "rate(claim_relations_created_total[1h])",
+          "legendFormat": "{{ relation_type }}"
+        }
+      ],
+      "title": "Claim Relations Created (per hour)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "${DS_PROMETHEUS}",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 12 },
+      "id": 9,
+      "targets": [
+        {
+          "expr": "count(policy_version_status{status=\"active\"}) by (domain)",
+          "legendFormat": "{{ domain }}"
+        }
+      ],
+      "title": "Active Policies by Domain",
+      "type": "piechart"
+    },
+    {
+      "datasource": "${DS_PROMETHEUS}",
+      "gridPos": { "h": 6, "w": 24, "x": 0, "y": 20 },
+      "id": 10,
+      "targets": [
+        {
+          "expr": "memory_controller_entries_total",
+          "legendFormat": "Total Entries"
+        },
+        {
+          "expr": "memory_controller_active_entries",
+          "legendFormat": "Active Entries"
+        },
+        {
+          "expr": "memory_controller_expired_entries",
+          "legendFormat": "Expired Entries"
+        }
+      ],
+      "title": "Memory Controller Stats",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": ["s38", "hardening", "ops"],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "S38 Hardening Dominios",
+  "uid": "s38-hardening",
+  "version": 1,
+  "weekStart": ""
+}
