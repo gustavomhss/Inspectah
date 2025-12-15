@@ -1,0 +1,195 @@
+# S38 Alertas de Observabilidade
+# Sprint 38: Hardening Dominios
+
+groups:
+  - name: s38_signals
+    rules:
+      - alert: SignalCacheHitRateLow
+        expr: rate(signal_cache_hits_total[5m]) / (rate(signal_cache_hits_total[5m]) + rate(signal_cache_misses_total[5m])) < 0.5
+        for: 10m
+        labels:
+          severity: warning
+          sprint: s38
+        annotations:
+          summary: "Signal cache hit rate below 50%"
+          description: "Signal cache hit rate is {{ $value | humanizePercentage }} in the last 5 minutes"
+
+      - alert: SignalCalculationLatencyHigh
+        expr: histogram_quantile(0.95, rate(signal_calculation_duration_seconds_bucket[5m])) > 2
+        for: 5m
+        labels:
+          severity: warning
+          sprint: s38
+        annotations:
+          summary: "Signal calculation P95 latency above 2s"
+          description: "Signal calculation P95 latency is {{ $value | humanizeDuration }}"
+
+      - alert: MentirasEmCirculacaoHigh
+        expr: signal_value{signal_type="mentiras_em_circulacao"} > 0.7
+        for: 15m
+        labels:
+          severity: critical
+          sprint: s38
+        annotations:
+          summary: "High volume of lies in circulation"
+          description: "mentiras_em_circulacao signal is {{ $value | humanizePercentage }}"
+
+      - alert: CampoBatalhaIntense
+        expr: signal_value{signal_type="campo_batalha"} > 0.8
+        for: 10m
+        labels:
+          severity: warning
+          sprint: s38
+        annotations:
+          summary: "Intense narrative battlefield detected"
+          description: "campo_batalha signal is {{ $value | humanizePercentage }}"
+
+  - name: s38_sources
+    rules:
+      - alert: SourceHealthDegraded
+        expr: count(source_health_status{status="DEGRADED"}) > 3
+        for: 15m
+        labels:
+          severity: warning
+          sprint: s38
+        annotations:
+          summary: "Multiple sources with degraded health"
+          description: "{{ $value }} sources are in DEGRADED state"
+
+      - alert: SourceHealthUnhealthy
+        expr: count(source_health_status{status="UNHEALTHY"}) > 0
+        for: 5m
+        labels:
+          severity: critical
+          sprint: s38
+        annotations:
+          summary: "Source(s) in unhealthy state"
+          description: "{{ $value }} source(s) are UNHEALTHY"
+
+      - alert: IngestionRateLow
+        expr: rate(source_ingestion_documents_total[1h]) < 10
+        for: 2h
+        labels:
+          severity: warning
+          sprint: s38
+        annotations:
+          summary: "Low ingestion rate"
+          description: "Only {{ $value }} documents ingested in the last hour"
+
+      - alert: RateLimiterTriggered
+        expr: rate(source_rate_limit_triggered_total[5m]) > 10
+        for: 5m
+        labels:
+          severity: warning
+          sprint: s38
+        annotations:
+          summary: "Rate limiter being triggered frequently"
+          description: "{{ $value }} rate limit triggers in last 5 minutes"
+
+      - alert: CircuitBreakerOpen
+        expr: source_circuit_breaker_state{state="OPEN"} == 1
+        for: 1m
+        labels:
+          severity: critical
+          sprint: s38
+        annotations:
+          summary: "Circuit breaker is OPEN"
+          description: "Circuit breaker for {{ $labels.source_id }} is OPEN"
+
+  - name: s38_policies
+    rules:
+      - alert: PolicyVersionPendingReview
+        expr: count(policy_version_status{status="pending_review"}) > 5
+        for: 24h
+        labels:
+          severity: warning
+          sprint: s38
+        annotations:
+          summary: "Many policy versions pending review"
+          description: "{{ $value }} policy versions have been pending review for 24h+"
+
+      - alert: PolicyRollbackDetected
+        expr: increase(policy_rollback_total[1h]) > 0
+        for: 0m
+        labels:
+          severity: warning
+          sprint: s38
+        annotations:
+          summary: "Policy rollback detected"
+          description: "A policy rollback was performed in the last hour"
+
+  - name: s38_claims
+    rules:
+      - alert: ClaimRelationInferenceErrors
+        expr: rate(claim_relation_inference_errors_total[5m]) > 1
+        for: 5m
+        labels:
+          severity: warning
+          sprint: s38
+        annotations:
+          summary: "High rate of claim relation inference errors"
+          description: "{{ $value }} errors/second in claim relation inference"
+
+      - alert: ContradictionDetectionHigh
+        expr: rate(claim_contradictions_detected_total[1h]) > 100
+        for: 30m
+        labels:
+          severity: warning
+          sprint: s38
+        annotations:
+          summary: "High volume of contradictions detected"
+          description: "{{ $value }} contradictions detected in the last hour"
+
+  - name: s38_memory
+    rules:
+      - alert: MemoryEntriesHigh
+        expr: memory_controller_entries_total > 50000
+        for: 15m
+        labels:
+          severity: warning
+          sprint: s38
+        annotations:
+          summary: "High number of memory entries"
+          description: "{{ $value }} memory entries in the system"
+
+      - alert: MemoryExpiredEntriesHigh
+        expr: memory_controller_expired_entries / memory_controller_entries_total > 0.3
+        for: 1h
+        labels:
+          severity: warning
+          sprint: s38
+        annotations:
+          summary: "High ratio of expired memory entries"
+          description: "{{ $value | humanizePercentage }} of memory entries are expired"
+
+  - name: s38_dashboard
+    rules:
+      - alert: OverallHealthUnhealthy
+        expr: dashboard_overall_health{status="unhealthy"} == 1
+        for: 5m
+        labels:
+          severity: critical
+          sprint: s38
+        annotations:
+          summary: "Overall system health is UNHEALTHY"
+          description: "Dashboard reports overall system health as UNHEALTHY"
+
+      - alert: MultipleComponentsDegraded
+        expr: count(dashboard_component_health{status="degraded"}) > 3
+        for: 10m
+        labels:
+          severity: warning
+          sprint: s38
+        annotations:
+          summary: "Multiple components degraded"
+          description: "{{ $value }} components are in degraded state"
+
+      - alert: SLOInViolation
+        expr: dashboard_slo_in_violation == 1
+        for: 0m
+        labels:
+          severity: critical
+          sprint: s38
+        annotations:
+          summary: "SLO is in violation"
+          description: "SLO {{ $labels.slo_name }} is in violation (current: {{ $labels.current }}%, target: {{ $labels.target }}%)"
