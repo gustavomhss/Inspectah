@@ -179,7 +179,9 @@ def run_newsdata_ingestion(
     repo.set_last_run(config.id, run.id)
     observability.log_run_start(run)
 
-    api_key = os.environ.get("NEWSDATA_API_KEY", "pub_1eb578cc391148dfb475bf474f2d2173")
+    api_key = os.environ.get("NEWSDATA_API_KEY")
+    if not api_key:
+        raise ValueError("NEWSDATA_API_KEY environment variable must be set")
     base_url = os.environ.get("NEWSDATA_BASE_URL", "https://newsdata.io/api/1")
     profile = _build_newsdata_profile()
     client = NewsProviderClient(api_key=api_key, base_url=base_url)

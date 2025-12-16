@@ -1,12 +1,56 @@
 from __future__ import annotations
 import hashlib
 from datetime import datetime, timezone
+import ipaddress
 import logging
 from pathlib import Path
+import socket
 import time
 from typing import Dict, List, Optional
+from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 import xml.etree.ElementTree as ET
+
+
+# SSRF protection: allowed schemes and blocked IP ranges
+_ALLOWED_SCHEMES = {"http", "https"}
+_BLOCKED_IP_RANGES = [
+    ipaddress.ip_network("10.0.0.0/8"),       # Private
+    ipaddress.ip_network("172.16.0.0/12"),    # Private
+    ipaddress.ip_network("192.168.0.0/16"),   # Private
+    ipaddress.ip_network("127.0.0.0/8"),      # Loopback
+    ipaddress.ip_network("169.254.0.0/16"),   # Link-local (AWS metadata)
+    ipaddress.ip_network("::1/128"),          # IPv6 loopback
+    ipaddress.ip_network("fc00::/7"),         # IPv6 private
+    ipaddress.ip_network("fe80::/10"),        # IPv6 link-local
+]
+
+
+def _validate_url_ssrf(url: str) -> None:
+    """Validate URL to prevent SSRF attacks."""
+    parsed = urlparse(url)
+
+    # Check scheme
+    if parsed.scheme.lower() not in _ALLOWED_SCHEMES:
+        raise ValueError(f"URL scheme '{parsed.scheme}' not allowed. Only {_ALLOWED_SCHEMES} permitted.")
+
+    # Check hostname exists
+    hostname = parsed.hostname
+    if not hostname:
+        raise ValueError("URL must have a valid hostname")
+
+    # Resolve hostname to IP and check against blocked ranges
+    try:
+        # Get all IPs for the hostname
+        addr_info = socket.getaddrinfo(hostname, parsed.port or 80, proto=socket.IPPROTO_TCP)
+        for family, _, _, _, sockaddr in addr_info:
+            ip_str = sockaddr[0]
+            ip = ipaddress.ip_address(ip_str)
+            for blocked in _BLOCKED_IP_RANGES:
+                if ip in blocked:
+                    raise ValueError(f"URL resolves to blocked IP range: {ip_str}")
+    except socket.gaierror as e:
+        raise ValueError(f"Cannot resolve hostname '{hostname}': {e}")
 
 from ..evidence import persist_evidence
 from ..fields import apply_field_definitions
@@ -36,6 +80,8 @@ def _parse_rss(content: bytes) -> List[Dict[str, str]]:
 
 
 def _fetch_feed(url: str) -> bytes:
+    """Fetch RSS feed with SSRF protection."""
+    _validate_url_ssrf(url)  # Validate URL before fetching
     req = Request(url, headers={'User-Agent': 'Inspectah-D8-Watcher'})
     with urlopen(req, timeout=10) as resp:  # noqa: S310
         return resp.read()

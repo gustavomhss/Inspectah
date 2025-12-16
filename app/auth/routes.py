@@ -12,10 +12,10 @@ except ModuleNotFoundError:  # pragma: no cover
     BaseModel = object  # type: ignore[misc,assignment]
 
 
-DEV_USERNAME = os.environ.get("INSPECTAH_DEV_USER", "admin@inspectah.dev")
-DEV_PASSWORD = os.environ.get("INSPECTAH_DEV_PASSWORD", "inspectah")
-DEV_TOKEN = os.environ.get("INSPECTAH_DEV_TOKEN", "dev-token")
-DEV_ENV = os.environ.get("INSPECTAH_ENV", "dev").lower()
+DEV_USERNAME = os.environ.get("INSPECTAH_DEV_USER")
+DEV_PASSWORD = os.environ.get("INSPECTAH_DEV_PASSWORD")
+DEV_TOKEN = os.environ.get("INSPECTAH_DEV_TOKEN")
+DEV_ENV = os.environ.get("INSPECTAH_ENV", "production").lower()  # Default to production (fail-closed)
 
 
 class LoginRequest(BaseModel):  # type: ignore[misc]

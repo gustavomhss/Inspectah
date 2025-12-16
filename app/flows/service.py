@@ -1149,16 +1149,16 @@ class FlowService:
             max_pct = int(limits.get("max_test_percentual", 100))
             if pct > max_pct:
                 alerts.append("rollout_percentual_exceeded")
-        except Exception:
-            pass
+        except (ValueError, TypeError) as e:
+            logger.warning(f"[flow_health] Failed to check rollout percentual for {flow.id}: {e}")
         try:
             with self._conn() as conn:
                 rollbacks = count_rollbacks_last_hour(conn, flow.id)
             limit_rb = int(limits.get("max_rollbacks_per_hour", 2))
             if rollbacks >= limit_rb:
                 alerts.append("alert_rollbacks_threshold")
-        except Exception:
-            pass
+        except (sqlite3.Error, ValueError) as e:
+            logger.warning(f"[flow_health] Failed to count rollbacks for {flow.id}: {e}")
         return alerts
 
     def _derive_slo_status(self, flow: Flow) -> List[Dict]:
