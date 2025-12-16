@@ -1180,7 +1180,8 @@ class FlowService:
                     payload = _json_load(r["payload"])
                     if payload.get("slo_id") == slo_id:
                         breaches.append(payload)
-        except Exception:
+        except (sqlite3.Error, ValueError, KeyError) as e:
+            logger.warning(f"[flow_health] Failed to derive SLO status for {flow.id}: {e}")
             breaches = []
         status = "OK" if not breaches else "BREACH"
         return [{"slo_id": slo_id, "status": status, "recent_breaches": breaches}]

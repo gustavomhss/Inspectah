@@ -250,7 +250,7 @@ class TestSignalCacheService:
     @pytest.mark.asyncio
     async def test_set_serialization_error(self, service):
         # Create a signal that can't be serialized properly
-        with patch.object(service, '_serialize', side_effect=Exception("Serialize error")):
+        with patch.object(service, '_serialize', side_effect=TypeError("Serialize error")):
             result = await service.set("key", MagicMock(), ttl=300)
             assert result is False
 

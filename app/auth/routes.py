@@ -32,8 +32,13 @@ if APIRouter is not None:  # pragma: no cover
 
     @router.post("/login")
     def login(payload: LoginRequest) -> Dict[str, Any]:
-        if DEV_ENV not in {"dev", "local", "development", ""}:
+        # Security: Only allow dev login in explicitly configured dev environments
+        if DEV_ENV not in {"dev", "local", "development"}:
             raise HTTPException(status_code=403, detail="Login de desenvolvimento desabilitado fora de ambiente dev")
+
+        # Security: Ensure credentials are configured (not None)
+        if not DEV_USERNAME or not DEV_PASSWORD or not DEV_TOKEN:
+            raise HTTPException(status_code=503, detail="Credenciais de desenvolvimento não configuradas")
 
         if payload.username != DEV_USERNAME or payload.password != DEV_PASSWORD:
             raise HTTPException(status_code=401, detail="Credenciais inválidas")

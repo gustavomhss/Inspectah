@@ -19,7 +19,7 @@ def _deserialize(payload: Optional[str]):
         return {}
     try:
         return json.loads(payload)
-    except Exception:
+    except (json.JSONDecodeError, TypeError, ValueError):
         return {}
 
 

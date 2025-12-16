@@ -101,7 +101,8 @@ if APIRouter is not None:  # pragma: no cover
             if data is None or data == "":
                 return []
             return data
-        except Exception:
+        except (json.JSONDecodeError, IOError, OSError) as exc:
+            logger.warning("Failed to load console agents flow from %s: %s", FLOW_PATH, exc)
             return []
 
     @router.put("/agents/flow")
