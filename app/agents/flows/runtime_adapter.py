@@ -2,12 +2,16 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime, timezone
-from typing import Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
 from app.agents.flows.schemas import AgentFlowConfigOut, AgentFlowStepOut
 from app.agents.flows.service import AgentFlowService
 from app.agents.flows.validator import validate_agent_flow
 from app.agents.models import AgentRole
+
+if TYPE_CHECKING:
+    from app.agents.trace_repository import AgentTrace, TraceRepository
+    from app.truth.models import TraceLinkRefs
 
 logger = logging.getLogger("agent_flows_runtime")
 
@@ -89,3 +93,74 @@ def get_executable_flow_plan(domain_key: str, service: Optional[AgentFlowService
     )
     logger.info("agent_flow_fallback_used", extra={"domain_key": domain_key})
     return _build_plan(fallback_flow, used_fallback=True)
+
+
+def record_flow_trace(
+    link_refs: "TraceLinkRefs",
+    flow_plan: Dict[str, Any],
+    *,
+    steps_summaries: Optional[List[str]] = None,
+    repo: Optional["TraceRepository"] = None,
+) -> "AgentTrace":
+    """
+    Records an AgentTrace for a flow execution based on the flow plan and step summaries.
+
+    Args:
+        link_refs: TraceLinkRefs with context (truth_record_id, decision_record_id, claim_id, domain, risk_level)
+        flow_plan: The executed flow plan dict with flow_id, domain_key, steps
+        steps_summaries: Optional list of summary strings for each step executed
+        repo: Optional TraceRepository instance
+
+    Returns:
+        The saved AgentTrace
+    """
+    from app.agents.trace_repository import AgentTrace, ReasoningStep, TraceRepository
+
+    repo_used = repo or TraceRepository()
+    now = datetime.now(timezone.utc)
+    flow_id = flow_plan.get("flow_id", "unknown")
+
+    # Build reasoning steps from flow_plan steps
+    reasoning_steps: List[ReasoningStep] = []
+    plan_steps = flow_plan.get("steps", [])
+    summaries = steps_summaries or []
+
+    for idx, step_data in enumerate(plan_steps):
+        summary = summaries[idx] if idx < len(summaries) else f"Step {idx + 1}: {step_data.get('agent_role', 'unknown')}"
+        reasoning_steps.append(
+            ReasoningStep(
+                order=idx + 1,
+                actor_role=step_data.get("agent_role"),
+                step_kind="flow_step",
+                summary=summary,
+                input_refs=[flow_id],
+                created_at=now,
+            )
+        )
+
+    # Use pilot_politics as default domain if empty
+    domain = link_refs.domain or flow_plan.get("domain_key") or "pilot_politics"
+
+    trace = AgentTrace(
+        truth_record_id=link_refs.truth_record_id,
+        decision_record_id=link_refs.decision_record_id,
+        claim_id=link_refs.claim_id,
+        domain=domain,
+        risk_level=link_refs.risk_level,
+        request_id=link_refs.request_id,
+        started_at=now,
+        finished_at=now,
+        steps=reasoning_steps,
+        created_at=now,
+    )
+
+    saved_trace = repo_used.save_agent_trace(trace)
+    logger.info(
+        "flow_trace_recorded",
+        extra={
+            "agent_trace_id": saved_trace.agent_trace_id,
+            "flow_id": flow_id,
+            "steps_count": len(reasoning_steps),
+        },
+    )
+    return saved_trace

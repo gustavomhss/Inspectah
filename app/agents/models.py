@@ -135,19 +135,6 @@ class ModelUpgradePolicy:
     next_upgrade_at: Optional[datetime] = None
     updated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
-
-@dataclass
-class AgentFlowLayer:
-    id: str
-    name: str
-    description: str
-    layer_type: FlowLayerType
-    layer_index: int
-    agent_ids: List[str]
-    mediator_agent_id: str
-    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-    updated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-
     def effective_model_for(self, agent: AgentProfile, now: Optional[datetime] = None) -> str:
         if agent.model_name:
             return agent.model_name
@@ -163,6 +150,19 @@ class AgentFlowLayer:
         self.last_upgrade_at = datetime.now(timezone.utc)
         self.next_upgrade_at = self.last_upgrade_at + timedelta(days=self.adoption_delay_days)
         self.updated_at = datetime.now(timezone.utc)
+
+
+@dataclass
+class AgentFlowLayer:
+    id: str
+    name: str
+    description: str
+    layer_type: FlowLayerType
+    layer_index: int
+    agent_ids: List[str]
+    mediator_agent_id: str
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 @dataclass

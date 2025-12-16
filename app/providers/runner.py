@@ -28,7 +28,7 @@ class ProfileRunner:
         self.evidence_dir = evidence_dir or Path("out/evidence/S31_G3_console/runs")
         self.evidence_dir.mkdir(parents=True, exist_ok=True)
 
-    def run_profile(self, profile_id: str, limit: int = 3) -> ProfileRun:
+    async def run_profile(self, profile_id: str, limit: int = 3) -> ProfileRun:
         profile = self.service.get_profile(profile_id)
         if not profile:
             raise ValueError("Profile not found")
@@ -42,11 +42,11 @@ class ProfileRunner:
         try:
             if profile.kind == ProfileKind.NEWS:
                 client = NewsProviderClient()
-                raw_items = client.fetch(profile, limit=limit)
+                raw_items = await client.fetch(profile, limit=limit)
                 normalized = normalize_news(raw_items)
             else:
                 client = SocialProviderClient()
-                raw_items = client.fetch(profile, limit=limit)
+                raw_items = await client.fetch(profile, limit=limit)
                 normalized = normalize_social(raw_items)
 
             for item in normalized:
@@ -79,23 +79,24 @@ class ProfileRunner:
         self.run_store.record(run)
         return run
 
-    def enqueue(self, profile_id: str, limit: int = 3) -> ProfileRun:
-        # In this sprint, enqueue == run synchronously but the contract stays forward compatible.
-        return self.run_profile(profile_id, limit=limit)
+    async def enqueue(self, profile_id: str, limit: int = 3) -> ProfileRun:
+        # In this sprint, enqueue == run asynchronously but the contract stays forward compatible.
+        return await self.run_profile(profile_id, limit=limit)
 
     def as_dict(self, run: ProfileRun) -> dict:
         return asdict(run)
 
 
-def run_all(limit: int = 3) -> list[dict]:
+async def run_all(limit: int = 3) -> list[dict]:
     runner = ProfileRunner()
     runs: list[dict] = []
     for profile in runner.service.list_profiles():
-        run = runner.enqueue(profile.id, limit=limit)
+        run = await runner.enqueue(profile.id, limit=limit)
         runs.append(runner.as_dict(run))
     return runs
 
 
 if __name__ == "__main__":  # pragma: no cover
-    results = run_all()
+    import asyncio
+    results = asyncio.run(run_all())
     print(json.dumps({"runs": results}, indent=2, ensure_ascii=False))

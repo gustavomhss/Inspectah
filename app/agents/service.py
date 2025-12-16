@@ -1,10 +1,15 @@
 from __future__ import annotations
 
 import json
+import logging
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
+
+if TYPE_CHECKING:
+    from app.agents.trace_repository import CommitteeTrace, TraceRepository
+    from app.truth.models import TraceLinkRefs
 
 from app.agents.models import (
     AgentCommittee,
@@ -260,3 +265,65 @@ def _validate_flow(flow: Any) -> None:
     if not required_layers.issubset(seen_layers):
         missing = required_layers - seen_layers
         raise ValueError(f"Fluxo incompleto; faltam camadas: {sorted(missing)}")
+
+
+_logger = logging.getLogger(__name__)
+
+
+def record_committee_trace(
+    link_refs: "TraceLinkRefs",
+    *,
+    agent_trace_ids: List[str],
+    summary: str,
+    committee_id: str = "pilot_committee",
+    committee_version: str = "v1",
+    repo: Optional["TraceRepository"] = None,
+) -> "CommitteeTrace":
+    """
+    Records a CommitteeTrace for a committee decision, linking DecisionRecord/TruthRecord/Claim to AgentTraces.
+
+    Args:
+        link_refs: TraceLinkRefs with context (truth_record_id, decision_record_id, claim_id, domain, risk_level)
+        agent_trace_ids: List of agent trace IDs that contributed to this committee decision
+        summary: Summary of the committee decision
+        committee_id: ID of the committee
+        committee_version: Version of the committee configuration
+        repo: Optional TraceRepository instance
+
+    Returns:
+        The saved CommitteeTrace
+    """
+    from app.agents.trace_repository import CommitteeTrace, TraceRepository
+
+    repo_used = repo or TraceRepository()
+    now = datetime.now(timezone.utc)
+
+    # Use pilot_politics as default domain if None or empty
+    domain = link_refs.domain or "pilot_politics"
+
+    trace = CommitteeTrace(
+        committee_id=committee_id,
+        committee_version=committee_version,
+        truth_record_id=link_refs.truth_record_id,
+        decision_record_id=link_refs.decision_record_id,
+        claim_id=link_refs.claim_id,
+        agent_trace_ids=agent_trace_ids,
+        summary=summary,
+        domain=domain,
+        risk_level=link_refs.risk_level,
+        request_id=link_refs.request_id,
+        started_at=now,
+        finished_at=now,
+        created_at=now,
+    )
+
+    saved_trace = repo_used.save_committee_trace(trace)
+    _logger.info(
+        "committee_trace_recorded",
+        extra={
+            "committee_trace_id": saved_trace.committee_trace_id,
+            "committee_id": committee_id,
+            "agent_traces_count": len(agent_trace_ids),
+        },
+    )
+    return saved_trace
