@@ -73,8 +73,10 @@ except ModuleNotFoundError:  # pragma: no cover
     flows_router = None
 try:  # pragma: no cover
     from app.api.catalog_routes import router as catalog_router
+    from app.api.trace_feedback_routes import router as trace_feedback_router
 except ModuleNotFoundError:  # pragma: no cover
     catalog_router = None
+    trace_feedback_router = None
 try:  # pragma: no cover
     from app.api.providers_routes import router as providers_router
 except ModuleNotFoundError:  # pragma: no cover
@@ -87,6 +89,23 @@ try:  # pragma: no cover
     from app.api.newsdata_ingest_routes import router as newsdata_router
 except ModuleNotFoundError:  # pragma: no cover
     newsdata_router = None
+try:  # pragma: no cover
+    from app.api.guardian.routes import router as guardian_router
+except ModuleNotFoundError:  # pragma: no cover
+    guardian_router = None
+# S39 Routes: Memory, Signals, Explain
+try:  # pragma: no cover
+    from app.api.memory_routes import router as memory_router
+except ModuleNotFoundError:  # pragma: no cover
+    memory_router = None
+try:  # pragma: no cover
+    from app.api.signals_routes import router as signals_router
+except ModuleNotFoundError:  # pragma: no cover
+    signals_router = None
+try:  # pragma: no cover
+    from app.api.explain_routes import router as explain_router
+except ModuleNotFoundError:  # pragma: no cover
+    explain_router = None
 
 
 def _add_cors(app: FastAPI, origins: Iterable[str]) -> None:
@@ -105,7 +124,7 @@ def build_app():  # pragma: no cover
     if FastAPI is None:
         return None
     api_app = FastAPI(title="Inspectah API")
-    _add_cors(api_app, origins=("http://localhost:5173", "http://127.0.0.1:5173"))
+    _add_cors(api_app, origins=("http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:5174", "http://127.0.0.1:5174"))
 
     # Semeia métricas admin/obs
     try:  # pragma: no cover
@@ -114,11 +133,21 @@ def build_app():  # pragma: no cover
         pass
 
     # Middleware de auth/RBAC com JWT RS256 (fail-closed)
-    try:  # pragma: no cover
+    # Auth is REQUIRED unless explicitly disabled in dev environments
+    import os
+    auth_disabled = os.environ.get("INSPECTAH_AUTH_DISABLED", "").lower() in {"1", "true"}
+    env = os.environ.get("INSPECTAH_ENV", "production").lower()
+
+    if auth_disabled:
+        # Only allow auth to be disabled in non-production environments
+        if env in {"production", "prod", "prd"}:
+            raise RuntimeError("Cannot disable auth in production environment")
+        import logging
+        logging.getLogger("auth").warning("Auth middleware DISABLED - dev/test only")
+    else:
+        # Fail-closed: if middleware fails to load, app should not start
         from app.middlewares.auth import AuthJWTMiddleware
         api_app.add_middleware(AuthJWTMiddleware)
-    except Exception:  # pragma: no cover
-        pass
 
     explore_router = build_router()
     if explore_router is not None:
@@ -153,6 +182,8 @@ def build_app():  # pragma: no cover
         api_app.include_router(flows_router)
     if catalog_router is not None:
         api_app.include_router(catalog_router)
+    if trace_feedback_router is not None:
+        api_app.include_router(trace_feedback_router)
     if providers_router is not None:
         api_app.include_router(providers_router, tags=["providers"])
     if ops_cockpit_router is not None:
@@ -164,6 +195,15 @@ def build_app():  # pragma: no cover
         api_app.include_router(copiloto_fontes_router, prefix="/admin/copiloto-fontes", tags=["admin-copiloto-fontes"])
     if auth_router is not None:
         api_app.include_router(auth_router)
+    if guardian_router is not None:
+        api_app.include_router(guardian_router, tags=["guardian"])
+    # S39 Routes
+    if memory_router is not None:
+        api_app.include_router(memory_router, tags=["memory"])
+    if signals_router is not None:
+        api_app.include_router(signals_router, tags=["signals"])
+    if explain_router is not None:
+        api_app.include_router(explain_router, tags=["explainability"])
 
     @api_app.get("/metrics")
     def metrics():  # pragma: no cover

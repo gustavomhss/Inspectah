@@ -2,12 +2,15 @@ from __future__ import annotations
 
 import importlib
 import json
+import logging
 import sqlite3
 import uuid
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Optional
+
+logger = logging.getLogger(__name__)
 
 from app.flows.models import (
     Flow,
@@ -1149,16 +1152,16 @@ class FlowService:
             max_pct = int(limits.get("max_test_percentual", 100))
             if pct > max_pct:
                 alerts.append("rollout_percentual_exceeded")
-        except Exception:
-            pass
+        except (ValueError, TypeError) as e:
+            logger.warning(f"[flow_health] Failed to check rollout percentual for {flow.id}: {e}")
         try:
             with self._conn() as conn:
                 rollbacks = count_rollbacks_last_hour(conn, flow.id)
             limit_rb = int(limits.get("max_rollbacks_per_hour", 2))
             if rollbacks >= limit_rb:
                 alerts.append("alert_rollbacks_threshold")
-        except Exception:
-            pass
+        except (sqlite3.Error, ValueError) as e:
+            logger.warning(f"[flow_health] Failed to count rollbacks for {flow.id}: {e}")
         return alerts
 
     def _derive_slo_status(self, flow: Flow) -> List[Dict]:
@@ -1177,7 +1180,8 @@ class FlowService:
                     payload = _json_load(r["payload"])
                     if payload.get("slo_id") == slo_id:
                         breaches.append(payload)
-        except Exception:
+        except (sqlite3.Error, ValueError, KeyError) as e:
+            logger.warning(f"[flow_health] Failed to derive SLO status for {flow.id}: {e}")
             breaches = []
         status = "OK" if not breaches else "BREACH"
         return [{"slo_id": slo_id, "status": status, "recent_breaches": breaches}]

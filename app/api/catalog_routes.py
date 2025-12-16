@@ -1,4 +1,5 @@
 from __future__ import annotations
+import logging
 from typing import List
 
 try:
@@ -10,6 +11,8 @@ except ModuleNotFoundError:  # pragma: no cover
 
 from app.flows.service import FlowService
 from app.flows.schemas import FlowCatalogEntry
+
+logger = logging.getLogger(__name__)
 
 # Rota dedicada de catálogo (sombra para compatibilidade)
 if APIRouter:
@@ -23,7 +26,11 @@ if APIRouter:
         try:
             entries = service.list_catalog()
         except Exception as exc:  # pragma: no cover
-            raise HTTPException(status_code=500, detail=str(exc))
+            logger.exception("Failed to list flow catalog")
+            raise HTTPException(
+                status_code=500,
+                detail="Failed to load flow catalog. Check server logs for details."
+            )
         return [FlowCatalogEntry.model_validate(e) for e in entries]
 else:  # pragma: no cover
     router = None

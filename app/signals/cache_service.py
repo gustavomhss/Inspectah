@@ -172,7 +172,7 @@ class SignalCacheService:
 
         try:
             return self._deserialize(data)
-        except Exception as e:
+        except (json.JSONDecodeError, KeyError, TypeError, ValueError) as e:
             logger.error(f"Failed to deserialize signal: {e}")
             await self.backend.delete(full_key)
             return None
@@ -183,7 +183,7 @@ class SignalCacheService:
         try:
             data = self._serialize(signal)
             return await self.backend.set(full_key, data, ttl)
-        except Exception as e:
+        except (TypeError, ValueError, AttributeError) as e:
             logger.error(f"Failed to serialize signal: {e}")
             return False
 

@@ -1,8 +1,11 @@
 from __future__ import annotations
 
 import json
+import logging
 from pathlib import Path
 from typing import Any, List, Optional
+
+logger = logging.getLogger(__name__)
 
 try:  # pragma: no cover
     from fastapi import APIRouter, Body, Depends, HTTPException, Query, status
@@ -98,7 +101,8 @@ if APIRouter is not None:  # pragma: no cover
             if data is None or data == "":
                 return []
             return data
-        except Exception:
+        except (json.JSONDecodeError, IOError, OSError) as exc:
+            logger.warning("Failed to load console agents flow from %s: %s", FLOW_PATH, exc)
             return []
 
     @router.put("/agents/flow")
@@ -114,10 +118,11 @@ if APIRouter is not None:  # pragma: no cover
             text = json.dumps(payload, ensure_ascii=False, indent=2)
             FLOW_PATH.write_text(text, encoding="utf-8")
             return payload
-        except Exception as exc:  # pragma: no cover
+        except Exception:  # pragma: no cover
+            logger.exception("Failed to save console agents flow to %s", FLOW_PATH)
             raise HTTPException(
                 status_code=500,
-                detail=f"Erro ao salvar fluxo de agentes do console: {exc}",
+                detail="Erro ao salvar fluxo de agentes. Verifique os logs do servidor.",
             )
 
     @router.get("/agents/{agent_id}", response_model=AgentProfileRead)
