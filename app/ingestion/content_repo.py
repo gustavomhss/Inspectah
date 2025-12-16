@@ -64,40 +64,45 @@ class ContentRepository:
             )
 
     def save_items(self, items: List[Dict]) -> int:
+        """Save items using bulk insert for better performance."""
+        if not items:
+            return 0
+
         now = datetime.now(timezone.utc).isoformat()
-        inserted = 0
+
+        # Prepare all data for bulk insert
+        data = [
+            (
+                item.get("content_id"),
+                item.get("kind"),
+                item.get("title"),
+                item.get("text"),
+                item.get("url"),
+                item.get("published_at"),
+                item.get("language"),
+                item.get("country"),
+                item.get("provider_id"),
+                item.get("profile_id"),
+                _serialize(item.get("categories", [])),
+                _serialize(item.get("tags", [])),
+                _serialize(item.get("payload")),
+                now,
+            )
+            for item in items
+        ]
+
         with self._conn() as conn:
-            for item in items:
-                try:
-                    conn.execute(
-                        """
-                        INSERT OR IGNORE INTO content_items (
-                            content_id, kind, title, text, url, published_at, language, country,
-                            provider_id, profile_id, categories, tags, payload, created_at
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                        """,
-                        (
-                            item.get("content_id"),
-                            item.get("kind"),
-                            item.get("title"),
-                            item.get("text"),
-                            item.get("url"),
-                            item.get("published_at"),
-                            item.get("language"),
-                            item.get("country"),
-                            item.get("provider_id"),
-                            item.get("profile_id"),
-                            _serialize(item.get("categories", [])),
-                            _serialize(item.get("tags", [])),
-                            _serialize(item.get("payload")),
-                            now,
-                        ),
-                    )
-                    inserted += 1
-                except sqlite3.IntegrityError:
-                    continue
+            cursor = conn.executemany(
+                """
+                INSERT OR IGNORE INTO content_items (
+                    content_id, kind, title, text, url, published_at, language, country,
+                    provider_id, profile_id, categories, tags, payload, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                data,
+            )
             conn.commit()
-        return inserted
+            return cursor.rowcount if cursor.rowcount > 0 else len(items)
 
     def list_items(self, limit: int = 20) -> List[Dict]:
         with self._conn() as conn:
