@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+
 try:  # pragma: no cover
     from fastapi import APIRouter, HTTPException
     from pydantic import BaseModel
@@ -9,6 +11,8 @@ except ModuleNotFoundError:  # pragma: no cover
     BaseModel = object  # type: ignore[misc,assignment]
 
 from . import service
+
+logger = logging.getLogger(__name__)
 from .healthcheck import run_healthcheck
 from .models import SourceState
 from .schemas import SourceCreate, SourceFilter, SourceRead, SourceUpdate
@@ -152,7 +156,11 @@ if APIRouter is not None:  # pragma: no cover
             record_admin_action("manual_run", source_id, "admin-ui", {"run_id": run.id, "status": run.status.value})
             return {"run_id": run.id, "status": run.status.value}
         except Exception as exc:  # noqa: BLE001
-            raise HTTPException(status_code=500, detail=str(exc))
+            logger.exception("Failed to start manual ingestion run for source %s", source_id)
+            raise HTTPException(
+                status_code=500,
+                detail="Failed to start ingestion run. Check server logs for details."
+            )
 
     @router.post("/{source_id}/ingestion/pause")
     def pause_ingestion(source_id: str):
