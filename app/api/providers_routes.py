@@ -141,13 +141,13 @@ def get_profile_detail(profile_id: str, svc: ProviderService = Depends(get_servi
 
 
 @router.post("/profiles/{profile_id}/run-now")
-def run_profile_now(
+async def run_profile_now(
     profile_id: str,
     limit: int = 3,
     runner: ProfileRunner = Depends(get_runner),
 ):
     try:
-        run = runner.enqueue(profile_id, limit=limit)
+        run = await runner.enqueue(profile_id, limit=limit)
     except ValueError:
         raise HTTPException(status_code=404, detail="Profile not found")
     return {"status": "queued", "run": runner.as_dict(run)}

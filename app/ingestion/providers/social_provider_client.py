@@ -24,7 +24,7 @@ class SocialProviderClient:
         self.api_key = api_key or "demo"
         self.base_url = base_url or "https://social-api.local"
 
-    def fetch(self, profile: IngestionProfile, limit: int = 5) -> List[RawSocialItem]:
+    async def fetch(self, profile: IngestionProfile, limit: int = 5) -> List[RawSocialItem]:
         items: List[RawSocialItem] = []
         for idx in range(limit):
             external_id = f"social-{profile.slug}-{idx}"

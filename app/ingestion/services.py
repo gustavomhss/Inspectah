@@ -130,7 +130,7 @@ def _dedup_newsdata_items(items: List[RawNewsItem]) -> Tuple[List[Dict], int]:
     return deduped, duplicates
 
 
-def run_newsdata_ingestion(
+async def run_newsdata_ingestion(
     *,
     trigger_origin: str = "ops_api",
     repo: Optional[IngestionRepository] = None,
@@ -196,7 +196,7 @@ def run_newsdata_ingestion(
         all_items: List[RawNewsItem] = []
         for i in range(0, len(domains), 5):
             batch = domains[i : i + 5]
-            raw_items = client.fetch(
+            raw_items = await client.fetch(
                 profile,
                 size=per_request_size,
                 domains=batch,

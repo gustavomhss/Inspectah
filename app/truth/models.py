@@ -24,6 +24,33 @@ def gen_event_id() -> str:
     return f"tce_{uuid4().hex[:12]}"
 
 
+def gen_agent_trace_id() -> str:
+    return f"at_{uuid4().hex[:12]}"
+
+
+def gen_committee_trace_id() -> str:
+    return f"ct_{uuid4().hex[:12]}"
+
+
+def gen_feedback_id(prefix: str = "fb") -> str:
+    return f"{prefix}_{uuid4().hex[:12]}"
+
+
+def gen_reasoning_step_id() -> str:
+    return f"rs_{uuid4().hex[:12]}"
+
+
+@dataclass
+class TraceLinkRefs:
+    """Links context for tracing - connects traces to truth records, decisions, claims."""
+    truth_record_id: Optional[str] = None
+    decision_record_id: Optional[str] = None
+    claim_id: Optional[str] = None
+    domain: Optional[str] = None
+    risk_level: Optional[str] = None
+    request_id: Optional[str] = None
+
+
 @dataclass
 class TruthRecord:
     id: str

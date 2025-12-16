@@ -172,7 +172,8 @@ async def create_version(
         )
         return _to_response(version)
     except ValueError as e:
-        raise HTTPException(400, str(e))
+        logger.warning("create_version validation error: %s", e)
+        raise HTTPException(400, {"error": "validation_error", "message": "Invalid policy configuration"})
 
 
 @router.get("/versions/{version_id}", response_model=PolicyVersionResponse)
@@ -199,7 +200,8 @@ async def submit_for_review(
         version = service.submit_for_review(version_id, submitted_by)
         return _to_response(version)
     except ValueError as e:
-        raise HTTPException(400, str(e))
+        logger.warning("submit_for_review error for %s: %s", version_id, e)
+        raise HTTPException(400, {"error": "validation_error", "message": "Cannot submit version for review"})
 
 
 @router.post("/versions/{version_id}/approve")
@@ -215,7 +217,8 @@ async def approve_version(
         version = service.approve(version_id, approved_by, body.comments)
         return _to_response(version)
     except ValueError as e:
-        raise HTTPException(400, str(e))
+        logger.warning("approve error for %s: %s", version_id, e)
+        raise HTTPException(400, {"error": "validation_error", "message": "Cannot approve version"})
 
 
 @router.post("/versions/{version_id}/activate")
@@ -230,7 +233,8 @@ async def activate_version(
         version = service.activate(version_id, activated_by)
         return _to_response(version)
     except ValueError as e:
-        raise HTTPException(400, str(e))
+        logger.warning("activate error for %s: %s", version_id, e)
+        raise HTTPException(400, {"error": "validation_error", "message": "Cannot activate version"})
 
 
 @router.post("/versions/{version_id}/deactivate")
@@ -246,7 +250,8 @@ async def deactivate_version(
         version = service.deactivate(version_id, deactivated_by, reason)
         return _to_response(version)
     except ValueError as e:
-        raise HTTPException(400, str(e))
+        logger.warning("deactivate error for %s: %s", version_id, e)
+        raise HTTPException(400, {"error": "validation_error", "message": "Cannot deactivate version"})
 
 
 @router.get("/active/{domain}")
@@ -305,7 +310,8 @@ async def rollback(
         )
         return _to_response(version)
     except ValueError as e:
-        raise HTTPException(400, str(e))
+        logger.warning("rollback error for domain %s: %s", domain, e)
+        raise HTTPException(400, {"error": "validation_error", "message": "Rollback failed"})
 
 
 @router.get("/compare")
@@ -325,7 +331,8 @@ async def compare_versions(
             "summary": comparison.summary,
         }
     except ValueError as e:
-        raise HTTPException(400, str(e))
+        logger.warning("compare_versions error for %s vs %s: %s", version_a, version_b, e)
+        raise HTTPException(400, {"error": "validation_error", "message": "Cannot compare versions"})
 
 
 @router.get("/audit", response_model=List[AuditEntryResponse])

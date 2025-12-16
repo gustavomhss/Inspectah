@@ -733,7 +733,8 @@ class TestToggleIngestionMode:
 class TestRunNewsdataIngestion:
     """Tests for run_newsdata_ingestion function."""
 
-    def test_rate_limit_exceeded_raises(self):
+    @pytest.mark.asyncio
+    async def test_rate_limit_exceeded_raises(self):
         """Rate limit exceeded raises."""
         repo = MagicMock()
         now = datetime.now(timezone.utc)
@@ -746,9 +747,10 @@ class TestRunNewsdataIngestion:
         ]
 
         with pytest.raises(RunInProgressError, match="Limite de 3 runs/min"):
-            run_newsdata_ingestion(repo=repo)
+            await run_newsdata_ingestion(repo=repo)
 
-    def test_daily_quota_exceeded_raises(self):
+    @pytest.mark.asyncio
+    async def test_daily_quota_exceeded_raises(self):
         """Daily quota exceeded raises."""
         repo = MagicMock()
 
@@ -759,9 +761,10 @@ class TestRunNewsdataIngestion:
         ]
 
         with pytest.raises(RunInProgressError, match="Quota diária"):
-            run_newsdata_ingestion(repo=repo)
+            await run_newsdata_ingestion(repo=repo)
 
-    def test_newsdata_run_success(self):
+    @pytest.mark.asyncio
+    async def test_newsdata_run_success(self):
         """Run newsdata ingestion successfully."""
         repo = MagicMock()
 
@@ -778,7 +781,7 @@ class TestRunNewsdataIngestion:
                 with patch("app.ingestion.services.observability"):
                     with patch("app.ingestion.services.newsdata_ingest"):
                         mock_client = MagicMock()
-                        mock_client.fetch.return_value = [
+                        mock_client.fetch = AsyncMock(return_value=[
                             RawNewsItem(
                                 external_id="1",
                                 title="Test",
@@ -791,10 +794,10 @@ class TestRunNewsdataIngestion:
                                 summary="",
                                 payload={},
                             )
-                        ]
+                        ])
                         mock_client_cls.return_value = mock_client
 
-                        result = run_newsdata_ingestion(
+                        result = await run_newsdata_ingestion(
                             repo=repo,
                             size=5,
                             throttle_seconds=0,
@@ -806,7 +809,8 @@ class TestRunNewsdataIngestion:
         assert result.status == IngestionStatus.SUCCESS
         repo.insert_run.assert_called_once()
 
-    def test_newsdata_run_fetch_exception(self):
+    @pytest.mark.asyncio
+    async def test_newsdata_run_fetch_exception(self):
         """Run newsdata ingestion with fetch exception."""
         repo = MagicMock()
 
@@ -822,11 +826,11 @@ class TestRunNewsdataIngestion:
                 with patch("app.ingestion.services.observability"):
                     with patch("app.ingestion.services.newsdata_ingest"):
                         mock_client = MagicMock()
-                        mock_client.fetch.side_effect = Exception("Network error")
+                        mock_client.fetch = AsyncMock(side_effect=Exception("Network error"))
                         mock_client_cls.return_value = mock_client
 
                         with pytest.raises(Exception, match="Network error"):
-                            run_newsdata_ingestion(
+                            await run_newsdata_ingestion(
                                 repo=repo,
                                 domains_override=["example.com"],
                             )

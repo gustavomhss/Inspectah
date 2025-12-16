@@ -6,9 +6,12 @@ REST API endpoints for the Guardian validation system.
 
 from __future__ import annotations
 
+import logging
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
+
+logger = logging.getLogger(__name__)
 
 from app.api.guardian.schemas import (
     AddReviewerRequest,
@@ -223,9 +226,10 @@ async def add_reviewer(
         member = await service.add_reviewer(decision_id, request.user_id)
         return {"member_id": member.id, "user_id": member.user_id}
     except ValueError as e:
+        logger.warning("add_reviewer error for decision %s: %s", decision_id, e)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e),
+            detail={"error": "validation_error", "message": "Cannot add reviewer to decision"},
         )
 
 
@@ -245,9 +249,10 @@ async def submit_review(
         )
         return _flow_context_to_response(ctx)
     except ValueError as e:
+        logger.warning("submit_review error for decision %s: %s", decision_id, e)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e),
+            detail={"error": "validation_error", "message": "Cannot submit review"},
         )
 
 
@@ -265,9 +270,10 @@ async def add_validator(
         member = await service.add_validator(decision_id, request.agent_id)
         return {"member_id": member.id, "agent_id": member.agent_id}
     except ValueError as e:
+        logger.warning("add_validator error for decision %s: %s", decision_id, e)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e),
+            detail={"error": "validation_error", "message": "Cannot add validator to decision"},
         )
 
 
@@ -296,9 +302,10 @@ async def submit_vote(
         )
         return _flow_context_to_response(ctx)
     except ValueError as e:
+        logger.warning("submit_vote error for decision %s: %s", decision_id, e)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e),
+            detail={"error": "validation_error", "message": "Cannot submit vote"},
         )
 
 

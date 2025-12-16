@@ -28,11 +28,11 @@ if APIRouter is not None:  # pragma: no cover
     router = APIRouter(prefix="/api/ingest/newsdata", tags=["ingestion"])
 
     @router.post("/run", response_model=NewsdataRunResponse, status_code=status.HTTP_201_CREATED)
-    def trigger_newsdata_run(
+    async def trigger_newsdata_run(
         payload: NewsdataRunRequest,
         _: str = Depends(_require_ops_ingest),
     ) -> NewsdataRunResponse:
-        run = services.run_newsdata_ingestion(
+        run = await services.run_newsdata_ingestion(
             trigger_origin=payload.trigger_origin,
             size=payload.size,
             throttle_seconds=payload.throttle_seconds,
