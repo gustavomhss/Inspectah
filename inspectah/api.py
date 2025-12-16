@@ -93,6 +93,19 @@ try:  # pragma: no cover
     from app.api.guardian.routes import router as guardian_router
 except ModuleNotFoundError:  # pragma: no cover
     guardian_router = None
+# S39 Routes: Memory, Signals, Explain
+try:  # pragma: no cover
+    from app.api.memory_routes import router as memory_router
+except ModuleNotFoundError:  # pragma: no cover
+    memory_router = None
+try:  # pragma: no cover
+    from app.api.signals_routes import router as signals_router
+except ModuleNotFoundError:  # pragma: no cover
+    signals_router = None
+try:  # pragma: no cover
+    from app.api.explain_routes import router as explain_router
+except ModuleNotFoundError:  # pragma: no cover
+    explain_router = None
 
 
 def _add_cors(app: FastAPI, origins: Iterable[str]) -> None:
@@ -184,6 +197,13 @@ def build_app():  # pragma: no cover
         api_app.include_router(auth_router)
     if guardian_router is not None:
         api_app.include_router(guardian_router, tags=["guardian"])
+    # S39 Routes
+    if memory_router is not None:
+        api_app.include_router(memory_router, tags=["memory"])
+    if signals_router is not None:
+        api_app.include_router(signals_router, tags=["signals"])
+    if explain_router is not None:
+        api_app.include_router(explain_router, tags=["explainability"])
 
     @api_app.get("/metrics")
     def metrics():  # pragma: no cover

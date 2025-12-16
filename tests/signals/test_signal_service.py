@@ -368,3 +368,162 @@ class TestSignalCacheService:
         count = await cache.invalidate_by_type(SignalType.VIRALIDADE)
         # Count may vary based on pattern matching implementation
         assert isinstance(count, int)
+
+
+class TestSignalServiceEdgeCases:
+    """Tests for edge cases to improve coverage."""
+
+    @pytest.fixture
+    def service_no_cache(self):
+        """Create service without cache."""
+        return SignalService()
+
+    @pytest.mark.asyncio
+    async def test_mentiras_zero_claims(self):
+        """Test MentirasEmCirculacaoCalculator with zero total_claims (line 55)."""
+        from app.signals.signal_service import MentirasEmCirculacaoCalculator
+
+        calculator = MentirasEmCirculacaoCalculator()
+        result = calculator.calculate(
+            SignalScope.GLOBAL,
+            None,
+            {"total_claims": 0, "false_claims": 0, "recent_false_24h": 0}
+        )
+        assert result.value == 0.0
+
+    @pytest.mark.asyncio
+    async def test_campo_batalha_zero_relations(self):
+        """Test CampoBatalhaCalculator with zero relations (line 97)."""
+        from app.signals.signal_service import CampoBatalhaCalculator
+
+        calculator = CampoBatalhaCalculator()
+        result = calculator.calculate(
+            SignalScope.GLOBAL,
+            None,
+            {"contradictions": 0, "supports": 0}
+        )
+        assert result.value == 0.0
+
+    @pytest.mark.asyncio
+    async def test_radar_silencio_zero_expected(self):
+        """Test RadarSilencioCalculator with zero expected_coverage (line 138)."""
+        from app.signals.signal_service import RadarSilencioCalculator
+
+        calculator = RadarSilencioCalculator()
+        result = calculator.calculate(
+            SignalScope.GLOBAL,
+            None,
+            {"expected_coverage": 0, "actual_coverage": 0, "source_diversity": 0.5}
+        )
+        assert result.value == 0.0
+
+    @pytest.mark.asyncio
+    async def test_viralidade_zero_mentions(self):
+        """Test ViralidadeCalculator with zero mentions_24h (line 218)."""
+        from app.signals.signal_service import ViralidadeCalculator
+
+        calculator = ViralidadeCalculator()
+        result = calculator.calculate(
+            SignalScope.GLOBAL,
+            None,
+            {"mentions_1h": 0, "mentions_24h": 0, "unique_sources": 0}
+        )
+        assert result.value == 0.0
+
+    @pytest.mark.asyncio
+    async def test_calculate_signal_exception_handling(self):
+        """Test that calculator exceptions are handled gracefully (lines 355-357)."""
+        service = SignalService()
+
+        # Mock calculator that raises exception
+        class FailingCalculator:
+            def calculate(self, scope, scope_id, context):
+                raise ValueError("Test error")
+
+        # Replace a calculator with failing one
+        original = service._calculators[SignalType.VIRALIDADE]
+        service._calculators[SignalType.VIRALIDADE] = FailingCalculator()
+
+        try:
+            result = await service._calculate_signal(
+                SignalType.VIRALIDADE, SignalScope.GLOBAL, None
+            )
+            # Should return None on error
+            assert result is None
+        finally:
+            service._calculators[SignalType.VIRALIDADE] = original
+
+    @pytest.mark.asyncio
+    async def test_get_data_context_with_provider(self):
+        """Test _get_data_context with custom data_provider (line 367)."""
+
+        async def custom_provider(signal_type, scope, scope_id):
+            return {"custom": "data", "signal_type": signal_type.value}
+
+        service = SignalService(data_provider=custom_provider)
+
+        context = await service._get_data_context(
+            SignalType.VIRALIDADE, SignalScope.GLOBAL, None
+        )
+
+        assert context["custom"] == "data"
+        assert context["signal_type"] == "viralidade"
+
+    def test_check_alerts_no_config(self):
+        """Test check_alerts when signal type has no config (line 421)."""
+        service = SignalService()
+
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
+        signal = SignalValue(
+            signal_type=SignalType.VIRALIDADE,
+            scope=SignalScope.GLOBAL,
+            scope_id=None,
+            value=0.5,
+            confidence=0.8,
+            sample_size=100,
+            calculated_at=now,
+            expires_at=now + timedelta(hours=1),
+        )
+
+        # Remove config for this signal type
+        original_config = service.configs.pop(SignalType.VIRALIDADE, None)
+
+        try:
+            alerts = service.check_alerts([signal])
+            # Should return empty list (skips signals without config)
+            assert alerts == []
+        finally:
+            if original_config:
+                service.configs[SignalType.VIRALIDADE] = original_config
+
+    def test_check_alerts_no_thresholds(self):
+        """Test check_alerts when config has no thresholds (line 421)."""
+        service = SignalService()
+
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
+        signal = SignalValue(
+            signal_type=SignalType.VIRALIDADE,
+            scope=SignalScope.GLOBAL,
+            scope_id=None,
+            value=0.99,  # High value
+            confidence=0.8,
+            sample_size=100,
+            calculated_at=now,
+            expires_at=now + timedelta(hours=1),
+        )
+
+        # Set config with no thresholds
+        original_config = service.configs.get(SignalType.VIRALIDADE)
+        service.configs[SignalType.VIRALIDADE] = SignalConfig(
+            signal_type=SignalType.VIRALIDADE,
+            priority=SignalPriority.HIGH,
+            cache_ttl_seconds=300,
+            thresholds=None,  # No thresholds
+        )
+
+        try:
+            alerts = service.check_alerts([signal])
+            assert alerts == []
+        finally:
+            if original_config:
+                service.configs[SignalType.VIRALIDADE] = original_config
