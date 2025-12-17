@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 import json
+import time
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import List
+from typing import Any, Dict, List, Optional
+
+from prometheus_client import Histogram
 
 from app.ingestion.models import IngestionRun, IngestionStatus
 from app.ingestion.repository import IngestionRepository
@@ -11,6 +14,30 @@ from metrics import ingestion_s22 as metrics  # legado
 from metrics import ingest as ingest_metrics
 
 LOG_PATH_DEFAULT = Path("out/evidence/S22_G6_observability/ingestion_runs.log")
+
+# S40-BE-020: P1 Latency Metrics
+# Pilot domains for SLA tracking
+P1_PILOT_DOMAINS = {"saude", "politica"}
+
+# P1 latency histogram: collected_to_ready (in seconds)
+# Buckets optimized for sub-second to multi-second latencies
+p1_latency_collected_to_ready = Histogram(
+    "p1_latency_collected_to_ready_seconds",
+    "Latency from document collection to ready state (P1 SLA)",
+    ["domain", "source"],
+    buckets=(0.1, 0.25, 0.5, 1.0, 2.0, 5.0, 10.0, 30.0, 60.0),
+)
+
+# P1 end-to-end latency histogram
+p1_latency_end_to_end = Histogram(
+    "p1_latency_end_to_end_seconds",
+    "End-to-end latency from collection to pipeline completion (P1 SLA)",
+    ["domain", "source"],
+    buckets=(0.5, 1.0, 2.0, 5.0, 10.0, 30.0, 60.0, 120.0, 300.0),
+)
+
+# In-memory tracking for collected timestamps
+_collected_timestamps: Dict[str, float] = {}
 
 
 def _append_log(entry: dict, log_path: Path = LOG_PATH_DEFAULT) -> None:
@@ -85,3 +112,171 @@ def _compute_latency_ms(run: IngestionRun):
         return None
     delta = run.finished_at - run.started_at
     return int(delta.total_seconds() * 1000)
+
+
+# =============================================================================
+# S40-BE-020: P1 Latency Metrics Functions
+# =============================================================================
+
+
+def is_pilot_domain(domain: str) -> bool:
+    """Check if domain is a P1 pilot domain."""
+    return domain.lower() in P1_PILOT_DOMAINS
+
+
+def mark_collected(document_id: str, domain: str, source: str) -> None:
+    """
+    Mark a document as collected (start P1 latency tracking).
+
+    Args:
+        document_id: Unique identifier for the document
+        domain: Domain (saude, politica, etc.)
+        source: Source identifier
+    """
+    if not is_pilot_domain(domain):
+        return
+
+    key = f"{domain}:{source}:{document_id}"
+    _collected_timestamps[key] = time.time()
+
+
+def mark_ready(
+    document_id: str,
+    domain: str,
+    source: str,
+    ready_at: Optional[float] = None,
+) -> Optional[float]:
+    """
+    Mark a document as ready and record P1 latency.
+
+    Args:
+        document_id: Unique identifier for the document
+        domain: Domain (saude, politica, etc.)
+        source: Source identifier
+        ready_at: Optional timestamp (defaults to now)
+
+    Returns:
+        Latency in seconds, or None if not tracked
+    """
+    if not is_pilot_domain(domain):
+        return None
+
+    key = f"{domain}:{source}:{document_id}"
+    collected_at = _collected_timestamps.pop(key, None)
+
+    if collected_at is None:
+        return None
+
+    ready_timestamp = ready_at or time.time()
+    latency_seconds = ready_timestamp - collected_at
+
+    # Record to Prometheus histogram
+    p1_latency_collected_to_ready.labels(
+        domain=domain.lower(),
+        source=source,
+    ).observe(latency_seconds)
+
+    return latency_seconds
+
+
+def mark_pipeline_complete(
+    document_id: str,
+    domain: str,
+    source: str,
+    collected_at: float,
+    completed_at: Optional[float] = None,
+) -> Optional[float]:
+    """
+    Record end-to-end P1 latency (collection to pipeline completion).
+
+    Args:
+        document_id: Unique identifier for the document
+        domain: Domain (saude, politica, etc.)
+        source: Source identifier
+        collected_at: Timestamp when document was collected
+        completed_at: Optional completion timestamp (defaults to now)
+
+    Returns:
+        Latency in seconds, or None if not a pilot domain
+    """
+    if not is_pilot_domain(domain):
+        return None
+
+    completed_timestamp = completed_at or time.time()
+    latency_seconds = completed_timestamp - collected_at
+
+    # Record to Prometheus histogram
+    p1_latency_end_to_end.labels(
+        domain=domain.lower(),
+        source=source,
+    ).observe(latency_seconds)
+
+    return latency_seconds
+
+
+def get_p1_latency_stats(domain: str, source: str) -> Dict[str, Any]:
+    """
+    Get P1 latency statistics for a domain/source combination.
+
+    Args:
+        domain: Domain (saude, politica, etc.)
+        source: Source identifier
+
+    Returns:
+        Dict with latency statistics
+    """
+    if not is_pilot_domain(domain):
+        return {"error": f"Domain '{domain}' is not a P1 pilot domain"}
+
+    # Get histogram data
+    collected_to_ready = p1_latency_collected_to_ready.labels(
+        domain=domain.lower(),
+        source=source,
+    )
+    end_to_end = p1_latency_end_to_end.labels(
+        domain=domain.lower(),
+        source=source,
+    )
+
+    return {
+        "domain": domain.lower(),
+        "source": source,
+        "collected_to_ready": {
+            "count": collected_to_ready._sum._value if hasattr(collected_to_ready, "_sum") else 0,
+            "buckets": list(p1_latency_collected_to_ready._upper_bounds),
+        },
+        "end_to_end": {
+            "count": end_to_end._sum._value if hasattr(end_to_end, "_sum") else 0,
+            "buckets": list(p1_latency_end_to_end._upper_bounds),
+        },
+        "pending_documents": sum(
+            1 for k in _collected_timestamps if k.startswith(f"{domain.lower()}:{source}:")
+        ),
+    }
+
+
+def clear_stale_timestamps(max_age_seconds: float = 3600) -> int:
+    """
+    Clear stale collected timestamps (documents that never became ready).
+
+    Args:
+        max_age_seconds: Maximum age before considering stale
+
+    Returns:
+        Number of cleared entries
+    """
+    now = time.time()
+    stale_keys = [
+        key for key, ts in _collected_timestamps.items()
+        if now - ts > max_age_seconds
+    ]
+
+    for key in stale_keys:
+        del _collected_timestamps[key]
+
+    return len(stale_keys)
+
+
+def get_pending_count() -> int:
+    """Get count of documents pending ready state."""
+    return len(_collected_timestamps)

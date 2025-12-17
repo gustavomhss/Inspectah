@@ -1,0 +1,189 @@
+# S40-BE-021: P1 SLA Alerts
+# Sprint 40: Truth-DB Estável - Pilot Domain SLA Monitoring
+#
+# P1 pilot domains: saude, politica
+# SLA targets:
+#   - collected_to_ready: P95 < 5s, P99 < 10s
+#   - end_to_end: P95 < 30s, P99 < 60s
+
+groups:
+  - name: s40_p1_latency
+    rules:
+      # Collected-to-Ready latency alerts
+      - alert: P1CollectedToReadyLatencyP95High
+        expr: histogram_quantile(0.95, rate(p1_latency_collected_to_ready_seconds_bucket[5m])) > 5
+        for: 5m
+        labels:
+          severity: warning
+          sprint: s40
+          sla: p1_latency
+          priority: P1
+        annotations:
+          summary: "P1 collected-to-ready P95 latency exceeds 5s"
+          description: "Domain {{ $labels.domain }} source {{ $labels.source }}: P95 latency is {{ $value | humanizeDuration }}"
+          runbook_url: "docs/runbooks/p1_latency_high.md"
+
+      - alert: P1CollectedToReadyLatencyP99Critical
+        expr: histogram_quantile(0.99, rate(p1_latency_collected_to_ready_seconds_bucket[5m])) > 10
+        for: 3m
+        labels:
+          severity: critical
+          sprint: s40
+          sla: p1_latency
+          priority: P1
+        annotations:
+          summary: "P1 collected-to-ready P99 latency exceeds 10s"
+          description: "Domain {{ $labels.domain }} source {{ $labels.source }}: P99 latency is {{ $value | humanizeDuration }}"
+          runbook_url: "docs/runbooks/p1_latency_critical.md"
+
+      # End-to-End latency alerts
+      - alert: P1EndToEndLatencyP95High
+        expr: histogram_quantile(0.95, rate(p1_latency_end_to_end_seconds_bucket[5m])) > 30
+        for: 5m
+        labels:
+          severity: warning
+          sprint: s40
+          sla: p1_latency
+          priority: P1
+        annotations:
+          summary: "P1 end-to-end P95 latency exceeds 30s"
+          description: "Domain {{ $labels.domain }} source {{ $labels.source }}: end-to-end P95 latency is {{ $value | humanizeDuration }}"
+          runbook_url: "docs/runbooks/p1_e2e_latency_high.md"
+
+      - alert: P1EndToEndLatencyP99Critical
+        expr: histogram_quantile(0.99, rate(p1_latency_end_to_end_seconds_bucket[5m])) > 60
+        for: 3m
+        labels:
+          severity: critical
+          sprint: s40
+          sla: p1_latency
+          priority: P1
+        annotations:
+          summary: "P1 end-to-end P99 latency exceeds 60s"
+          description: "Domain {{ $labels.domain }} source {{ $labels.source }}: end-to-end P99 latency is {{ $value | humanizeDuration }}"
+          runbook_url: "docs/runbooks/p1_e2e_latency_critical.md"
+
+  - name: s40_p1_throughput
+    rules:
+      # Throughput alerts for pilot domains
+      - alert: P1IngestionRateLow
+        expr: sum(rate(p1_latency_collected_to_ready_seconds_count[1h])) by (domain) < 10
+        for: 2h
+        labels:
+          severity: warning
+          sprint: s40
+          sla: p1_throughput
+          priority: P1
+        annotations:
+          summary: "P1 domain ingestion rate below threshold"
+          description: "Domain {{ $labels.domain }}: only {{ $value }} documents processed in last hour"
+          runbook_url: "docs/runbooks/p1_low_throughput.md"
+
+      - alert: P1NoIngestionActivity
+        expr: sum(increase(p1_latency_collected_to_ready_seconds_count[30m])) by (domain) == 0
+        for: 30m
+        labels:
+          severity: critical
+          sprint: s40
+          sla: p1_throughput
+          priority: P1
+        annotations:
+          summary: "No P1 ingestion activity for 30 minutes"
+          description: "Domain {{ $labels.domain }}: no documents processed in last 30 minutes"
+          runbook_url: "docs/runbooks/p1_no_activity.md"
+
+  - name: s40_p1_health
+    rules:
+      # Pilot domain source health
+      - alert: P1SourceHealthDegraded
+        expr: count(source_health_status{status="DEGRADED", domain=~"saude|politica"}) > 0
+        for: 10m
+        labels:
+          severity: warning
+          sprint: s40
+          sla: p1_availability
+          priority: P1
+        annotations:
+          summary: "P1 pilot domain source health degraded"
+          description: "{{ $value }} P1 sources in DEGRADED state"
+          runbook_url: "docs/runbooks/p1_source_degraded.md"
+
+      - alert: P1SourceHealthUnhealthy
+        expr: count(source_health_status{status="UNHEALTHY", domain=~"saude|politica"}) > 0
+        for: 2m
+        labels:
+          severity: critical
+          sprint: s40
+          sla: p1_availability
+          priority: P1
+        annotations:
+          summary: "P1 pilot domain source unhealthy"
+          description: "{{ $value }} P1 sources are UNHEALTHY - immediate attention required"
+          runbook_url: "docs/runbooks/p1_source_unhealthy.md"
+
+      # Social provider health for pilot domains
+      - alert: P1SocialProviderErrors
+        expr: rate(social_provider_errors_total{domain=~"saude|politica"}[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          sprint: s40
+          sla: p1_availability
+          priority: P1
+        annotations:
+          summary: "P1 social provider experiencing errors"
+          description: "Domain {{ $labels.domain }}: {{ $value }} errors/sec from social provider"
+          runbook_url: "docs/runbooks/p1_social_errors.md"
+
+      # Gov.br API health for pilot domains
+      - alert: P1GovBrAPIDown
+        expr: gov_br_api_health{endpoint=~"transparencia|dados_gov", status="down"} == 1
+        for: 5m
+        labels:
+          severity: critical
+          sprint: s40
+          sla: p1_availability
+          priority: P1
+        annotations:
+          summary: "Gov.br API endpoint is down"
+          description: "Endpoint {{ $labels.endpoint }} is DOWN - affects official data ingestion"
+          runbook_url: "docs/runbooks/p1_govbr_down.md"
+
+  - name: s40_p1_slo
+    rules:
+      # SLO-based alerts
+      - alert: P1SLOLatencyBudgetLow
+        expr: |
+          1 - (
+            sum(rate(p1_latency_collected_to_ready_seconds_bucket{le="5"}[24h])) by (domain)
+            /
+            sum(rate(p1_latency_collected_to_ready_seconds_count[24h])) by (domain)
+          ) > 0.05
+        for: 15m
+        labels:
+          severity: warning
+          sprint: s40
+          sla: p1_slo
+          priority: P1
+        annotations:
+          summary: "P1 latency SLO error budget consumption high"
+          description: "Domain {{ $labels.domain }}: {{ $value | humanizePercentage }} of requests exceeding 5s target"
+          runbook_url: "docs/runbooks/p1_slo_budget.md"
+
+      - alert: P1SLOLatencyBudgetExhausted
+        expr: |
+          1 - (
+            sum(rate(p1_latency_collected_to_ready_seconds_bucket{le="5"}[24h])) by (domain)
+            /
+            sum(rate(p1_latency_collected_to_ready_seconds_count[24h])) by (domain)
+          ) > 0.10
+        for: 5m
+        labels:
+          severity: critical
+          sprint: s40
+          sla: p1_slo
+          priority: P1
+        annotations:
+          summary: "P1 latency SLO error budget exhausted"
+          description: "Domain {{ $labels.domain }}: {{ $value | humanizePercentage }} of requests exceeding 5s target - SLO violated"
+          runbook_url: "docs/runbooks/p1_slo_violated.md"
