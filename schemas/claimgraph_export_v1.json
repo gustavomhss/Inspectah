@@ -1,0 +1,295 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://inspectah.io/schemas/claimgraph_export_v1.json",
+  "title": "ClaimGraphExport",
+  "description": "Export v1 do ClaimGraph para ingestão por P3 (Truth-DB). Formato sem cola manual.",
+  "type": "object",
+  "required": ["version", "export_id", "domain", "claims", "exported_at"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "const": "1.0",
+      "description": "Versão do formato de export"
+    },
+    "export_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Identificador único deste export"
+    },
+    "domain": {
+      "type": "string",
+      "description": "Domínio do export (ex: saude, politica)",
+      "minLength": 1
+    },
+    "claims": {
+      "type": "array",
+      "description": "Lista de claims exportadas",
+      "items": {
+        "type": "object",
+        "required": ["claim_id", "text", "prior", "evidence_trail", "current_state", "created_at"],
+        "properties": {
+          "claim_id": {
+            "type": "string",
+            "description": "Identificador único do claim"
+          },
+          "text": {
+            "type": "string",
+            "description": "Texto original do claim",
+            "minLength": 1
+          },
+          "normalized_text": {
+            "type": "string",
+            "description": "Texto normalizado do claim"
+          },
+          "prior": {
+            "type": "object",
+            "description": "Prior probabilístico do claim (P2)",
+            "required": ["probability", "confidence", "source"],
+            "properties": {
+              "probability": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1,
+                "description": "Probabilidade de veracidade (0-1)"
+              },
+              "confidence": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1,
+                "description": "Confiança na estimativa (0-1)"
+              },
+              "source": {
+                "type": "string",
+                "enum": ["model", "expert", "crowd", "official", "hybrid"],
+                "description": "Fonte do prior"
+              },
+              "model_version": {
+                "type": "string",
+                "description": "Versão do modelo que gerou o prior"
+              },
+              "computed_at": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "additionalProperties": false
+          },
+          "evidence_trail": {
+            "type": "array",
+            "description": "Trilha de evidências que suportam ou refutam o claim",
+            "minItems": 0,
+            "items": {
+              "type": "object",
+              "required": ["evidence_id", "type", "stance"],
+              "properties": {
+                "evidence_id": {
+                  "type": "string"
+                },
+                "type": {
+                  "type": "string",
+                  "enum": ["source", "fact_check", "expert_opinion", "official_data", "user_report", "contradiction", "support"]
+                },
+                "stance": {
+                  "type": "string",
+                  "enum": ["supports", "refutes", "neutral", "unclear"],
+                  "description": "Posição da evidência em relação ao claim"
+                },
+                "weight": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "Peso da evidência"
+                },
+                "url": {
+                  "type": "string",
+                  "format": "uri"
+                },
+                "snippet": {
+                  "type": "string",
+                  "description": "Trecho relevante da evidência"
+                },
+                "collected_at": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "current_state": {
+            "type": "string",
+            "enum": ["UNKNOWN", "CLAIMED", "UNDER_REVIEW", "PROVISIONAL", "ESTABLISHED_FACT", "UNDER_DISPUTE", "RETRACTED"],
+            "description": "Estado atual do claim no P2"
+          },
+          "signals": {
+            "type": "array",
+            "description": "Sinais ativos (NO-GO signals)",
+            "items": {
+              "type": "object",
+              "required": ["type", "severity"],
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": ["INCONSISTENCY", "SUSPICION", "ABUSE"],
+                  "description": "Tipo do sinal NO-GO"
+                },
+                "severity": {
+                  "type": "string",
+                  "enum": ["low", "medium", "high", "critical"]
+                },
+                "reason": {
+                  "type": "string"
+                },
+                "detected_at": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "relations": {
+            "type": "array",
+            "description": "Relações com outros claims",
+            "items": {
+              "type": "object",
+              "required": ["target_claim_id", "relation_type"],
+              "properties": {
+                "target_claim_id": {
+                  "type": "string"
+                },
+                "relation_type": {
+                  "type": "string",
+                  "enum": ["contradicts", "supports", "implies", "part_of", "derived_from"]
+                },
+                "confidence": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "source_refs": {
+            "type": "array",
+            "description": "Referências às fontes originais",
+            "items": {
+              "type": "object",
+              "properties": {
+                "source_id": {
+                  "type": "string"
+                },
+                "source_type": {
+                  "type": "string",
+                  "enum": ["social", "news", "official", "user_submitted"]
+                },
+                "url": {
+                  "type": "string",
+                  "format": "uri"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "edges": {
+      "type": "array",
+      "description": "Arestas do grafo (relações entre claims)",
+      "items": {
+        "type": "object",
+        "required": ["source_id", "target_id", "relation_type"],
+        "properties": {
+          "edge_id": {
+            "type": "string"
+          },
+          "source_id": {
+            "type": "string",
+            "description": "ID do claim de origem"
+          },
+          "target_id": {
+            "type": "string",
+            "description": "ID do claim de destino"
+          },
+          "relation_type": {
+            "type": "string",
+            "enum": ["contradicts", "supports", "implies", "part_of", "derived_from"]
+          },
+          "weight": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "pagination": {
+      "type": "object",
+      "description": "Informações de paginação",
+      "properties": {
+        "page": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "page_size": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000
+        },
+        "total_claims": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "total_pages": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "has_next": {
+          "type": "boolean"
+        },
+        "next_cursor": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "exported_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp do export"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Metadados do export",
+      "properties": {
+        "sprint": {
+          "type": "string"
+        },
+        "commit": {
+          "type": "string"
+        },
+        "exporter_version": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}
