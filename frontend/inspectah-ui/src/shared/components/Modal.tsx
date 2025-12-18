@@ -1,13 +1,16 @@
 import type { ReactNode } from 'react';
 
-interface ModalProps {
+export interface ModalProps {
   title: string;
   children: ReactNode;
   onClose: () => void;
   actions?: ReactNode;
+  open?: boolean;
 }
 
-function Modal({ title, children, onClose, actions }: ModalProps) {
+function Modal({ title, children, onClose, actions, open = true }: ModalProps) {
+  if (!open) return null;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 p-4">
       <div className="w-full max-w-lg rounded-2xl border border-white/10 bg-slate-900 p-6 shadow-2xl">
