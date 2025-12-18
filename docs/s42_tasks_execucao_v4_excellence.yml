@@ -1,0 +1,1152 @@
+# Sprint 42 — Plano de Execucao v4.0 EXCELLENCE
+# Gerado pelo Sprint Planner Tecnico v7
+# Versao: 4.0 EXCELLENCE (Auditoria Brutal + 30 rodadas de refinamento)
+
+sprint: S42
+programa: P2+P3+P4
+epico: Simulacoes MAC + Plano Adiabatico + Exposicao MI
+versao: "4.0"
+tasks_total: 263
+
+ace_resumo:
+  objetivo: |
+    Construir simulacoes deterministicas da MAC (dry-run + batch),
+    plano adiabatico (mudanca gradual), e exposicao parcial de MI/Experiencias.
+    NIVEL MAXIMO DE EXCELENCIA: testes negativos, E2E, concorrencia, observabilidade avancada.
+    Preparar S43 (GO/NO-GO Fase 2) com evidencias auditaveis.
+  leitura_minima:
+    - docs/Agents/Planejamento/Programa 2/Sprint 42/S42_spec.md
+    - docs/Agents/Planejamento/Programa 2/Sprint 42/Capitulo 2/Bloco 2.md
+    - docs/Agents/Planejamento/Programa 2/Sprint 42/Capitulo 3/Bloco 2.md
+    - docs/Agents/Planejamento/Programa 2/Sprint 42/Capitulo 6/Bloco 2.md
+    - docs/s42_gap_analysis_v4_brutal.md
+  instrucoes:
+    - Seguir waves na ordem (W0 -> W11)
+    - Nao pular wave sem completar tasks obrigatorias
+    - W7-W11 sao criticas para nivel de excelencia
+    - Reportar gaps encontrados imediatamente
+    - Invariantes sao inegociaveis (INV_S42_*)
+    - Todos error paths devem ser testados (INV_S42_ERR_01)
+    - Sem race conditions (INV_S42_CONC_01)
+    - Recovery deve ser funcional (INV_S42_REC_01)
+    - Sem PASS sintetico — scorecard sem provenance = NO-GO
+
+invariantes:
+  - id: INV_S42_SIM_01
+    descricao: Simulacao NAO muda TruthState oficial
+    verificacao: S42-BE-015, S42-TST-002, S42-E2E-001..003
+    metodo: Assertion TruthState antes == depois; E2E valida fluxos
+  - id: INV_S42_DET_01
+    descricao: Replay deterministico 100% quando T=0
+    verificacao: S42-BE-016, S42-TST-002, S42-TST-011, S42-CONC-001..008
+    metodo: Loop de 100 replays identicos; testes de concorrencia
+  - id: INV_S42_TRAIL_01
+    descricao: Provenance completa em toda simulacao (manifest com lineage)
+    verificacao: S42-BE-005, S42-BE-017, S42-EVD-001..015
+    metodo: Campos obrigatorios; evidencias automatizadas
+  - id: INV_S42_PRIV_01
+    descricao: Privacidade MI/Experiencias (redaction + RBAC)
+    verificacao: S42-BE-064..067, S42-TST-040..042, S42-SEC-001..015
+    metodo: Testes de RBAC exaustivos; security hardening
+  - id: INV_S42_QUAL_01
+    descricao: Sem PASS sintetico
+    verificacao: S42-BND-001..008, S42-EVD-001..015
+    metodo: Manifests com provenance; evidencias reais
+  - id: INV_S42_ERR_01
+    descricao: Todos error paths testados
+    verificacao: S42-NEG-001..015
+    metodo: 15+ testes de error paths distintos
+  - id: INV_S42_CONC_01
+    descricao: Sem race conditions
+    verificacao: S42-CONC-001..008
+    metodo: 8 testes de concorrencia explicitos
+  - id: INV_S42_REC_01
+    descricao: Recovery funcional
+    verificacao: S42-REC-001..007
+    metodo: 7 cenarios de recovery testados
+
+riscos:
+  - id: R1
+    descricao: Confusao simulacao = producao
+    impacto: Critico
+    mitigacao: S42-FE-015, S42-UX-001, S42-FE-026
+  - id: R2
+    descricao: Nao-determinismo em replay
+    impacto: Alto
+    mitigacao: S42-BE-016, S42-TST-002, S42-TST-011, S42-CONC-001..008
+  - id: R3
+    descricao: Vazamento de dados MI
+    impacto: Critico
+    mitigacao: S42-BE-064..067, S42-SEC-001..015
+  - id: R4
+    descricao: Dataset bias
+    impacto: Alto
+    mitigacao: S42-DAT-001..008, S42-TST-010..011
+  - id: R5
+    descricao: Plano adiabatico inseguro
+    impacto: Alto
+    mitigacao: S42-BE-050..057, S42-TST-030, S42-E2E-003
+  - id: R6
+    descricao: UX pesada/lenta
+    impacto: Medio
+    mitigacao: S42-FE-012, S42-SLO-001..004
+  - id: R7
+    descricao: PASS sintetico
+    impacto: Critico
+    mitigacao: S42-BND-001..008, S42-EVD-001..015
+  - id: R8
+    descricao: Race conditions em batch
+    impacto: Alto
+    mitigacao: S42-CONC-001..008
+  - id: R9
+    descricao: Recovery falho
+    impacto: Alto
+    mitigacao: S42-REC-001..007
+  - id: R10
+    descricao: Security vulnerabilities
+    impacto: Critico
+    mitigacao: S42-SEC-001..015
+
+waves:
+  - id: W0
+    nome: Fundacao MAC
+    objetivo: Criar estrutura base completa (modulos, schemas, migrations, configs, datasets canonicos, manifest)
+    gates: [Pre-req]
+    dependencias: []
+    tasks_count: 24
+    ace_context:
+      spec_refs:
+        - Capitulo 3/Bloco 2.md
+        - Capitulo 3/Bloco 3.md
+        - Capitulo 6/Bloco 2.md
+      resumo: Estrutura base completa. Datasets canonicos (~1100 casos). Manifest com lineage.
+
+  - id: W1
+    nome: MAC Simulate
+    objetivo: Endpoint dry-run deterministico com manifest completo
+    gates: [G30]
+    dependencias: [W0]
+    tasks_count: 22
+    ace_context:
+      spec_refs:
+        - Capitulo 3/Bloco 1.md
+        - Capitulo 2/Bloco 2.md
+        - Capitulo 6/Bloco 2.md
+      resumo: MAC engine core + POST /api/v1/mac/simulate. Determinismo T=0. Manifest obrigatorio. p95<500ms.
+
+  - id: W2
+    nome: MAC Batch
+    objetivo: Simulacao em lote + scorecards + streaming + cancel
+    gates: [G31]
+    dependencias: [W0, W1]
+    tasks_count: 18
+    ace_context:
+      spec_refs:
+        - Capitulo 6/Bloco 2.md
+        - Capitulo 2/Bloco 2.md
+        - Capitulo 8/Bloco 2.md
+      resumo: Batch runner + datasets gold/adversarial/edge. Targets MAC Anexo D. Cancel/streaming.
+
+  - id: W3
+    nome: Plano Adiabatico
+    objetivo: Validador + simulador por fases + rollback
+    gates: [G32]
+    dependencias: [W0, W1]
+    tasks_count: 16
+    ace_context:
+      spec_refs:
+        - Capitulo 6/Bloco 3.md
+        - Capitulo 2/Bloco 2.md
+      resumo: AdiabaticPlan completo + validador derivada (0.20/dia) + simulador fases + rollback.
+
+  - id: W4
+    nome: MI/Exp Exposure
+    objetivo: Exposicao parcial governada + RBAC + redaction + derivation
+    gates: [G33]
+    dependencias: [W0, W1]
+    tasks_count: 20
+    ace_context:
+      spec_refs:
+        - Capitulo 6/Bloco 4.md
+        - Capitulo 3/Bloco 2.md
+      resumo: Modulo app/mi/ + RBAC (ops/reviewer/council) + redaction PII + experience derivation.
+
+  - id: W5
+    nome: Frontend P4
+    objetivo: UI completa com virtualization, disclaimers, estados MI, diffs
+    gates: [G34]
+    dependencias: [W1, W2, W3, W4]
+    tasks_count: 32
+    ace_context:
+      spec_refs:
+        - Capitulo 8/Bloco 1.md
+        - Capitulo 8/Bloco 2.md
+        - Capitulo 8/Bloco 3.md
+        - Capitulo 9/Bloco 1.md
+        - Capitulo 9/Bloco 3.md
+      resumo: Modulo modules/mac/ + SimulationLab + BatchPage + virtualization + disclaimers + estados MI.
+
+  - id: W6
+    nome: ORR/Bundle
+    objetivo: Scripts de gate + runbooks + teste carga + bundle com redaction
+    gates: [G35]
+    dependencias: [W0, W1, W2, W3, W4, W5]
+    tasks_count: 26
+    ace_context:
+      spec_refs:
+        - Capitulo 2/Bloco 2.md
+        - Capitulo 4/Bloco 4.md
+        - Capitulo 7/Bloco 1.md
+      resumo: Scripts bin/s42_g3*.sh + runbooks operacionais + teste carga + bundle ZIP consolidado.
+
+  - id: W7
+    nome: Quality Assurance
+    objetivo: Testes negativos exaustivos, E2E completos, concorrencia, recovery
+    gates: [All]
+    dependencias: [W0, W1, W2, W3, W4, W5, W6]
+    tasks_count: 45
+    ace_context:
+      spec_refs:
+        - Capitulo 2/Bloco 2.md
+        - Capitulo 3/Bloco 2.md
+        - Capitulo 5/Bloco 2.md
+        - Capitulo 8/Bloco 2.md
+      resumo: |
+        INV_S42_ERR_01: 15 testes de error paths
+        INV_S42_CONC_01: 8 testes de concorrencia
+        INV_S42_REC_01: 7 cenarios de recovery
+        10 E2E backend + 5 E2E Playwright
+
+  - id: W8
+    nome: Observability Advanced
+    objetivo: Metricas detalhadas, SLOs, tracing distribuido, alertas actionable
+    gates: [All]
+    dependencias: [W6]
+    tasks_count: 20
+    ace_context:
+      spec_refs:
+        - Capitulo 2/Bloco 2.md
+      resumo: |
+        8 metricas Prometheus especificas
+        4 SLOs definidos
+        3 spans de tracing
+        5 alertas actionable
+
+  - id: W9
+    nome: Security Hardening
+    objetivo: Pentesting, RBAC edge cases, audit hardening, input sanitization
+    gates: [G33, G35]
+    dependencias: [W4, W6]
+    tasks_count: 15
+    ace_context:
+      spec_refs:
+        - Capitulo 2/Bloco 2.md
+        - Capitulo 3/Bloco 2.md
+      resumo: |
+        4 testes RBAC edge cases
+        4 testes input sanitization
+        3 testes audit hardening
+        4 testes penetration (OWASP)
+
+  - id: W10
+    nome: API Excellence
+    objetivo: OpenAPI, versioning, contracts, backward compatibility
+    gates: [All]
+    dependencias: [W1, W2, W3, W4]
+    tasks_count: 10
+    ace_context:
+      spec_refs:
+        - Capitulo 3/Bloco 2.md
+      resumo: |
+        OpenAPI spec automatica
+        Versioning via path
+        Contract tests baseline
+        CI para breaking changes
+
+  - id: W11
+    nome: Evidence Mastery
+    objetivo: Estrutura out/ completa, automacao, hash validation
+    gates: [G35]
+    dependencias: [W6]
+    tasks_count: 15
+    ace_context:
+      spec_refs:
+        - Capitulo 4/Bloco 4.md
+        - Capitulo 7/Bloco 4.md
+      resumo: |
+        Estrutura automatizada por gate
+        manifest.json, summary.md, requests/responses.jsonl
+        redaction_report.json, rbac_matrix.json
+        Bundle hash validation e reproducao
+
+# ============================================
+# TASKS W0-W6 (158 tasks originais v3.0)
+# ============================================
+# Ver arquivo s42_tasks_execucao.yml para tasks W0-W6 completas
+
+# ============================================
+# TASKS W7 - Quality Assurance (45 tasks) [NOVAS]
+# ============================================
+
+tasks_w7:
+  # Testes Negativos / Error Paths
+  - id: S42-NEG-001
+    wave: W7
+    area: testing
+    descricao: Testar PolicyNotFoundError em simulate com policy inexistente
+    arquivos: [tests/mac/test_errors.py]
+    gates: [All]
+    done: Erro 404 correto retornado
+    evidencias: pytest tests/mac/test_errors.py::test_policy_not_found
+
+  - id: S42-NEG-002
+    wave: W7
+    area: testing
+    descricao: Testar PolicyVersionMismatchError em comparacao baseline/candidate
+    arquivos: [tests/mac/test_errors.py]
+    gates: [All]
+    done: Erro detectado e reportado
+
+  - id: S42-NEG-003
+    wave: W7
+    area: testing
+    descricao: Testar SignalSnapshotInvalidError com payload malformado
+    arquivos: [tests/mac/test_errors.py]
+    gates: [All]
+    done: Erro 400 correto
+
+  - id: S42-NEG-004
+    wave: W7
+    area: testing
+    descricao: Testar SignalSnapshotExpiredError com timestamp antigo
+    arquivos: [tests/mac/test_errors.py]
+    gates: [All]
+    done: Erro detectado
+
+  - id: S42-NEG-005
+    wave: W7
+    area: testing
+    descricao: Testar SimulationTimeoutError com timeout forcado
+    arquivos: [tests/mac/test_errors.py]
+    gates: [All]
+    done: Timeout graceful
+
+  - id: S42-NEG-006
+    wave: W7
+    area: testing
+    descricao: Testar BatchCanceledError durante execucao
+    arquivos: [tests/mac/test_errors.py]
+    gates: [All]
+    done: Estado canceled correto
+
+  - id: S42-NEG-007
+    wave: W7
+    area: testing
+    descricao: Testar ReplayMismatchError com token invalido
+    arquivos: [tests/mac/test_errors.py]
+    gates: [All]
+    done: Erro detectado
+
+  - id: S42-NEG-008
+    wave: W7
+    area: testing
+    descricao: Testar DeterminismViolationError forcando non-determinism
+    arquivos: [tests/mac/test_errors.py]
+    gates: [All]
+    done: Invariante detectado
+
+  - id: S42-NEG-009
+    wave: W7
+    area: testing
+    descricao: Testar RBACForbiddenError em TODOS endpoints MI
+    arquivos: [tests/mac/test_errors.py]
+    gates: [G33]
+    done: 403 em todos endpoints MI
+
+  - id: S42-NEG-010
+    wave: W7
+    area: testing
+    descricao: Testar DatasetNotFoundError com dataset inexistente
+    arquivos: [tests/mac/test_errors.py]
+    gates: [All]
+    done: Erro 404 correto
+
+  - id: S42-NEG-011
+    wave: W7
+    area: testing
+    descricao: Testar DatasetInvalidError com dataset corrompido
+    arquivos: [tests/mac/test_errors.py]
+    gates: [All]
+    done: Erro detectado
+
+  - id: S42-NEG-012
+    wave: W7
+    area: testing
+    descricao: Testar ManifestIncompleteError com campos faltando
+    arquivos: [tests/mac/test_errors.py]
+    gates: [All]
+    done: Erro detectado
+
+  - id: S42-NEG-013
+    wave: W7
+    area: testing
+    descricao: Testar payload malformado JSON em todos endpoints
+    arquivos: [tests/mac/test_input_validation.py]
+    gates: [All]
+    done: 400 em todos
+
+  - id: S42-NEG-014
+    wave: W7
+    area: testing
+    descricao: Testar SQL injection em filtros de listagem
+    arquivos: [tests/mac/test_input_validation.py]
+    gates: [All]
+    done: Sanitizacao funciona
+
+  - id: S42-NEG-015
+    wave: W7
+    area: testing
+    descricao: Testar XSS em campos de texto (notes, rationale)
+    arquivos: [tests/mac/test_input_validation.py]
+    gates: [All]
+    done: Escape funciona
+
+  # Testes E2E
+  - id: S42-E2E-001
+    wave: W7
+    area: testing
+    descricao: "E2E: simulate -> retry -> success (jornada completa)"
+    arquivos: [tests/e2e/test_simulate_flow.py]
+    gates: [G30]
+    done: Fluxo passa
+
+  - id: S42-E2E-002
+    wave: W7
+    area: testing
+    descricao: "E2E: batch -> progress -> scorecard -> bundle"
+    arquivos: [tests/e2e/test_batch_flow.py]
+    gates: [G31]
+    done: Fluxo completo
+
+  - id: S42-E2E-003
+    wave: W7
+    area: testing
+    descricao: "E2E: adiabatic plan -> validate -> simulate phases -> rollback preview"
+    arquivos: [tests/e2e/test_adiabatic_flow.py]
+    gates: [G32]
+    done: Fluxo completo
+
+  - id: S42-E2E-004
+    wave: W7
+    area: testing
+    descricao: "E2E: MI exposure com ops -> reviewer -> council (3 roles)"
+    arquivos: [tests/e2e/test_mi_rbac_flow.py]
+    gates: [G33]
+    done: Progressao de acesso
+
+  - id: S42-E2E-005
+    wave: W7
+    area: testing
+    descricao: "E2E: jornada Conselho/Revisor (Cap.5B2) completa"
+    arquivos: [tests/e2e/test_council_journey.py]
+    gates: [All]
+    done: Jornada validada
+
+  - id: S42-E2E-006
+    wave: W7
+    area: frontend
+    descricao: "E2E Playwright: SimulationLab completo com disclaimer"
+    arquivos: [frontend/.../e2e/mac_simulate.spec.ts]
+    gates: [G34]
+    done: Playwright passa
+
+  - id: S42-E2E-007
+    wave: W7
+    area: frontend
+    descricao: "E2E Playwright: BatchPage com cancel e retry"
+    arquivos: [frontend/.../e2e/mac_batch.spec.ts]
+    gates: [G34]
+    done: Playwright passa
+
+  - id: S42-E2E-008
+    wave: W7
+    area: frontend
+    descricao: "E2E Playwright: AdiabaticPlan com timeline visual"
+    arquivos: [frontend/.../e2e/mac_adiabatic.spec.ts]
+    gates: [G34]
+    done: Playwright passa
+
+  - id: S42-E2E-009
+    wave: W7
+    area: frontend
+    descricao: "E2E Playwright: 4 estados MI (available, redacted, not_authorized, not_available)"
+    arquivos: [frontend/.../e2e/mi_states.spec.ts]
+    gates: [G33, G34]
+    done: 4 estados visuais
+
+  - id: S42-E2E-010
+    wave: W7
+    area: frontend
+    descricao: "E2E Playwright: Diff view com flip set navegavel"
+    arquivos: [frontend/.../e2e/mac_diff.spec.ts]
+    gates: [G34]
+    done: Diff funcional
+
+  # Concorrencia / Race Conditions
+  - id: S42-CONC-001
+    wave: W7
+    area: testing
+    descricao: Testar concurrent batch cancel (2 cancel simultaneos)
+    arquivos: [tests/mac/test_concurrency.py]
+    gates: [G31]
+    done: Sem double cancel
+
+  - id: S42-CONC-002
+    wave: W7
+    area: testing
+    descricao: Testar concurrent simulations no mesmo allegation_id
+    arquivos: [tests/mac/test_concurrency.py]
+    gates: [G30]
+    done: Isolamento correto
+
+  - id: S42-CONC-003
+    wave: W7
+    area: testing
+    descricao: Testar concurrent writes no mesmo batch_run_id
+    arquivos: [tests/mac/test_concurrency.py]
+    gates: [G31]
+    done: Sem data race
+
+  - id: S42-CONC-004
+    wave: W7
+    area: testing
+    descricao: Testar database transaction isolation (READ COMMITTED)
+    arquivos: [tests/mac/test_concurrency.py]
+    gates: [All]
+    done: Sem dirty reads
+
+  - id: S42-CONC-005
+    wave: W7
+    area: testing
+    descricao: Testar parallel batch executions (3 batches simultaneos)
+    arquivos: [tests/mac/test_concurrency.py]
+    gates: [G31]
+    done: Recursos isolados
+
+  - id: S42-CONC-006
+    wave: W7
+    area: testing
+    descricao: Testar concurrent policy update durante simulacao
+    arquivos: [tests/mac/test_concurrency.py]
+    gates: [G30]
+    done: Snapshot correto
+
+  - id: S42-CONC-007
+    wave: W7
+    area: testing
+    descricao: Testar mutex/locking em recursos compartilhados
+    arquivos: [tests/mac/test_concurrency.py]
+    gates: [All]
+    done: Sem deadlock
+
+  - id: S42-CONC-008
+    wave: W7
+    area: testing
+    descricao: Testar race condition cancel/stream simultaneos
+    arquivos: [tests/mac/test_concurrency.py]
+    gates: [G31]
+    done: Estado consistente
+
+  # Recovery / Fallback
+  - id: S42-REC-001
+    wave: W7
+    area: backend
+    descricao: Implementar recovery de batch interrompido (resume from checkpoint)
+    arquivos: [app/mac/batch_recovery.py]
+    gates: [G31]
+    done: Resume funcional
+
+  - id: S42-REC-002
+    wave: W7
+    area: backend
+    descricao: Implementar fallback quando policy file nao carrega
+    arquivos: [app/mac/policy_loader.py]
+    gates: [G30]
+    done: Default ou erro claro
+
+  - id: S42-REC-003
+    wave: W7
+    area: testing
+    descricao: Testar database migration rollback end-to-end
+    arquivos: [tests/db/test_migration_rollback.py]
+    gates: [All]
+    done: Rollback funciona
+
+  - id: S42-REC-004
+    wave: W7
+    area: backend
+    descricao: Implementar graceful degradation quando signals service down
+    arquivos: [app/mac/signals_client.py]
+    gates: [G30]
+    done: Degradation graceful
+
+  - id: S42-REC-005
+    wave: W7
+    area: backend
+    descricao: Implementar retry logic em batch com backoff exponencial
+    arquivos: [app/mac/batch_runner.py]
+    gates: [G31]
+    done: Retry funcional
+
+  - id: S42-REC-006
+    wave: W7
+    area: backend
+    descricao: Implementar circuit breaker para dependencias externas
+    arquivos: [app/mac/circuit_breaker.py]
+    gates: [All]
+    done: CB funcional
+
+  - id: S42-REC-007
+    wave: W7
+    area: testing
+    descricao: Testar recovery de simulacao apos crash
+    arquivos: [tests/mac/test_recovery.py]
+    gates: [G30]
+    done: Estado consistente
+
+# ============================================
+# TASKS W8 - Observability Advanced (20 tasks) [NOVAS]
+# ============================================
+
+tasks_w8:
+  # Metricas Prometheus
+  - id: S42-MET-001
+    wave: W8
+    area: observability
+    descricao: "Definir mac_simulation_duration_seconds{endpoint,mode,domain} histogram"
+    arquivos: [app/mac/metrics.py]
+    gates: [All]
+    done: Metrica registrada
+
+  - id: S42-MET-002
+    wave: W8
+    area: observability
+    descricao: "Definir mac_simulation_total{status,mode,domain} counter"
+    arquivos: [app/mac/metrics.py]
+    gates: [All]
+    done: Counter funcional
+
+  - id: S42-MET-003
+    wave: W8
+    area: observability
+    descricao: "Definir mac_batch_duration_seconds{dataset,status} histogram"
+    arquivos: [app/mac/metrics.py]
+    gates: [G31]
+    done: Histogram funcional
+
+  - id: S42-MET-004
+    wave: W8
+    area: observability
+    descricao: "Definir mac_batch_total{status,dataset} counter"
+    arquivos: [app/mac/metrics.py]
+    gates: [G31]
+    done: Counter funcional
+
+  - id: S42-MET-005
+    wave: W8
+    area: observability
+    descricao: Definir mac_replay_concordance gauge (1.0 = 100%)
+    arquivos: [app/mac/metrics.py]
+    gates: [G30]
+    done: Gauge funcional
+
+  - id: S42-MET-006
+    wave: W8
+    area: observability
+    descricao: "Definir mi_access_total{role,resource,action} counter"
+    arquivos: [app/mac/metrics.py]
+    gates: [G33]
+    done: Counter funcional
+
+  - id: S42-MET-007
+    wave: W8
+    area: observability
+    descricao: "Definir mi_redaction_total{type,level} counter"
+    arquivos: [app/mac/metrics.py]
+    gates: [G33]
+    done: Counter funcional
+
+  - id: S42-MET-008
+    wave: W8
+    area: observability
+    descricao: "Definir mac_error_total{error_code,endpoint} counter"
+    arquivos: [app/mac/metrics.py]
+    gates: [All]
+    done: Counter funcional
+
+  # SLOs / SLIs
+  - id: S42-SLO-001
+    wave: W8
+    area: observability
+    descricao: "Definir SLO: simulate p95 < 500ms (99.9% requests)"
+    arquivos: [observability/slos/s42_mac.yaml]
+    gates: [G30]
+    done: SLO definido
+
+  - id: S42-SLO-002
+    wave: W8
+    area: observability
+    descricao: "Definir SLO: simulate p99 < 2s (99.9% requests)"
+    arquivos: [observability/slos/s42_mac.yaml]
+    gates: [G30]
+    done: SLO definido
+
+  - id: S42-SLO-003
+    wave: W8
+    area: observability
+    descricao: "Definir SLO: replay concordance = 100%"
+    arquivos: [observability/slos/s42_mac.yaml]
+    gates: [G30]
+    done: SLO definido
+
+  - id: S42-SLO-004
+    wave: W8
+    area: observability
+    descricao: "Definir SLO: error rate < 1%"
+    arquivos: [observability/slos/s42_mac.yaml]
+    gates: [All]
+    done: SLO definido
+
+  # Tracing Distribuido
+  - id: S42-TRC-001
+    wave: W8
+    area: observability
+    descricao: "Implementar spans para simulate: parse -> validate -> evaluate -> manifest"
+    arquivos: [app/mac/tracing.py]
+    gates: [G30]
+    done: Spans criados
+
+  - id: S42-TRC-002
+    wave: W8
+    area: observability
+    descricao: "Implementar spans para batch: load -> iterate -> aggregate -> scorecard"
+    arquivos: [app/mac/tracing.py]
+    gates: [G31]
+    done: Spans criados
+
+  - id: S42-TRC-003
+    wave: W8
+    area: observability
+    descricao: Propagate trace_id entre servicos (context propagation)
+    arquivos: [app/mac/tracing.py]
+    gates: [All]
+    done: Propagation funcional
+
+  # Alertas Avancados
+  - id: S42-ALR-001
+    wave: W8
+    area: observability
+    descricao: "Alerta: mac_simulate_latency_p95 > 600ms por 5min"
+    arquivos: [observability/alerts/s42_mac.yaml]
+    gates: [G30]
+    done: Alerta funcional
+
+  - id: S42-ALR-002
+    wave: W8
+    area: observability
+    descricao: "Alerta: mac_replay_concordance < 1.0"
+    arquivos: [observability/alerts/s42_mac.yaml]
+    gates: [G30]
+    done: Alerta critico
+
+  - id: S42-ALR-003
+    wave: W8
+    area: observability
+    descricao: "Alerta: mac_error_rate > 5% por 2min"
+    arquivos: [observability/alerts/s42_mac.yaml]
+    gates: [All]
+    done: Alerta funcional
+
+  - id: S42-ALR-004
+    wave: W8
+    area: observability
+    descricao: "Alerta: mi_rbac_violation > 10/min"
+    arquivos: [observability/alerts/s42_mac.yaml]
+    gates: [G33]
+    done: Alerta seguranca
+
+  - id: S42-ALR-005
+    wave: W8
+    area: observability
+    descricao: Dashboard Grafana com todos os paineis
+    arquivos: [observability/dashboards/s42_mac.json]
+    gates: [G35]
+    done: Dashboard importa
+
+# ============================================
+# TASKS W9 - Security Hardening (15 tasks) [NOVAS]
+# ============================================
+
+tasks_w9:
+  # RBAC Edge Cases
+  - id: S42-SEC-001
+    wave: W9
+    area: security
+    descricao: Testar RBAC com token expirado mid-request
+    arquivos: [tests/security/test_rbac_edge.py]
+    gates: [G33]
+    done: 401 retornado
+
+  - id: S42-SEC-002
+    wave: W9
+    area: security
+    descricao: Testar RBAC com role revogada durante sessao
+    arquivos: [tests/security/test_rbac_edge.py]
+    gates: [G33]
+    done: Acesso negado
+
+  - id: S42-SEC-003
+    wave: W9
+    area: security
+    descricao: Testar role escalation (ops tentando council)
+    arquivos: [tests/security/test_rbac_edge.py]
+    gates: [G33]
+    done: Escalation bloqueada
+
+  - id: S42-SEC-004
+    wave: W9
+    area: security
+    descricao: Testar redaction bypass via API manipulation
+    arquivos: [tests/security/test_rbac_edge.py]
+    gates: [G33]
+    done: Bypass impossivel
+
+  # Input Sanitization
+  - id: S42-SEC-005
+    wave: W9
+    area: security
+    descricao: Testar SQL injection em todos endpoints de filtro
+    arquivos: [tests/security/test_injection.py]
+    gates: [All]
+    done: Injection bloqueada
+
+  - id: S42-SEC-006
+    wave: W9
+    area: security
+    descricao: Testar NoSQL injection se aplicavel
+    arquivos: [tests/security/test_injection.py]
+    gates: [All]
+    done: Injection bloqueada
+
+  - id: S42-SEC-007
+    wave: W9
+    area: security
+    descricao: Testar path traversal em dataset paths
+    arquivos: [tests/security/test_injection.py]
+    gates: [All]
+    done: Traversal bloqueado
+
+  - id: S42-SEC-008
+    wave: W9
+    area: security
+    descricao: Testar command injection em shell commands
+    arquivos: [tests/security/test_injection.py]
+    gates: [All]
+    done: Injection bloqueada
+
+  # Audit Hardening
+  - id: S42-SEC-009
+    wave: W9
+    area: security
+    descricao: Testar audit log tampering (logs imutaveis)
+    arquivos: [tests/security/test_audit.py]
+    gates: [G33]
+    done: Tampering detectado
+
+  - id: S42-SEC-010
+    wave: W9
+    area: backend
+    descricao: Implementar audit log encryption at rest
+    arquivos: [app/mi/audit.py]
+    gates: [G33]
+    done: Encryption ativo
+
+  - id: S42-SEC-011
+    wave: W9
+    area: backend
+    descricao: Implementar audit log rotation com retention
+    arquivos: [app/mi/audit.py]
+    gates: [G33]
+    done: Rotation funcional
+
+  # Penetration Testing
+  - id: S42-SEC-012
+    wave: W9
+    area: security
+    descricao: Documentar pentest checklist OWASP Top 10
+    arquivos: [docs/security/pentest_checklist.md]
+    gates: [G35]
+    done: Checklist completo
+
+  - id: S42-SEC-013
+    wave: W9
+    area: security
+    descricao: Executar ZAP scan em endpoints MAC
+    arquivos: [tests/security/zap_scan_results.json]
+    gates: [G35]
+    done: Scan executado
+
+  - id: S42-SEC-014
+    wave: W9
+    area: security
+    descricao: Executar ZAP scan em endpoints MI
+    arquivos: [tests/security/zap_scan_results.json]
+    gates: [G35]
+    done: Scan executado
+
+  - id: S42-SEC-015
+    wave: W9
+    area: security
+    descricao: Remediar HIGH/CRITICAL findings
+    arquivos: [docs/security/remediation.md]
+    gates: [G35]
+    done: Findings remediados
+
+# ============================================
+# TASKS W10 - API Excellence (10 tasks) [NOVAS]
+# ============================================
+
+tasks_w10:
+  # OpenAPI
+  - id: S42-OAS-001
+    wave: W10
+    area: api
+    descricao: Gerar OpenAPI spec automaticamente de routes
+    arquivos: [openapi/s42_mac_api.yaml]
+    gates: [All]
+    done: Spec valida
+
+  - id: S42-OAS-002
+    wave: W10
+    area: api
+    descricao: Validar responses contra OpenAPI schema em runtime
+    arquivos: [app/api/validation.py]
+    gates: [All]
+    done: Validation ativa
+
+  - id: S42-OAS-003
+    wave: W10
+    area: api
+    descricao: Gerar SDK clients de OpenAPI (Python, TypeScript)
+    arquivos: [scripts/generate_clients.sh]
+    gates: [All]
+    done: Clients gerados
+
+  # Versioning
+  - id: S42-VER-001
+    wave: W10
+    area: api
+    descricao: Implementar versioning via path (/api/v1/, /api/v2/)
+    arquivos: [app/api/versioning.py]
+    gates: [All]
+    done: Versioning funcional
+
+  - id: S42-VER-002
+    wave: W10
+    area: api
+    descricao: Implementar deprecation warnings via headers
+    arquivos: [app/api/deprecation.py]
+    gates: [All]
+    done: Warnings presentes
+
+  - id: S42-VER-003
+    wave: W10
+    area: documentation
+    descricao: Documentar breaking changes policy
+    arquivos: [docs/api/breaking_changes.md]
+    gates: [All]
+    done: Policy documentada
+
+  # Backward Compatibility
+  - id: S42-BWD-001
+    wave: W10
+    area: testing
+    descricao: Criar contract tests baseline (snapshot)
+    arquivos: [tests/contracts/baseline.json]
+    gates: [All]
+    done: Baseline criado
+
+  - id: S42-BWD-002
+    wave: W10
+    area: ci
+    descricao: Criar CI job para detectar breaking changes
+    arquivos: [.github/workflows/contract_test.yml]
+    gates: [All]
+    done: Job funcional
+
+  - id: S42-BWD-003
+    wave: W10
+    area: api
+    descricao: Implementar rate limit headers (X-RateLimit-*)
+    arquivos: [app/api/rate_limit.py]
+    gates: [All]
+    done: Headers presentes
+
+  - id: S42-BWD-004
+    wave: W10
+    area: documentation
+    descricao: Documentar pagination strategy (cursor-based)
+    arquivos: [docs/api/pagination.md]
+    gates: [All]
+    done: Strategy documentada
+
+# ============================================
+# TASKS W11 - Evidence Mastery (15 tasks) [NOVAS]
+# ============================================
+
+tasks_w11:
+  # Estrutura de Evidencias
+  - id: S42-EVD-001
+    wave: W11
+    area: evidence
+    descricao: Criar estrutura out/evidence/S42_G30_mac_simulate/ automaticamente
+    arquivos: [scripts/create_evidence_dirs.py]
+    gates: [G35]
+    done: Dirs criados
+
+  - id: S42-EVD-002
+    wave: W11
+    area: evidence
+    descricao: Gerar manifest.json por gate com lineage completo
+    arquivos: [scripts/generate_manifest.py]
+    gates: [G35]
+    done: Manifest gerado
+
+  - id: S42-EVD-003
+    wave: W11
+    area: evidence
+    descricao: Gerar summary.md por gate (o que foi testado, como reproduzir, limitacoes)
+    arquivos: [scripts/generate_summary.py]
+    gates: [G35]
+    done: Summary gerado
+
+  - id: S42-EVD-004
+    wave: W11
+    area: evidence
+    descricao: Gerar requests.jsonl com todos requests do gate
+    arquivos: [scripts/capture_requests.py]
+    gates: [G35]
+    done: Requests capturados
+
+  - id: S42-EVD-005
+    wave: W11
+    area: evidence
+    descricao: Gerar responses.jsonl com todas responses do gate
+    arquivos: [scripts/capture_requests.py]
+    gates: [G35]
+    done: Responses capturados
+
+  # Evidencias MI
+  - id: S42-EVD-006
+    wave: W11
+    area: evidence
+    descricao: Gerar redaction_report.json (campos redatados, motivo, count)
+    arquivos: [scripts/generate_redaction_report.py]
+    gates: [G33]
+    done: Report gerado
+
+  - id: S42-EVD-007
+    wave: W11
+    area: evidence
+    descricao: Gerar rbac_matrix.json (roles x recursos x acoes)
+    arquivos: [scripts/generate_rbac_matrix.py]
+    gates: [G33]
+    done: Matrix gerada
+
+  - id: S42-EVD-008
+    wave: W11
+    area: evidence
+    descricao: Gerar audit_log.jsonl (acessos durante testes)
+    arquivos: [app/mi/audit.py]
+    gates: [G33]
+    done: Audit capturado
+
+  # Evidencias UI
+  - id: S42-EVD-009
+    wave: W11
+    area: evidence
+    descricao: Gerar routes_covered.json (rotas exercitadas)
+    arquivos: [frontend/.../scripts/routes_coverage.ts]
+    gates: [G34]
+    done: Coverage gerada
+
+  - id: S42-EVD-010
+    wave: W11
+    area: evidence
+    descricao: Gerar screenshots automaticos durante E2E
+    arquivos: [frontend/.../playwright.config.ts]
+    gates: [G34]
+    done: Screenshots gerados
+
+  - id: S42-EVD-011
+    wave: W11
+    area: evidence
+    descricao: Gerar video de E2E critical paths
+    arquivos: [frontend/.../playwright.config.ts]
+    gates: [G34]
+    done: Videos gerados
+
+  # Bundle Validation
+  - id: S42-EVD-012
+    wave: W11
+    area: evidence
+    descricao: Implementar hash validation de todos artefatos
+    arquivos: [scripts/validate_bundle.py]
+    gates: [G35]
+    done: Hashes validados
+
+  - id: S42-EVD-013
+    wave: W11
+    area: evidence
+    descricao: Implementar index.json com lista de artefatos e hashes
+    arquivos: [scripts/generate_index.py]
+    gates: [G35]
+    done: Index gerado
+
+  - id: S42-EVD-014
+    wave: W11
+    area: evidence
+    descricao: Implementar bundle integrity check
+    arquivos: [scripts/check_integrity.py]
+    gates: [G35]
+    done: Check funcional
+
+  - id: S42-EVD-015
+    wave: W11
+    area: evidence
+    descricao: Criar script de reproducao a partir do bundle
+    arquivos: [scripts/reproduce_from_bundle.py]
+    gates: [G35]
+    done: Reproducao funcional
+
+# ============================================
+# ASSINATURA v4.0 EXCELLENCE
+# ============================================
+
+assinatura:
+  sprint: S42
+  versao: "4.0"
+  status: EXCELLENCE
+  tasks_total: 263
+  tasks_originais: 158
+  tasks_novas: 105
+  waves: 11
+  gates: [G30, G31, G32, G33, G34, G35]
+  invariantes: 8
+  riscos_mitigados: 10
+  datasets: "~1100 casos"
+  runbooks: 6
+  refinamentos_aplicados: 30
+  gaps_brutais_resolvidos: 100
+  gerado_por: "Sprint Planner Tecnico v7"
+  timestamp: "2025-12-17"

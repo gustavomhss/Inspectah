@@ -1,0 +1,36 @@
+{
+  "title": "SF4 Observability Overview",
+  "version": "0.1.0",
+  "panels": [
+    {
+      "title": "Auth status codes",
+      "type": "timeseries",
+      "query": "sum by (code) (rate(auth_requests_total[5m]))",
+      "description": "401/403/200 por minuto"
+    },
+    {
+      "title": "Ingest errors rate",
+      "type": "timeseries",
+      "query": "rate(ingest_requests_total{code=~\"5..\"}[5m]) / rate(ingest_requests_total[5m])",
+      "description": "Erros ingest (%)"
+    },
+    {
+      "title": "Explorer 5xx rate",
+      "type": "timeseries",
+      "query": "rate(explorer_requests_total{code=~\"5..\"}[5m]) / rate(explorer_requests_total[5m])",
+      "description": "Erros Explorer (%)"
+    },
+    {
+      "title": "Explorer latency p90",
+      "type": "timeseries",
+      "query": "histogram_quantile(0.9, sum by (le) (rate(explorer_latency_seconds_bucket[5m])))",
+      "description": "Latência p90 Explorer"
+    },
+    {
+      "title": "Dashboard freshness",
+      "type": "stat",
+      "query": "dashboard_freshness_seconds",
+      "description": "Atraso do painel sf4_obs_overview"
+    }
+  ]
+}

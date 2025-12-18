@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import random
 import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -25,6 +26,7 @@ DEFAULT_RATE_LIMIT_PER_MINUTE = 60
 DEFAULT_MAX_RETRIES = 3
 DEFAULT_RETRY_DELAY_SECONDS = 1.0
 DEFAULT_RETRY_BACKOFF_MULTIPLIER = 2.0
+DEFAULT_RETRY_JITTER = 0.1  # 10% jitter
 
 
 @dataclass
@@ -90,7 +92,7 @@ class SocialProviderClient:
         self._error_count = 0
 
     def _check_rate_limit(self) -> None:
-        """Check and enforce rate limiting."""
+        """Check and enforce rate limiting (sync version for backward compat)."""
         now = time.time()
         elapsed = now - self._rate_limit.window_start
 
@@ -102,12 +104,37 @@ class SocialProviderClient:
         if self._rate_limit.requests_made >= self._rate_limit.limit_per_minute:
             # Wait until window resets
             wait_time = 60 - elapsed
-            logger.warning(f"Rate limit reached, waiting {wait_time:.1f}s")
+            logger.warning(f"[social_provider] Rate limit reached, waiting {wait_time:.1f}s")
             time.sleep(wait_time)
             self._rate_limit.requests_made = 0
             self._rate_limit.window_start = time.time()
 
         self._rate_limit.requests_made += 1
+
+    async def _check_rate_limit_async(self) -> None:
+        """Check and enforce rate limiting (async version)."""
+        now = time.time()
+        elapsed = now - self._rate_limit.window_start
+
+        # Reset window if a minute has passed
+        if elapsed >= 60:
+            self._rate_limit.requests_made = 0
+            self._rate_limit.window_start = now
+
+        if self._rate_limit.requests_made >= self._rate_limit.limit_per_minute:
+            # Wait until window resets (async)
+            wait_time = 60 - elapsed
+            logger.warning(f"[social_provider] Rate limit reached, waiting {wait_time:.1f}s")
+            await asyncio.sleep(wait_time)
+            self._rate_limit.requests_made = 0
+            self._rate_limit.window_start = time.time()
+
+        self._rate_limit.requests_made += 1
+
+    def _add_jitter(self, delay: float) -> float:
+        """Add jitter to delay to prevent thundering herd."""
+        jitter = delay * DEFAULT_RETRY_JITTER * random.uniform(-1, 1)
+        return max(0.01, delay + jitter)  # Ensure minimum delay
 
     async def _fetch_with_retry(
         self,
@@ -120,21 +147,25 @@ class SocialProviderClient:
 
         for attempt in range(1, self.max_retries + 1):
             try:
-                self._check_rate_limit()
+                await self._check_rate_limit_async()
                 return await self._do_fetch(profile, limit)
             except SocialProviderError as e:
                 last_error = e
                 self._error_count += 1
                 if not e.retryable or attempt >= self.max_retries:
-                    logger.error(f"Social fetch failed after {attempt} attempts: {e}")
+                    logger.error(f"[social_provider] Fetch failed after {attempt} attempts for {profile.slug}: {e}")
                     raise
-                logger.warning(f"Social fetch attempt {attempt} failed, retrying in {delay}s: {e}")
-                await asyncio.sleep(delay)
+                jittered_delay = self._add_jitter(delay)
+                logger.warning(
+                    f"[social_provider] Fetch attempt {attempt}/{self.max_retries} failed for {profile.slug}, "
+                    f"retrying in {jittered_delay:.2f}s: {e}"
+                )
+                await asyncio.sleep(jittered_delay)
                 delay *= DEFAULT_RETRY_BACKOFF_MULTIPLIER
             except Exception as e:
                 last_error = e
                 self._error_count += 1
-                logger.error(f"Unexpected error in social fetch: {e}")
+                logger.error(f"[social_provider] Unexpected error fetching {profile.slug}: {e}")
                 raise
 
         raise last_error or SocialProviderError("Max retries exceeded")
@@ -191,14 +222,17 @@ class SocialProviderClient:
 
         Args:
             profile: Ingestion profile
-            limit: Maximum items to fetch
+            limit: Maximum items to fetch (must be > 0)
 
         Returns:
             List of RawSocialItem
 
         Raises:
+            ValueError: If limit <= 0
             SocialProviderError: On fetch failure
         """
+        if limit <= 0:
+            raise ValueError(f"limit must be > 0, got {limit}")
         return await self._fetch_with_retry(profile, limit)
 
     async def fetch_for_domain(
@@ -214,18 +248,22 @@ class SocialProviderClient:
 
         Args:
             domain: Domain name (saude, politica)
-            keywords: Keywords to search
-            limit: Maximum items
+            keywords: Keywords to search (must not be empty)
+            limit: Maximum items (must be > 0)
 
         Returns:
             List of RawSocialItem
 
         Raises:
-            ValueError: If domain not in pilot domains
+            ValueError: If domain not in pilot domains, limit <= 0, or keywords empty
             SocialProviderError: On fetch failure
         """
         if domain not in PILOT_DOMAINS:
             raise ValueError(f"Domain '{domain}' not in pilot domains: {PILOT_DOMAINS}")
+        if limit <= 0:
+            raise ValueError(f"limit must be > 0, got {limit}")
+        if not keywords:
+            raise ValueError("keywords must not be empty")
 
         # Create a synthetic profile for the domain
         from app.providers.models import ProfileKind
@@ -252,6 +290,14 @@ class SocialProviderClient:
             "rate_limit_per_minute": self._rate_limit.limit_per_minute,
         }
 
+    def reset_stats(self) -> None:
+        """Reset client statistics (useful for testing)."""
+        self._request_count = 0
+        self._error_count = 0
+        self._rate_limit.requests_made = 0
+        self._rate_limit.window_start = time.time()
+        logger.debug("[social_provider] Stats reset")
+
     def is_pilot_domain(self, domain: str) -> bool:
-        """Check if domain is a pilot domain."""
-        return domain in PILOT_DOMAINS
+        """Check if domain is a pilot domain (case-insensitive)."""
+        return domain.lower() in PILOT_DOMAINS

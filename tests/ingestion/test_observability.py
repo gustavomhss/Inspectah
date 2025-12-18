@@ -139,7 +139,8 @@ class TestP1LatencyTracking:
 
     def setup_method(self):
         """Clear timestamps before each test."""
-        observability._collected_timestamps.clear()
+        with observability._timestamps_lock:
+            observability._collected_timestamps.clear()
 
     def test_mark_collected_pilot_domain(self):
         """mark_collected stores timestamp for pilot domain."""
@@ -250,7 +251,8 @@ class TestClearStaleTimestamps:
 
     def setup_method(self):
         """Clear timestamps before each test."""
-        observability._collected_timestamps.clear()
+        with observability._timestamps_lock:
+            observability._collected_timestamps.clear()
 
     def test_clear_stale_timestamps(self):
         """clear_stale_timestamps removes old entries."""
@@ -279,7 +281,8 @@ class TestGetPendingCount:
 
     def setup_method(self):
         """Clear timestamps before each test."""
-        observability._collected_timestamps.clear()
+        with observability._timestamps_lock:
+            observability._collected_timestamps.clear()
 
     def test_get_pending_count_empty(self):
         """get_pending_count returns 0 when empty."""
@@ -289,6 +292,134 @@ class TestGetPendingCount:
         """get_pending_count returns correct count."""
         import time
 
-        observability._collected_timestamps["saude:src:doc1"] = time.time()
-        observability._collected_timestamps["politica:src:doc2"] = time.time()
+        with observability._timestamps_lock:
+            observability._collected_timestamps["saude:src:doc1"] = time.time()
+            observability._collected_timestamps["politica:src:doc2"] = time.time()
         assert observability.get_pending_count() == 2
+
+
+class TestGetPendingDocuments:
+    """Tests for get_pending_documents function."""
+
+    def setup_method(self):
+        """Clear timestamps before each test."""
+        with observability._timestamps_lock:
+            observability._collected_timestamps.clear()
+
+    def test_get_pending_documents_empty(self):
+        """get_pending_documents returns empty list when no documents."""
+        result = observability.get_pending_documents()
+        assert result == []
+
+    def test_get_pending_documents_all(self):
+        """get_pending_documents returns all pending documents."""
+        import time
+
+        now = time.time()
+        with observability._timestamps_lock:
+            observability._collected_timestamps["saude:src1:doc1"] = now - 10
+            observability._collected_timestamps["politica:src2:doc2"] = now - 5
+
+        result = observability.get_pending_documents()
+
+        assert len(result) == 2
+        # Oldest first (saude doc1 is older)
+        assert result[0][0] == "saude"
+        assert result[0][2] == "doc1"
+
+    def test_get_pending_documents_filtered(self):
+        """get_pending_documents can filter by domain."""
+        import time
+
+        now = time.time()
+        with observability._timestamps_lock:
+            observability._collected_timestamps["saude:src1:doc1"] = now
+            observability._collected_timestamps["politica:src2:doc2"] = now
+
+        result = observability.get_pending_documents(domain="saude")
+
+        assert len(result) == 1
+        assert result[0][0] == "saude"
+
+
+class TestGetP1Summary:
+    """Tests for get_p1_summary function."""
+
+    def setup_method(self):
+        """Clear timestamps before each test."""
+        with observability._timestamps_lock:
+            observability._collected_timestamps.clear()
+
+    def test_get_p1_summary_empty(self):
+        """get_p1_summary returns summary with no pending."""
+        result = observability.get_p1_summary()
+
+        assert "pilot_domains" in result
+        assert "saude" in result["pilot_domains"]
+        assert "politica" in result["pilot_domains"]
+        assert result["pending_documents"] == 0
+        assert result["oldest_pending_seconds"] is None
+        assert "histograms" in result
+
+    def test_get_p1_summary_with_pending(self):
+        """get_p1_summary returns summary with pending documents."""
+        import time
+
+        now = time.time()
+        with observability._timestamps_lock:
+            observability._collected_timestamps["saude:src:doc1"] = now - 30
+
+        result = observability.get_p1_summary()
+
+        assert result["pending_documents"] == 1
+        assert result["oldest_pending_seconds"] >= 30
+
+
+class TestThreadSafety:
+    """Tests for thread safety of latency tracking."""
+
+    def setup_method(self):
+        """Clear timestamps before each test."""
+        with observability._timestamps_lock:
+            observability._collected_timestamps.clear()
+
+    def test_concurrent_mark_collected(self):
+        """mark_collected is thread-safe."""
+        import threading
+
+        def mark_docs():
+            for i in range(100):
+                observability.mark_collected(f"doc{i}", "saude", "src")
+
+        threads = [threading.Thread(target=mark_docs) for _ in range(5)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+
+        # Should have 100 unique docs (not 500 - same doc IDs from different threads)
+        assert observability.get_pending_count() == 100
+
+    def test_concurrent_mark_collected_ready(self):
+        """mark_collected and mark_ready are thread-safe together."""
+        import threading
+        import time
+
+        # First mark some docs as collected
+        for i in range(50):
+            observability.mark_collected(f"doc{i}", "saude", "src")
+
+        time.sleep(0.01)  # Small delay
+
+        def mark_ready():
+            for i in range(50):
+                observability.mark_ready(f"doc{i}", "saude", "src")
+
+        threads = [threading.Thread(target=mark_ready) for _ in range(3)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+
+        # All docs should be marked ready now
+        assert observability.get_pending_count() == 0

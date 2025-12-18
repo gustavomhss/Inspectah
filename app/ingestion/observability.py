@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import json
+import logging
+import threading
 import time
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from prometheus_client import Histogram
 
@@ -12,6 +14,8 @@ from app.ingestion.models import IngestionRun, IngestionStatus
 from app.ingestion.repository import IngestionRepository
 from metrics import ingestion_s22 as metrics  # legado
 from metrics import ingest as ingest_metrics
+
+logger = logging.getLogger(__name__)
 
 LOG_PATH_DEFAULT = Path("out/evidence/S22_G6_observability/ingestion_runs.log")
 
@@ -36,8 +40,9 @@ p1_latency_end_to_end = Histogram(
     buckets=(0.5, 1.0, 2.0, 5.0, 10.0, 30.0, 60.0, 120.0, 300.0),
 )
 
-# In-memory tracking for collected timestamps
+# In-memory tracking for collected timestamps (thread-safe)
 _collected_timestamps: Dict[str, float] = {}
+_timestamps_lock = threading.Lock()
 
 
 def _append_log(entry: dict, log_path: Path = LOG_PATH_DEFAULT) -> None:
@@ -136,8 +141,10 @@ def mark_collected(document_id: str, domain: str, source: str) -> None:
     if not is_pilot_domain(domain):
         return
 
-    key = f"{domain}:{source}:{document_id}"
-    _collected_timestamps[key] = time.time()
+    key = f"{domain.lower()}:{source}:{document_id}"
+    with _timestamps_lock:
+        _collected_timestamps[key] = time.time()
+    logger.debug(f"[p1_latency] Marked collected: {key}")
 
 
 def mark_ready(
@@ -161,10 +168,12 @@ def mark_ready(
     if not is_pilot_domain(domain):
         return None
 
-    key = f"{domain}:{source}:{document_id}"
-    collected_at = _collected_timestamps.pop(key, None)
+    key = f"{domain.lower()}:{source}:{document_id}"
+    with _timestamps_lock:
+        collected_at = _collected_timestamps.pop(key, None)
 
     if collected_at is None:
+        logger.debug(f"[p1_latency] mark_ready called but no collected timestamp: {key}")
         return None
 
     ready_timestamp = ready_at or time.time()
@@ -176,6 +185,7 @@ def mark_ready(
         source=source,
     ).observe(latency_seconds)
 
+    logger.debug(f"[p1_latency] Marked ready: {key}, latency={latency_seconds:.3f}s")
     return latency_seconds
 
 
@@ -266,17 +276,78 @@ def clear_stale_timestamps(max_age_seconds: float = 3600) -> int:
         Number of cleared entries
     """
     now = time.time()
-    stale_keys = [
-        key for key, ts in _collected_timestamps.items()
-        if now - ts > max_age_seconds
-    ]
+    with _timestamps_lock:
+        stale_keys = [
+            key for key, ts in _collected_timestamps.items()
+            if now - ts > max_age_seconds
+        ]
 
-    for key in stale_keys:
-        del _collected_timestamps[key]
+        for key in stale_keys:
+            del _collected_timestamps[key]
+
+    if stale_keys:
+        logger.info(f"[p1_latency] Cleared {len(stale_keys)} stale timestamps")
 
     return len(stale_keys)
 
 
 def get_pending_count() -> int:
     """Get count of documents pending ready state."""
-    return len(_collected_timestamps)
+    with _timestamps_lock:
+        return len(_collected_timestamps)
+
+
+def get_pending_documents(domain: Optional[str] = None) -> List[Tuple[str, str, str, float]]:
+    """
+    Get list of pending documents (collected but not ready).
+
+    Args:
+        domain: Optional domain filter
+
+    Returns:
+        List of (domain, source, document_id, collected_at) tuples
+    """
+    now = time.time()
+    results = []
+
+    with _timestamps_lock:
+        for key, collected_at in _collected_timestamps.items():
+            parts = key.split(":", 2)
+            if len(parts) == 3:
+                doc_domain, source, doc_id = parts
+                if domain is None or doc_domain == domain.lower():
+                    results.append((doc_domain, source, doc_id, now - collected_at))
+
+    return sorted(results, key=lambda x: x[3], reverse=True)  # Oldest first
+
+
+def get_p1_summary() -> Dict[str, Any]:
+    """
+    Get a summary of P1 latency tracking state.
+
+    Returns:
+        Dict with summary statistics
+    """
+    with _timestamps_lock:
+        pending_count = len(_collected_timestamps)
+        if pending_count == 0:
+            oldest_pending = None
+        else:
+            now = time.time()
+            oldest_pending = max(now - ts for ts in _collected_timestamps.values())
+
+    return {
+        "pilot_domains": list(P1_PILOT_DOMAINS),
+        "pending_documents": pending_count,
+        "oldest_pending_seconds": oldest_pending,
+        "histograms": {
+            "collected_to_ready": {
+                "name": p1_latency_collected_to_ready._name,
+                "buckets": list(p1_latency_collected_to_ready._upper_bounds),
+            },
+            "end_to_end": {
+                "name": p1_latency_end_to_end._name,
+                "buckets": list(p1_latency_end_to_end._upper_bounds),
+            },
+        },
+    }

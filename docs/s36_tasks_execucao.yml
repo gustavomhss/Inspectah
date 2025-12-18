@@ -1,0 +1,492 @@
+sprint: S36
+programa: 2
+epico: "P2 - Interpretação, claims, entidades, sinais"
+
+ace_resumo:
+  objetivo_sprint: >
+    Em domínios piloto, decisões de alto risco de comitês de agentes passam a ter
+    traces estruturados (AgentTrace/CommitteeTrace/ReasoningStep) ligados a TR/DecisionRecords/claims,
+    com canal oficial de feedback humano via Truth Console / Case Cockpit / Debunker e métricas básicas
+    de cobertura, profundidade, uso e integridade de links (G0–G4).
+  leitura_minima_spec:
+    - docs/Agents/Planejamento/Programa 2/Sprint 36/Capitulo 1/Capitulo 1.md
+    - docs/Agents/Planejamento/Programa 2/Sprint 36/Capitulo 2/Capitulo 2.md
+    - docs/Agents/Planejamento/Programa 2/Sprint 36/Capitulo 3/Capitulo 3.md
+    - docs/Agents/Planejamento/Programa 2/Sprint 36/Capitulo 4/Capitulo 4.md
+    - docs/Agents/Planejamento/Programa 2/Sprint 36/Capitulo 5/Capitulo 5.md
+  instrucoes_para_ace: >
+    Trabalhe wave a wave usando apenas o ace_context da wave/task atual.
+    Não expanda escopo além dos domínios/fluxos piloto definidos em S36-DOC-000.
+    G0–G4 exigem evidências reais (traces, feedbacks, métricas, ORR), não simulações superficiais.
+
+waves:
+  - id: W0
+    nome: "Grounding, modelo e contratos (G0)"
+    descricao: "Fixar recorte piloto, consolidar objetos de trace/feedback e contratos de IDs/links com TR/DecisionRecord; mapear dependências P2‑E1/E2/E4/E7."
+    ace_context:
+      spec_refs:
+        - docs/Agents/Planejamento/Programa 2/Sprint 36/Capitulo 1/Capitulo 1.md
+        - docs/Agents/Planejamento/Programa 2/Sprint 36/Capitulo 2/Capitulo 2.md
+        - docs/Agents/Planejamento/Programa 2/Sprint 36/Capitulo 3/Bloco 2.md
+        - docs/Agents/Planejamento/Programa 2 - Interpretacao, claims, entidades, sinais.md
+      resumo_para_ace: >
+        Feche primeiro o recorte de domínios/fluxos piloto, depois a taxonomia/contratos de trace/feedback (G0).
+        Sem esse grounding, instrumentar runtime ou UI vai gerar drift e theater.
+      observacoes_execucao: >
+        Não codar instrumentação aqui; foco é modelo, contratos de IDs e clareza de dependências.
+
+  - id: W1
+    nome: "Persistência, índices, PII & retenção"
+    descricao: "Materializar o modelo em schemas/migrations, índices/constraints, política de PII/redaction e retenção para domínios piloto."
+    ace_context:
+      spec_refs:
+        - docs/Agents/Planejamento/Programa 2/Sprint 36/Capitulo 2/Capitulo 2.md
+        - docs/Agents/Planejamento/Programa 2/Sprint 36/Capitulo 3/Capitulo 3.md
+        - docs/Agents/Planejamento/Programa 2/Sprint 36/Capitulo 4/Bloco 4.md
+      resumo_para_ace: >
+        Criar/ajustar schemas e repositórios de trace/feedback com PII/redaction e retenção embutidos,
+        garantindo base sólida para instrumentação de runtime.
+      observacoes_execucao: >
+        Valide migrations em ambiente piloto. Testes de PII precisam usar dados simulados e serem documentados.
+
+  - id: W2
+    nome: "Instrumentação de runtime nos fluxos piloto"
+    descricao: "Instrumentar ContentItem→Claim/Entidade→Comitê→TR→DecisionRecord para gerar traces completos e bem ligados, com métricas de coverage/overhead."
+    ace_context:
+      spec_refs:
+        - docs/Agents/Planejamento/Programa 2/Sprint 36/Capitulo 2/Capitulo 2.md
+        - docs/Agents/Planejamento/Programa 2/Sprint 36/Capitulo 5/Capitulo 5.md
+      resumo_para_ace: >
+        Ativar logging estruturado em pelo menos um fluxo A completo (ContentItem→DecisionRecord)
+        e um recorte de Fluxo B (Debunker v0+sinais), atingindo coverage ≥80% e integridade de links (G1/G2).
+      observacoes_execucao: >
+        Meça coverage e link_breaks com scripts; não confie apenas em contagem manual.
+
+  - id: W3
+    nome: "UI, feedback humano e UX anti-teatro"
+    descricao: "Expor traces em Truth Console/Case Cockpit/Debunker e habilitar FeedbackOnTrace/FeedbackOnDecision com UX utilizável."
+    ace_context:
+      spec_refs:
+        - docs/Agents/Planejamento/Programa 2/Sprint 36/Capitulo 5/Capitulo 5.md
+        - docs/Agents/Planejamento/Programa 2/Sprint 36/Capitulo 8/Capitulo 8.md
+        - docs/Agents/Planejamento/Programa 2/Sprint 36/Capitulo 9/Capitulo 9.md
+      resumo_para_ace: >
+        Conectar backend de trace/feedback às UIs existentes, com visualização de trace legível e formulários
+        de feedback estruturado, sem overload visual e respeitando PII.
+      observacoes_execucao: >
+        Consulte operadores cedo (S36-UX-010). Se ninguém quer usar a tela, há theater.
+
+  - id: W4
+    nome: "Métricas, riscos e ORR de auditabilidade"
+    descricao: "Consolidar métricas e riscos de auditabilidade, revisar amostras qualitativamente e executar ORR G4."
+    ace_context:
+      spec_refs:
+        - docs/Agents/Planejamento/Programa 2/Sprint 36/Capitulo 2/Capitulo 2.md
+        - docs/Agents/Planejamento/Programa 2/Sprint 36/Capitulo 7/Capitulo 7.md
+      resumo_para_ace: >
+        Calcular trace_coverage_rate, avg_trace_depth, feedback_rate, trace_link_break_rate; revisar amostras
+        para teatro/PII/overhead; rodar ORR G4 com GO/NO-GO e ações.
+      observacoes_execucao: >
+        Use scripts para métricas e documente ORR em arquivos sob out/scorecards/out/evidence.
+
+tasks:
+  - id: S36-DOC-000
+    wave: W0
+    area: docs
+    gate_relacionado: S36_G0
+    descricao: "Consolidar recorte de domínios/fluxos piloto e referenciar contratos P2‑E1/E2/E4/E7."
+    arquivos_alvo:
+      - docs/Agents/Planejamento/Programa 2/Sprint 36/Capitulo 1/*
+      - docs/Agents/Planejamento/Programa 2/Sprint 36/Capitulo 2/Capitulo 2.md
+      - docs/Agents/Planejamento/Programa 2/Sprint 36/Capitulo 5/Capitulo 5.md
+      - docs/Agents/Planejamento/Programa 2/Sprint 36/GAP_P2_E2_pipeline_data.md
+      - docs/Agents/Planejamento/Programa 2 - Interpretacao, claims, entidades, sinais.md
+    criterios_aceite:
+      - "Domínios piloto e fluxos A/B descritos por nome e recorte."
+      - "Recorte explicitamente limitado; gates G1–G3 não dependem de todos os domínios."
+    ace_context:
+      spec_refs:
+        - docs/Agents/Planejamento/Programa 2/Sprint 36/Capitulo 1/Capitulo 1.md
+        - docs/Agents/Planejamento/Programa 2/Sprint 36/Capitulo 5/Capitulo 5.md
+        - docs/Agents/Planejamento/Programa 2/Sprint 36/GAP_P2_E2_pipeline_data.md
+      resumo_para_ace: >
+        Antes de codar, fixe quais domínios e fluxos entram em S36. Use isso como filtro para todas as tasks seguintes.
+
+  - id: S36-BE-001
+    wave: W0
+    area: backend
+    gate_relacionado: S36_G0
+    descricao: "Refinar modelo canônico de objetos de trace/feedback alinhando Cap.3/Bloco 2 e contratos P2→E40.5."
+    arquivos_alvo:
+      - docs/Agents/Planejamento/Programa 2/Sprint 36/Capitulo 3/Bloco 2.md
+      - docs/architecture/p2_s36_trace_model_v1.md
+    criterios_aceite:
+      - "Taxonomia completa de AgentTrace/CommitteeTrace/ReasoningStep/EvidenceRef/Feedback* com campos mínimos e relações."
+      - "Versão trace_schema_v1 registrada e referenciada na spec."
+    ace_context:
+      spec_refs:
+        - docs/Agents/Planejamento/Programa 2/Sprint 36/Capitulo 3/Bloco 2.md
+      resumo_para_ace: >
+        Não mexa em código ainda; feche o modelo em docs/architecture com clareza de campos e relações.
+
+  - id: S36-BE-002
+    wave: W0
+    area: backend
+    gate_relacionado: S36_G0
+    descricao: "Definir contratos de IDs/correlação entre TR/DecisionRecord/Claim e objetos de trace/feedback."
+    arquivos_alvo:
+      - app/truth/models.py
+      - app/truth/service.py
+      - docs/architecture/p2_s36_trace_model_v1.md
+    criterios_aceite:
+      - "Campos de IDs/refs (committee_trace_id, agent_trace_id, decision_record_id, tr_ref, claim_ref, domain/risk_level) definidos e documentados."
+      - "Cardinalidades e comportamento em reprocessamentos claros."
+    ace_context:
+      spec_refs:
+        - docs/Agents/Planejamento/Programa 2/Sprint 36/Capitulo 2/Capitulo 2.md
+      resumo_para_ace: >
+        Mapear onde e como IDs serão gerados/propagados; isso guiará instrumentação em W2.
+
+  - id: S36-GAP-001
+    wave: W0
+    area: planning
+    gate_relacionado: ""
+    descricao: "Mapear dependências críticas em P2‑E1/E2/E4/E7 e registrar gaps de Programa 2 que afetem S36."
+    arquivos_alvo:
+      - docs/Agents/Planejamento/Programa 2 - Interpretacao, claims, entidades, sinais.md
+      - docs/Agents/Planejamento/Programa 2/Sprint 36/Capitulo 1/Capitulo 1.md
+      - docs/Agents/Planejamento/Programa 2/Sprint 36/Capitulo 2/Capitulo 2.md
+      - docs/Agents/Planejamento/Programa 2/Sprint 36/GAP_P2_E2_pipeline_data.md
+    criterios_aceite:
+      - "Lista de dependências com status (OK/risco/gap impeditivo) emitida."
+      - "Gaps relevantes marcados como GAP_P2_* em log/scorecard."
+    ace_context:
+      spec_refs:
+        - docs/Agents/Planejamento/Programa 2 - Interpretacao, claims, entidades, sinais.md
+        - docs/Agents/Planejamento/Programa 2/Sprint 36/GAP_P2_E2_pipeline_data.md
+      resumo_para_ace: >
+        Se faltar algo estrutural em P2‑E1/E2/E4/E7, registre gap; não tente consertar constituição via tasks locais.
+
+  - id: S36-DOC-001
+    wave: W0
+    area: docs
+    gate_relacionado: S36_G0
+    descricao: "Consolidar documentação oficial do modelo canônico de trace/feedback e linkar na spec."
+    arquivos_alvo:
+      - docs/architecture/p2_s36_trace_model_v1.md
+      - docs/Agents/Planejamento/Programa 2/Sprint 36/Capitulo 3/Capitulo 3.md
+      - docs/Agents/Planejamento/Programa 2/Sprint 36/Capitulo 4/Capitulo 4.md
+    criterios_aceite:
+      - "Documento de modelo referenciado nos capítulos 3 e 4 da spec."
+    ace_context:
+      spec_refs:
+        - docs/Agents/Planejamento/Programa 2/Sprint 36/Capitulo 3/Capitulo 3.md
+      resumo_para_ace: >
+        Garanta que o modelo que você definiu em S36-BE-001/002 virou referência oficial de S36.
+
+  - id: S36-DB-010
+    wave: W1
+    area: dados/db
+    gate_relacionado: S36_G0
+    descricao: "Implementar migrations/schemas físicos para objetos de trace/feedback em domínios piloto."
+    arquivos_alvo:
+      - db/migrations/026_sprint36_traces.sql
+      - scripts/db/migrate.py
+    criterios_aceite:
+      - "Migrations aplicam em ambiente dev/piloto sem erro."
+      - "Campos mínimos/versão presentes conforme modelo."
+    ace_context:
+      spec_refs:
+        - docs/Agents/Planejamento/Programa 2/Sprint 36/Capitulo 3/Bloco 2.md
+      resumo_para_ace: >
+        Traduza o modelo conceitual para tabelas reais com versionamento de schema.
+
+  - id: S36-DB-011
+    wave: W1
+    area: dados/db
+    gate_relacionado: S36_G1
+    descricao: "Criar índices/constraints e política inicial de retenção/expurgo para traces/feedback em domínios piloto."
+    arquivos_alvo:
+      - db/migrations/026_sprint36_traces.sql
+      - scripts/s14_migrations_and_cleanup.py
+      - scripts/maintenance/s36_trace_retention.sh
+    criterios_aceite:
+      - "Consultas principais (por DecisionRecord/TR/domínio/período) com planos aceitáveis."
+      - "Regras de retenção/expurgo documentadas e aplicáveis aos domínios piloto."
+    ace_context:
+      spec_refs:
+        - docs/Agents/Planejamento/Programa 2/Sprint 36/Capitulo 4/Bloco 4.md
+      resumo_para_ace: >
+        Garanta que logging não exploda storage nem quebre SLOs; retention explícito desde o começo.
+
+  - id: S36-SEC-010
+    wave: W1
+    area: seguranca
+    gate_relacionado: S36_G4
+    descricao: "Definir red/blacklist de PII e implementar redaction em traces/feedback (persistência e UI)."
+    arquivos_alvo:
+      - docs/DNA/Pilares/P2-*
+      - docs/DNA/Pilares/P4-*
+      - docs/DNA/Pilares/P5-*
+      - camada de persistência/serialização de Trace/Feedback
+      - componentes de UI que exibem traces/feedback
+    criterios_aceite:
+      - "Lista de campos sensíveis por objeto publicada."
+      - "Redaction aplicada em gravação e exibição; testes com dados sensíveis simulados."
+    ace_context:
+      spec_refs:
+        - docs/Agents/Planejamento/Programa 2/Sprint 36/Capitulo 7/Capitulo 7.md
+      resumo_para_ace: >
+        Aplique Pilares P2/P4/P5/P6 à definição de PII; nenhum campo proibido vai para UI/log bruto.
+
+  - id: S36-BE-010
+    wave: W1
+    area: backend
+    gate_relacionado: S36_G1
+    descricao: "Criar/ajustar repositórios/serviços para escrita/leitura de Trace/Feedback com PII/retention embutidos."
+    arquivos_alvo:
+      - app/agents/trace_repository.py
+      - app/feedback/repository.py
+    criterios_aceite:
+      - "APIs internas prontas para uso por instrumentação e UI."
+      - "Redaction/retention aplicados por padrão."
+    ace_context:
+      spec_refs:
+        - docs/Agents/Planejamento/Programa 2/Sprint 36/Capitulo 4/Bloco 4.md
+      resumo_para_ace: >
+        Não deixe cada call de logging cuidar de PII; centralize na camada de persistência.
+
+  - id: S36-BE-020
+    wave: W2
+    area: backend
+    gate_relacionado: S36_G1
+    descricao: "Instrumentar pipeline ContentItem→Claim/Entidade para gerar ReasoningSteps/AgentTrace em domínios piloto."
+    arquivos_alvo:
+      - app/agents/flows/runtime_adapter.py
+      - app/agents/trace_repository.py
+    criterios_aceite:
+      - "Em domínios piloto, ≥80% dos casos elegíveis geram AgentTrace com ReasoningSteps mínimos."
+    ace_context:
+      spec_refs:
+        - docs/Agents/Planejamento/Programa 2/Sprint 36/Capitulo 5/Capitulo 5.md
+      resumo_para_ace: >
+        Adicione logging estruturado em pontos chave do pipeline, usando repositório de trace de W1.
+
+  - id: S36-BE-021
+    wave: W2
+    area: backend
+    gate_relacionado: S36_G1
+    descricao: "Instrumentar runtime de comitês/IEL e TR FSM para gerar CommitteeTrace ligado a AgentTrace/TR/DecisionRecord."
+    arquivos_alvo:
+      - app/agents/service.py
+      - app/agents/repository.py
+      - app/agents/flows/runtime_adapter.py
+      - app/truth/models.py
+      - app/truth/service.py
+    criterios_aceite:
+      - "CommitteeTraces gerados para ≥80% das decisões de alto risco em domínios piloto."
+      - "Links a AgentTraces/TR/DecisionRecord válidos conforme contratos."
+    ace_context:
+      spec_refs:
+        - docs/Agents/Planejamento/Programa 2/Sprint 36/Capitulo 2/Capitulo 2.md
+      resumo_para_ace: >
+        Use IDs/contratos de W0; evite logging redundante ou inútil.
+
+  - id: S36-BE-022
+    wave: W2
+    area: backend
+    gate_relacionado: S36_G2
+    descricao: "Garantir que DecisionRecords de alto risco em domínios piloto referenciem pelo menos um trace válido e implementar script de trace_link_break_rate."
+    arquivos_alvo:
+      - app/truth/models.py
+      - app/truth/service.py
+      - scripts/metrics/s36_trace_links.py
+    criterios_aceite:
+      - "100% das DecisionRecords de alto risco em domínios piloto com ref a trace válido."
+      - "Script de trace_link_break_rate produz valor ≈0 (com exceções justificadas)."
+    ace_context:
+      spec_refs:
+        - docs/Agents/Planejamento/Programa 2/Sprint 36/Capitulo 2/Capitulo 2.md
+      resumo_para_ace: >
+        Trate links quebrados como bug de S36, não como “exceção natural”.
+
+  - id: S36-QA-010
+    wave: W2
+    area: qa_dados
+    gate_relacionado: S36_G1
+    descricao: "Implementar scripts para trace_coverage_rate e avg_trace_depth por domínio/tipo de decisão."
+    arquivos_alvo:
+      - scripts/metrics/s36_trace_coverage.py
+      - scripts/metrics/s36_trace_depth.py
+    criterios_aceite:
+      - "Scripts executam em domínios piloto e geram métricas por domínio/tipo de decisão."
+    ace_context:
+      spec_refs:
+        - docs/Agents/Planejamento/Programa 2/Sprint 36/Capitulo 2/Capitulo 2.md
+      resumo_para_ace: >
+        Use esses scripts como fonte de verdade para G1/G2; evite contar na mão.
+
+  - id: S36-QA-011
+    wave: W2
+    area: qa_performance
+    gate_relacionado: S36_G1
+    descricao: "Medir overhead de logging (latência/throughput/volume) e ajustar granularidade se necessário."
+    arquivos_alvo:
+      - scripts/benchmarks/s36_trace_overhead_*.sh
+      - configs de logging/trace
+    criterios_aceite:
+      - "Benchmarks comparando antes/depois da instrumentação documentados."
+      - "Granularidade ajustada se overhead violar limites aceitáveis."
+    ace_context:
+      spec_refs:
+        - docs/Agents/Planejamento/Programa 2/Sprint 36/Capitulo 7/Capitulo 7.md
+      resumo_para_ace: >
+        Meça de verdade; theater de observabilidade aqui é perigoso.
+
+  - id: S36-FE-010
+    wave: W3
+    area: frontend
+    gate_relacionado: S36_G3
+    descricao: "Exibir traces em Truth Console/Case Cockpit com visão de resumo+drill-down, respeitando PII."
+    arquivos_alvo:
+      - frontend/inspectah-ui/src/modules/console/pages/TruthConsolePage.tsx
+      - frontend/inspectah-ui/src/modules/cases/pages/CaseTimelinePage.tsx
+      - frontend/inspectah-ui/src/modules/cases/components/xray/CaseXRayLayout.tsx
+    criterios_aceite:
+      - "Operadores visualizam traces para decisões piloto com resumo claro e detalhes acessíveis."
+      - "Nenhum campo PII proibido exibido."
+    ace_context:
+      spec_refs:
+        - docs/Agents/Planejamento/Programa 2/Sprint 36/Capitulo 8/Capitulo 8.md
+      resumo_para_ace: >
+        Priorize legibilidade e foco; comece pelo resumo, não pelo dump bruto.
+
+  - id: S36-FE-011
+    wave: W3
+    area: frontend
+    gate_relacionado: S36_G3
+    descricao: "Implementar formulário de feedback estruturado em Truth Console/Case Cockpit/Debunker."
+    arquivos_alvo:
+      - frontend/inspectah-ui/src/modules/console/components/TraceFeedbackForm.tsx
+      - frontend/inspectah-ui/src/modules/cases/components/CaseFeedbackForm.tsx
+      - frontend/inspectah-ui/src/modules/cases/components/xray/DebunkerPanel.tsx
+    criterios_aceite:
+      - "Feedbacks podem ser registrados (tipo, severidade, comentário) em decisões piloto."
+    ace_context:
+      spec_refs:
+        - docs/Agents/Planejamento/Programa 2/Sprint 36/Capitulo 9/Capitulo 9.md
+      resumo_para_ace: >
+        Formulário precisa ser rápido de usar; evite campos desnecessários.
+
+  - id: S36-BE-023
+    wave: W3
+    area: backend
+    gate_relacionado: S36_G3
+    descricao: "Persistir FeedbackOnTrace/FeedbackOnDecision com integridade referencial e trilha de autoria/tempo."
+    arquivos_alvo:
+      - app/api/trace_feedback_routes.py
+      - app/feedback/repository.py
+    criterios_aceite:
+      - "Feedbacks enviados pelas UIs aparecem nas tabelas de feedback com FKs corretos e timestamps."
+    ace_context:
+      spec_refs:
+        - docs/Agents/Planejamento/Programa 2/Sprint 36/Capitulo 2/Capitulo 2.md
+      resumo_para_ace: >
+        Mantenha trilha de quem/quando deu feedback; isso é insumo de governança.
+
+  - id: S36-UX-010
+    wave: W3
+    area: ux
+    gate_relacionado: S36_G3
+    descricao: "Validar UX de trace/feedback com operadores de domínios piloto e aplicar ajustes mínimos."
+    arquivos_alvo:
+      - docs/ux/s36_trace_feedback_study.md
+    criterios_aceite:
+      - "Pelo menos 3–5 sessões realizadas; ajustes principais registrados e aplicados (quando factíveis)."
+    ace_context:
+      spec_refs:
+        - docs/Agents/Planejamento/Programa 2/Sprint 36/Capitulo 5/Capitulo 5.md
+      resumo_para_ace: >
+        Coletar feedback real de operadores; documente fricções e melhorias para S37/P2‑E6.
+
+  - id: S36-QA-020
+    wave: W4
+    area: qa_observabilidade
+    gate_relacionado: S36_G2
+    descricao: "Implementar pipelines para cálculo de feedback_rate e atualização de trace_link_break_rate."
+    arquivos_alvo:
+      - scripts/metrics/s36_feedback_rate.py
+      - scripts/metrics/s36_trace_link_break_rate.py
+    criterios_aceite:
+      - "Métricas calculadas periodicamente em domínios piloto; resultados usados em ORR."
+    ace_context:
+      spec_refs:
+        - docs/Agents/Planejamento/Programa 2/Sprint 36/Capitulo 2/Capitulo 2.md
+      resumo_para_ace: >
+        Use essas métricas para sustentar G2/G3 e alimentar ORR de auditabilidade.
+
+  - id: S36-QA-021
+    wave: W4
+    area: qa_revisao_manual
+    gate_relacionado: S36_G4
+    descricao: "Revisar amostra de traces/feedbacks para avaliar profundidade, legibilidade e utilidade (anti-teatro)."
+    arquivos_alvo:
+      - docs/reviews/s36_trace_quality_review.md
+    criterios_aceite:
+      - "Amostra N≈30–50 decisões revisadas; recomendações concretas registradas."
+    ace_context:
+      spec_refs:
+        - docs/Agents/Planejamento/Programa 2/Sprint 36/Capitulo 7/Capitulo 7.md
+      resumo_para_ace: >
+        Inspecione manualmente traces/feedbacks; documente se explicam de fato as decisões ou apenas fingem.
+
+  - id: S36-OPS-020
+    wave: W4
+    area: ops
+    gate_relacionado: S36_G4
+    descricao: "Preparar checklist e script base de ORR de auditabilidade de S36."
+    arquivos_alvo:
+      - bin/s36_g4_audit_orr.sh
+      - docs/runbooks/S36_audit_orr_checklist.md
+    criterios_aceite:
+      - "Checklist e script prontos para consolidar métricas/riscos e apoiar ORR."
+    ace_context:
+      spec_refs:
+        - docs/Agents/Planejamento/Programa 2/Sprint 36/Capitulo 2/Capitulo 2.md
+        - docs/Agents/Planejamento/Programa 2/Sprint 36/Capitulo 7/Capitulo 7.md
+      resumo_para_ace: >
+        Crie a espinha dorsal do ORR, incluindo checagens de PII, overhead, coverage e uso real de feedback.
+
+  - id: S36-OPS-021
+    wave: W4
+    area: ops
+    gate_relacionado: S36_G4
+    descricao: "Executar ORR de auditabilidade de S36, registrar GO/NO-GO e ações de follow-up."
+    arquivos_alvo:
+      - bin/s36_g4_audit_orr.sh
+      - out/scorecards/S36_ORR_audit.json
+      - out/evidence/S36_ORR_summary.txt
+    criterios_aceite:
+      - "ORR realizado; decisão GO/NO-GO documentada com lista de ações."
+    ace_context:
+      spec_refs:
+        - docs/Agents/Planejamento/Programa 2/Sprint 36/Capitulo 2/Capitulo 2.md
+        - docs/Agents/Planejamento/Programa 2/Sprint 36/Capitulo 7/Capitulo 7.md
+      resumo_para_ace: >
+        Use scripts/métricas/qualidade para embasar a decisão; registre riscos remanescentes e itens para S37/P2‑E6.
+
+  - id: S36-AN-020
+    wave: W4
+    area: analise_dados
+    gate_relacionado: S36_G3
+    descricao: "Consolidar análise de uso real de feedbacks e derivar insumos para ajustes de diretrizes/policies."
+    arquivos_alvo:
+      - scripts/metrics/s36_feedback_analysis.py
+      - docs/analysis/s36_feedback_findings.md
+    criterios_aceite:
+      - "Estatísticas de feedback_rate atingem pelo menos 20 feedbacks em 10+ decisões; achados e oportunidades documentados."
+    ace_context:
+      spec_refs:
+        - docs/Agents/Planejamento/Programa 2/Sprint 36/Capitulo 2/Capitulo 2.md
+      resumo_para_ace: >
+        Resuma como operadores usaram o canal de feedback e quais ajustes de políticas/diretrizes S36 sugere para S37+.

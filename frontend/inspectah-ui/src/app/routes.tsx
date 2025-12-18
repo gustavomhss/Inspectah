@@ -30,6 +30,7 @@ import AgentFlowsPage from '../features/agent-flows/AgentFlowsPage';
 import ProvidersPage from '../features/providers/ProvidersPage';
 import OpsCockpitPage from '../modules/ops/pages/OpsCockpitPage';
 import HowToPage from '../modules/admin/pages/HowToPage';
+import { SpTruthTwinPage } from '../modules/truth/pages';
 
 export function AppRoutes() {
   return (
@@ -76,6 +77,7 @@ export function AppRoutes() {
           <Route path="*" element={<SourcesNotFoundPage />} />
         </Route>
         <Route path="/admin/howto" element={<HowToPage />} />
+        <Route path="/admin/truth-twin" element={<SpTruthTwinPage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

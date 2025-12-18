@@ -130,6 +130,12 @@ class TruthRepository:
             row = conn.execute("SELECT * FROM truth_records WHERE id=?", (record_id,)).fetchone()
         return self._row_to_record(row)
 
+    def get_record_by_claim_id(self, claim_id: str) -> Optional[TruthRecord]:
+        """Get truth record by claim_id."""
+        with self._conn() as conn:
+            row = conn.execute("SELECT * FROM truth_records WHERE claim_id=?", (claim_id,)).fetchone()
+        return self._row_to_record(row)
+
     def list_records(self, domain: str | None = None, state: TruthState | None = None, limit: int = 50) -> List[TruthRecord]:
         clauses: list[str] = []
         params: list[str] = []

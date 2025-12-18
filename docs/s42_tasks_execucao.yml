@@ -1,0 +1,2377 @@
+# Sprint 42 — Plano de Execucao (ACE Exec)
+# Gerado pelo Sprint Planner Tecnico v7
+# Versao: 3.0 MATURE (18 rodadas de refinamento aplicadas)
+
+sprint: S42
+programa: P2+P3+P4
+epico: Simulacoes MAC + Plano Adiabatico + Exposicao MI
+versao: "3.0"
+tasks_total: 158
+
+ace_resumo:
+  objetivo: |
+    Construir simulacoes deterministicas da MAC (dry-run + batch),
+    plano adiabatico (mudanca gradual), e exposicao parcial de MI/Experiencias.
+    Preparar S43 (GO/NO-GO Fase 2) com evidencias auditaveis.
+  leitura_minima:
+    - docs/Agents/Planejamento/Programa 2/Sprint 42/S42_spec.md
+    - docs/Agents/Planejamento/Programa 2/Sprint 42/Capitulo 2/Bloco 2.md
+    - docs/Agents/Planejamento/Programa 2/Sprint 42/Capitulo 3/Bloco 2.md
+    - docs/Agents/Planejamento/Programa 2/Sprint 42/Capitulo 6/Bloco 2.md
+  instrucoes:
+    - Seguir waves na ordem (W0 -> W6)
+    - Nao pular wave sem completar tasks obrigatorias
+    - Reportar gaps encontrados imediatamente
+    - Invariantes sao inegociaveis (INV_S42_*)
+    - Datasets devem seguir estrutura canonica (~1100 casos)
+    - Manifest completo obrigatorio em toda simulacao
+    - Sem PASS sintetico — scorecard sem provenance = NO-GO
+
+invariantes:
+  - id: INV_S42_SIM_01
+    descricao: Simulacao NAO muda TruthState oficial
+    verificacao: S42-BE-015, S42-TST-002
+    metodo: Assertion TruthState antes == depois
+  - id: INV_S42_DET_01
+    descricao: Replay deterministico 100% quando T=0
+    verificacao: S42-BE-016, S42-TST-002, S42-TST-011
+    metodo: Loop de 100 replays identicos; batch determinism
+  - id: INV_S42_TRAIL_01
+    descricao: Provenance completa em toda simulacao (manifest com lineage)
+    verificacao: S42-BE-005, S42-BE-017, S42-FE-018, S42-FE-020
+    metodo: Campos simulation_run_id, policy_version, params, seed, git_commit, timestamps obrigatorios
+  - id: INV_S42_PRIV_01
+    descricao: Privacidade MI/Experiencias (redaction + RBAC)
+    verificacao: S42-BE-064..067, S42-TST-040..042
+    metodo: Testes de RBAC (3 roles), redaction (15 casos), audit
+  - id: INV_S42_QUAL_01
+    descricao: Sem PASS sintetico
+    verificacao: S42-BND-001..008
+    metodo: Manifests com provenance em todos scorecards
+
+riscos:
+  - id: R1
+    descricao: Confusao simulacao = producao
+    impacto: Critico
+    mitigacao: S42-FE-015, S42-UX-001, S42-FE-026
+  - id: R2
+    descricao: Nao-determinismo em replay
+    impacto: Alto
+    mitigacao: S42-BE-016, S42-TST-002, S42-TST-011, S42-OBS-003
+  - id: R3
+    descricao: Vazamento de dados MI
+    impacto: Critico
+    mitigacao: S42-BE-064..067, S42-TST-040..042, S42-BND-007
+  - id: R4
+    descricao: Dataset bias
+    impacto: Alto
+    mitigacao: S42-DAT-001..008, S42-TST-010..011
+  - id: R5
+    descricao: Plano adiabatico inseguro
+    impacto: Alto
+    mitigacao: S42-BE-050..057, S42-TST-030
+  - id: R6
+    descricao: UX pesada/lenta
+    impacto: Medio
+    mitigacao: S42-FE-012, S42-FE-023..025, S42-TST-053
+  - id: R7
+    descricao: PASS sintetico
+    impacto: Critico
+    mitigacao: S42-BND-001..008, S42-CI-001..006
+
+waves:
+  - id: W0
+    nome: Fundacao MAC
+    objetivo: Criar estrutura base completa (modulos, schemas, migrations, configs, datasets canonicos, manifest)
+    gates: [Pre-req]
+    dependencias: []
+    tasks_count: 24
+    ace_context:
+      spec_refs:
+        - Capitulo 3/Bloco 2.md
+        - Capitulo 3/Bloco 3.md
+        - Capitulo 6/Bloco 2.md
+      resumo: Estrutura base completa. Datasets canonicos (~1100 casos). Manifest com lineage.
+
+  - id: W1
+    nome: MAC Simulate
+    objetivo: Endpoint dry-run deterministico com manifest completo
+    gates: [G30]
+    dependencias: [W0]
+    tasks_count: 22
+    ace_context:
+      spec_refs:
+        - Capitulo 3/Bloco 1.md
+        - Capitulo 2/Bloco 2.md
+        - Capitulo 6/Bloco 2.md
+      resumo: MAC engine core + POST /api/v1/mac/simulate. Determinismo T=0. Manifest obrigatorio. p95<500ms.
+
+  - id: W2
+    nome: MAC Batch
+    objetivo: Simulacao em lote + scorecards + streaming + cancel
+    gates: [G31]
+    dependencias: [W0, W1]
+    tasks_count: 18
+    ace_context:
+      spec_refs:
+        - Capitulo 6/Bloco 2.md
+        - Capitulo 2/Bloco 2.md
+        - Capitulo 8/Bloco 2.md
+      resumo: Batch runner + datasets gold/adversarial/edge. Targets MAC Anexo D. Cancel/streaming.
+
+  - id: W3
+    nome: Plano Adiabatico
+    objetivo: Validador + simulador por fases + rollback
+    gates: [G32]
+    dependencias: [W0, W1]
+    tasks_count: 16
+    ace_context:
+      spec_refs:
+        - Capitulo 6/Bloco 3.md
+        - Capitulo 2/Bloco 2.md
+      resumo: AdiabaticPlan completo + validador derivada (0.20/dia) + simulador fases + rollback.
+
+  - id: W4
+    nome: MI/Exp Exposure
+    objetivo: Exposicao parcial governada + RBAC + redaction + derivation
+    gates: [G33]
+    dependencias: [W0, W1]
+    tasks_count: 20
+    ace_context:
+      spec_refs:
+        - Capitulo 6/Bloco 4.md
+        - Capitulo 3/Bloco 2.md
+      resumo: Modulo app/mi/ + RBAC (ops/reviewer/council) + redaction PII + experience derivation.
+
+  - id: W5
+    nome: Frontend P4
+    objetivo: UI completa com virtualization, disclaimers, estados MI, diffs
+    gates: [G34]
+    dependencias: [W1, W2, W3, W4]
+    tasks_count: 32
+    ace_context:
+      spec_refs:
+        - Capitulo 8/Bloco 1.md
+        - Capitulo 8/Bloco 2.md
+        - Capitulo 8/Bloco 3.md
+        - Capitulo 9/Bloco 1.md
+        - Capitulo 9/Bloco 3.md
+      resumo: Modulo modules/mac/ + SimulationLab + BatchPage + virtualization + disclaimers + estados MI.
+
+  - id: W6
+    nome: ORR/Bundle
+    objetivo: Scripts de gate + runbooks + teste carga + bundle com redaction
+    gates: [G35]
+    dependencias: [W0, W1, W2, W3, W4, W5]
+    tasks_count: 26
+    ace_context:
+      spec_refs:
+        - Capitulo 2/Bloco 2.md
+        - Capitulo 4/Bloco 4.md
+        - Capitulo 7/Bloco 1.md
+      resumo: Scripts bin/s42_g3*.sh + runbooks operacionais + teste carga + bundle ZIP consolidado.
+
+tasks:
+  # ============================================
+  # W0 - Fundacao MAC (24 tasks)
+  # ============================================
+
+  # Backend Core
+  - id: S42-BE-001
+    wave: W0
+    area: backend
+    descricao: Criar modulo app/mac/ com __init__.py, models.py, service.py, exceptions.py, manifest.py
+    arquivos:
+      - app/mac/__init__.py
+      - app/mac/models.py
+      - app/mac/service.py
+      - app/mac/exceptions.py
+      - app/mac/manifest.py
+    gates: [Pre-req]
+    done: from app.mac import models, manifest funciona; 0 erros de import
+    evidencias: python -c "from app.mac import models, manifest" exit 0
+    ace_context:
+      spec_refs: [Capitulo 3/Bloco 3.md]
+      resumo: Estrutura inicial MAC com manifest
+
+  - id: S42-BE-002
+    wave: W0
+    area: backend
+    descricao: |
+      Implementar MacDecision dataclass com TODOS campos:
+      decision_id, allegation_id, source_state, target_state, action, confidence, mode,
+      costs{type_i,type_ii,change,context,total}, hard_cap_triggered{reason},
+      hysteresis_applied{factor}, temperature_applied, policy_ref{name,version,hash},
+      params_ref{mode,version,hash}, mi_refs[], experience_refs[], timestamp, replay_token
+    arquivos: [app/mac/models.py]
+    gates: [Pre-req]
+    done: Todos os 20+ campos presentes; to_dict() preserva todos
+    evidencias: tests/mac/test_models.py — 20+ assertions
+    ace_context:
+      spec_refs: [Capitulo 3/Bloco 2.md]
+      resumo: Campos conforme MAC Anexo C
+
+  - id: S42-BE-003
+    wave: W0
+    area: backend
+    descricao: |
+      Implementar MacSimulation dataclass com campos canonicos:
+      simulation_id, basis{allegation_id,candidate_transition},
+      simulation_options{override_mode,override_signals,temperature,override_params},
+      recommended_action, action_probabilities, cost_breakdown{}, signals_used[],
+      notes[], mi_refs[], experience_refs[], exposure_state, created_at,
+      commit_ref, dataset_ref, replay_token, manifest_ref
+    arquivos: [app/mac/models.py]
+    gates: [Pre-req]
+    done: Todos os 16+ campos presentes
+    evidencias: tests/mac/test_models.py
+    ace_context:
+      spec_refs: [Capitulo 3/Bloco 2.md]
+      resumo: Modelo simulacao completo
+
+  - id: S42-BE-004
+    wave: W0
+    area: backend
+    descricao: |
+      Implementar MacBatchRun dataclass com campos:
+      batch_run_id, dataset_id, scenario_matrix_id, inputs{policy,params,mode,plan versions},
+      status{queued,running,succeeded,failed,canceled}, progress_percent,
+      estimated_remaining_seconds, outputs{metrics,divergencias,paths},
+      created_at, started_at, completed_at, canceled_at, cancel_reason
+    arquivos: [app/mac/models.py]
+    gates: [Pre-req]
+    done: Estados de lifecycle completos conforme Cap.8B2
+    evidencias: tests/mac/test_models.py
+    ace_context:
+      spec_refs: [Capitulo 3/Bloco 2.md, Capitulo 8/Bloco 2.md]
+      resumo: Batch run com todos estados
+
+  - id: S42-BE-005
+    wave: W0
+    area: backend
+    descricao: |
+      Implementar RunManifest dataclass com lineage completo conforme Cap.6B2:
+      simulation_run_id, mode, policy_id, policy_version, policy_bundle_id,
+      mac_version{commit,tag}, mi_version, dataset_id, dataset_version,
+      params_efetivos, override_reason, seed, rng_state, temperature,
+      timestamps{created,started,completed}, git_commit, server_id, replay_token
+    arquivos: [app/mac/manifest.py]
+    gates: [Pre-req]
+    done: Manifest gera hash deterministico; todos campos conforme spec
+    evidencias: tests/mac/test_manifest.py
+    ace_context:
+      spec_refs: [Capitulo 6/Bloco 2.md]
+      resumo: INV_S42_TRAIL_01 — lineage completo
+
+  - id: S42-BE-006
+    wave: W0
+    area: backend
+    descricao: |
+      Implementar error codes estaveis conforme Cap.3B2:
+      MacError(code,message_human,details), PolicyNotFoundError, PolicyVersionMismatchError,
+      SignalSnapshotInvalidError, SignalSnapshotExpiredError, SimulationTimeoutError,
+      BatchCanceledError, ReplayMismatchError, DeterminismViolationError,
+      RBACForbiddenError, DatasetNotFoundError, DatasetInvalidError, ManifestIncompleteError
+    arquivos: [app/mac/exceptions.py]
+    gates: [Pre-req]
+    done: 13 classes de erro com codes estaveis; message_human em PT-BR
+    evidencias: tests/mac/test_exceptions.py
+    ace_context:
+      spec_refs: [Capitulo 3/Bloco 2.md]
+      resumo: Contratos de erro estaveis
+
+  # Plano Adiabatico Base
+  - id: S42-BE-007
+    wave: W0
+    area: backend
+    descricao: |
+      Implementar AdiabaticPlan dataclass com campos canonicos conforme Cap.6B3:
+      plan_id, plan_version, baseline_policy_version, target_policy_version,
+      scope{global,domain}, phases[], constraints{derivative_limits{max_per_day:0.20},
+      hard_caps_by_domain}, rationale, provenance{commit,datasets[],author,timestamp,justification}
+    arquivos: [app/mac/adiabatic.py]
+    gates: [Pre-req]
+    done: Todos campos conforme Cap.6B3; derivative default 0.20
+    evidencias: tests/mac/test_adiabatic_model.py
+    ace_context:
+      spec_refs: [Capitulo 6/Bloco 3.md]
+      resumo: Modelo plano adiabatico completo
+
+  - id: S42-BE-008
+    wave: W0
+    area: backend
+    descricao: |
+      Implementar AdiabaticPhase dataclass:
+      phase_id, order, delta{params_changes[]}, duration_days,
+      constraints{derivative_cap,domain_overrides}, success_criteria{metrics_targets[]},
+      rollback_strategy{target_version,trigger_conditions[],auto_trigger:bool}
+    arquivos: [app/mac/adiabatic.py]
+    gates: [Pre-req]
+    done: Rollback como primeira classe; trigger_conditions explicitas
+    evidencias: tests/mac/test_adiabatic_model.py
+    ace_context:
+      spec_refs: [Capitulo 6/Bloco 3.md]
+      resumo: Fases com rollback
+
+  # Migrations
+  - id: S42-DB-001
+    wave: W0
+    area: dados
+    descricao: |
+      Criar migration 034_s42_mac_simulations.sql:
+      tabelas mac_simulations(id,allegation_id,mode,policy_ref_json,params_ref_json,
+      costs_json,signals_json,result_json,manifest_json,replay_token,created_at),
+      indices em (id), (created_at), (allegation_id)
+    arquivos: [db/migrations/034_s42_mac_simulations.sql]
+    gates: [Pre-req]
+    done: Migration up/down funcionais; indices criados
+    evidencias: make db-migrate; make db-rollback
+    ace_context:
+      spec_refs: [Capitulo 3/Bloco 2.md]
+      resumo: Tabela simulacoes
+
+  - id: S42-DB-002
+    wave: W0
+    area: dados
+    descricao: |
+      Criar migration 035_s42_mac_batch_runs.sql:
+      tabela mac_batch_runs(id,dataset_id,scenario_matrix_json,status,progress_percent,
+      inputs_json,outputs_json,manifest_json,created_at,started_at,completed_at,
+      canceled_at,cancel_reason), indices em (id), (status), (created_at)
+    arquivos: [db/migrations/035_s42_mac_batch_runs.sql]
+    gates: [Pre-req]
+    done: Migration up/down funcionais
+    evidencias: make db-migrate; make db-rollback
+    ace_context:
+      spec_refs: [Capitulo 3/Bloco 2.md]
+      resumo: Tabela batch runs
+
+  - id: S42-DB-003
+    wave: W0
+    area: dados
+    descricao: |
+      Criar migration 036_s42_adiabatic_plans.sql:
+      tabela adiabatic_plans(id,version,baseline_policy_version,target_policy_version,
+      scope,phases_json,constraints_json,rationale,provenance_json,status,created_at,updated_at),
+      indices
+    arquivos: [db/migrations/036_s42_adiabatic_plans.sql]
+    gates: [Pre-req]
+    done: Migration up/down funcionais
+    evidencias: make db-migrate; make db-rollback
+    ace_context:
+      spec_refs: [Capitulo 6/Bloco 3.md]
+      resumo: Tabela planos adiabaticos
+
+  - id: S42-DB-004
+    wave: W0
+    area: dados
+    descricao: |
+      Criar migration 037_s42_run_manifests.sql:
+      tabela run_manifests(id,simulation_run_id,manifest_json,manifest_hash,created_at),
+      indice unique em manifest_hash
+    arquivos: [db/migrations/037_s42_run_manifests.sql]
+    gates: [Pre-req]
+    done: Manifest persistido para replay; hash unico
+    evidencias: make db-migrate; make db-rollback
+    ace_context:
+      spec_refs: [Capitulo 6/Bloco 2.md]
+      resumo: Tabela manifests com hash unico
+
+  # Configs
+  - id: S42-CFG-001
+    wave: W0
+    area: configs
+    descricao: |
+      Criar configs/mac/policies/default.yaml com campos:
+      name, version, thresholds{promote,demote,suspend,revoke},
+      costs_weights{type_i,type_ii,change,context}, hard_caps[{domain,action,reason}],
+      hysteresis{factor,window_hours}
+    arquivos: [configs/mac/policies/default.yaml]
+    gates: [Pre-req]
+    done: yamllint pass; schema valido
+    evidencias: yamllint configs/mac/policies/default.yaml
+    ace_context:
+      spec_refs: [Capitulo 3/Bloco 2.md]
+      resumo: Policy default
+
+  - id: S42-CFG-002
+    wave: W0
+    area: configs
+    descricao: Criar configs/mac/policies/candidate.yaml (policy alternativa para comparacao)
+    arquivos: [configs/mac/policies/candidate.yaml]
+    gates: [Pre-req]
+    done: Diff significativo vs default; yaml valido
+    evidencias: yamllint pass; diff mostra diferencas
+    ace_context:
+      spec_refs: [Capitulo 3/Bloco 2.md]
+      resumo: Policy candidata
+
+  - id: S42-CFG-003
+    wave: W0
+    area: configs
+    descricao: |
+      Criar configs/mac/params/default.yaml com:
+      mode_defaults{NORMAL,ENDURECIDO,EMERGENCIA}, derivative_limits{max_per_day:0.20,max_per_phase:0.50},
+      hysteresis_factor, temperature_range{min,max,default}, seed_strategy
+    arquivos: [configs/mac/params/default.yaml]
+    gates: [Pre-req]
+    done: Derivative default 0.20 conforme Cap.6B3
+    evidencias: yamllint pass
+    ace_context:
+      spec_refs: [Capitulo 3/Bloco 2.md, Capitulo 6/Bloco 3.md]
+      resumo: Params com derivative_limits
+
+  - id: S42-CFG-004
+    wave: W0
+    area: configs
+    descricao: Criar configs/mac/domains/politics.yaml com constraints especificos, hard_caps, derivative_overrides{max_per_day:0.10}
+    arquivos: [configs/mac/domains/politics.yaml]
+    gates: [Pre-req]
+    done: Override mais restritivo (0.10); yamllint pass
+    evidencias: yamllint pass
+    ace_context:
+      spec_refs: [Capitulo 6/Bloco 3.md]
+      resumo: Constraints politics
+
+  - id: S42-CFG-005
+    wave: W0
+    area: configs
+    descricao: Criar configs/mac/domains/health.yaml com constraints especificos
+    arquivos: [configs/mac/domains/health.yaml]
+    gates: [Pre-req]
+    done: yamllint pass
+    evidencias: yamllint pass
+    ace_context:
+      spec_refs: [Capitulo 6/Bloco 3.md]
+      resumo: Constraints health
+
+  # Datasets Canonicos (~1100 casos conforme Cap.6B2)
+  - id: S42-DAT-001
+    wave: W0
+    area: dados
+    descricao: |
+      Criar datasets/mac/gold_standard/health_crises/ com ~150 casos:
+      case_id, allegation_id, signals{mqv,tds,cvi,ethical}, expected_action,
+      expected_confidence_range, justification, domain:health, tags[]
+    arquivos: [datasets/mac/gold_standard/health_crises/*.json]
+    gates: [Pre-req]
+    done: jq length >= 150; todos campos presentes
+    evidencias: jq '.cases | length' >= 150
+    ace_context:
+      spec_refs: [Capitulo 6/Bloco 2.md]
+      resumo: Gold health crises
+
+  - id: S42-DAT-002
+    wave: W0
+    area: dados
+    descricao: Criar datasets/mac/gold_standard/political_scandals/ com ~200 casos
+    arquivos: [datasets/mac/gold_standard/political_scandals/*.json]
+    gates: [Pre-req]
+    done: jq length >= 200
+    evidencias: jq '.cases | length' >= 200
+    ace_context:
+      spec_refs: [Capitulo 6/Bloco 2.md]
+      resumo: Gold political
+
+  - id: S42-DAT-003
+    wave: W0
+    area: dados
+    descricao: Criar datasets/mac/gold_standard/historical_claims/ com ~100 casos
+    arquivos: [datasets/mac/gold_standard/historical_claims/*.json]
+    gates: [Pre-req]
+    done: jq length >= 100
+    evidencias: jq '.cases | length' >= 100
+    ace_context:
+      spec_refs: [Capitulo 6/Bloco 2.md]
+      resumo: Gold historical
+
+  - id: S42-DAT-004
+    wave: W0
+    area: dados
+    descricao: |
+      Criar datasets/mac/adversarial/coordinated_attacks/ com ~80 casos:
+      attack_type:coordinated, expected_detection:true, detection_target:>=95%
+    arquivos: [datasets/mac/adversarial/coordinated_attacks/*.json]
+    gates: [Pre-req]
+    done: jq length >= 80; detection_target presente
+    evidencias: jq '.cases | length' >= 80
+    ace_context:
+      spec_refs: [Capitulo 6/Bloco 2.md]
+      resumo: Adversarial coordinated (>=95%)
+
+  - id: S42-DAT-005
+    wave: W0
+    area: dados
+    descricao: Criar datasets/mac/adversarial/temporal_attacks/ com ~30 casos (detection_target:>=98%)
+    arquivos: [datasets/mac/adversarial/temporal_attacks/*.json]
+    gates: [Pre-req]
+    done: jq length >= 30; detection_target >= 98%
+    evidencias: jq '.cases | length' >= 30
+    ace_context:
+      spec_refs: [Capitulo 6/Bloco 2.md]
+      resumo: Adversarial temporal (>=98%)
+
+  - id: S42-DAT-006
+    wave: W0
+    area: dados
+    descricao: Criar datasets/mac/adversarial/reversal_attacks/ com ~20 casos (detection_target:>=99%)
+    arquivos: [datasets/mac/adversarial/reversal_attacks/*.json]
+    gates: [Pre-req]
+    done: jq length >= 20; detection_target >= 99%
+    evidencias: jq '.cases | length' >= 20
+    ace_context:
+      spec_refs: [Capitulo 6/Bloco 2.md]
+      resumo: Adversarial reversal (>=99%)
+
+  - id: S42-DAT-007
+    wave: W0
+    area: dados
+    descricao: Criar datasets/mac/edge_cases/threshold_boundary/ com ~50 casos (valores exatamente no limiar)
+    arquivos: [datasets/mac/edge_cases/threshold_boundary/*.json]
+    gates: [Pre-req]
+    done: jq length >= 50
+    evidencias: jq '.cases | length' >= 50
+    ace_context:
+      spec_refs: [Capitulo 6/Bloco 2.md]
+      resumo: Edge threshold
+
+  - id: S42-DAT-008
+    wave: W0
+    area: dados
+    descricao: |
+      Criar datasets/mac/dataset_manifest.json com:
+      version, created_at, datasets[]{id,path,case_count,domain,type,detection_target,origin,license,hash}
+    arquivos: [datasets/mac/dataset_manifest.json]
+    gates: [Pre-req]
+    done: Manifest versionado com hashes
+    evidencias: jq '.datasets | length' > 0
+    ace_context:
+      spec_refs: [Capitulo 6/Bloco 2.md]
+      resumo: Dataset manifest canonico
+
+  # Schemas
+  - id: S42-SCH-001
+    wave: W0
+    area: schemas
+    descricao: Criar JSON Schema schemas/mac_simulation_v1.json validando MacSimulation com todos campos required
+    arquivos: [schemas/mac_simulation_v1.json]
+    gates: [Pre-req]
+    done: jsonschema validation pass
+    evidencias: jsonschema --instance ... --schema ... pass
+    ace_context:
+      spec_refs: [Capitulo 3/Bloco 2.md]
+      resumo: Schema simulacao
+
+  - id: S42-SCH-002
+    wave: W0
+    area: schemas
+    descricao: |
+      Criar JSON Schema schemas/mac_scorecard_v1.json com campos conforme Cap.2B3:
+      sprint, gate, status{PASS,NO_GO,GO_COM_RESSALVA}, commit, timestamp_utc,
+      inputs{}, metrics{}, targets{}, violations[], evidence_paths[], limitations[]
+    arquivos: [schemas/mac_scorecard_v1.json]
+    gates: [Pre-req]
+    done: Schema completo conforme Cap.2B3
+    evidencias: jsonschema validation pass
+    ace_context:
+      spec_refs: [Capitulo 2/Bloco 3.md]
+      resumo: Schema scorecard completo
+
+  - id: S42-SCH-003
+    wave: W0
+    area: schemas
+    descricao: Criar JSON Schema schemas/run_manifest_v1.json validando RunManifest com todos campos lineage
+    arquivos: [schemas/run_manifest_v1.json]
+    gates: [Pre-req]
+    done: Todos campos lineage conforme Cap.6B2
+    evidencias: jsonschema validation pass
+    ace_context:
+      spec_refs: [Capitulo 6/Bloco 2.md]
+      resumo: Schema manifest/lineage
+
+  # ============================================
+  # W1 - MAC Simulate (22 tasks)
+  # ============================================
+
+  # Engine Core
+  - id: S42-BE-010
+    wave: W1
+    area: backend
+    descricao: Implementar MacEngine.__init__() com carregamento de policy, params, mode configs
+    arquivos: [app/mac/engine.py]
+    gates: [G30]
+    done: Engine inicializa sem erros; configs carregadas
+    evidencias: tests/mac/test_engine.py
+    ace_context:
+      spec_refs: [Capitulo 3/Bloco 1.md]
+      resumo: Inicializacao MAC engine
+
+  - id: S42-BE-011
+    wave: W1
+    area: backend
+    descricao: Implementar MacEngine.evaluate() com calculo de costs (type_i, type_ii, change, context, total) usando weights da policy
+    arquivos: [app/mac/engine.py]
+    gates: [G30]
+    done: Costs calculados corretamente; formula documentada
+    evidencias: tests/mac/test_engine.py — 20+ testes
+    ace_context:
+      spec_refs: [Capitulo 3/Bloco 1.md]
+      resumo: Core do motor MAC
+
+  - id: S42-BE-012
+    wave: W1
+    area: backend
+    descricao: Implementar MacEngine.apply_hard_caps() retornando {blocked:bool, reason:str, cap_id:str, domain:str}
+    arquivos: [app/mac/engine.py]
+    gates: [G30]
+    done: Hard caps bloqueiam acoes proibidas
+    evidencias: tests/mac/test_engine.py — 5+ testes de hard caps
+    ace_context:
+      spec_refs: [Capitulo 3/Bloco 2.md]
+      resumo: Hard caps enforcement
+
+  - id: S42-BE-013
+    wave: W1
+    area: backend
+    descricao: Implementar MacEngine.apply_hysteresis() com fator configuravel e window temporal
+    arquivos: [app/mac/engine.py]
+    gates: [G30]
+    done: Hysteresis ajusta thresholds
+    evidencias: tests/mac/test_engine.py — 5+ testes de hysteresis
+    ace_context:
+      spec_refs: [Capitulo 3/Bloco 2.md]
+      resumo: Hysteresis para estabilidade
+
+  - id: S42-BE-014
+    wave: W1
+    area: backend
+    descricao: Implementar MacEngine.calculate_action_probabilities() para temperature > 0
+    arquivos: [app/mac/engine.py]
+    gates: [G30]
+    done: Distribuicao soma 1.0; softmax aplicado
+    evidencias: tests/mac/test_engine.py
+    ace_context:
+      spec_refs: [Capitulo 3/Bloco 2.md]
+      resumo: Probabilidades quando T>0
+
+  # Simulation Core
+  - id: S42-BE-015
+    wave: W1
+    area: backend
+    descricao: Implementar simulate() dry-run que NUNCA muta TruthState; assertion explicita
+    arquivos: [app/mac/simulation.py]
+    gates: [G30]
+    done: Teste com mock TruthState; antes == depois
+    evidencias: tests/mac/test_simulation.py — assertion TruthState
+    ace_context:
+      spec_refs: [Capitulo 3/Bloco 1.md]
+      resumo: INV_S42_SIM_01 obrigatorio
+
+  - id: S42-BE-016
+    wave: W1
+    area: backend
+    descricao: |
+      Implementar determinismo com seed quando T=0:
+      random.seed(seed), ordenacao deterministica de todas operacoes
+    arquivos: [app/mac/simulation.py]
+    gates: [G30]
+    done: 100 execucoes identicas byte-a-byte
+    evidencias: tests/mac/test_replay_determinism.py — loop de 100
+    ace_context:
+      spec_refs: [Capitulo 6/Bloco 2.md]
+      resumo: INV_S42_DET_01 obrigatorio
+
+  - id: S42-BE-017
+    wave: W1
+    area: backend
+    descricao: Implementar simulate() gerando RunManifest completo automaticamente
+    arquivos: [app/mac/simulation.py]
+    gates: [G30]
+    done: Manifest com todos campos preenchidos; hash gerado
+    evidencias: tests/mac/test_simulation.py
+    ace_context:
+      spec_refs: [Capitulo 6/Bloco 2.md]
+      resumo: Manifest automatico
+
+  - id: S42-BE-018
+    wave: W1
+    area: backend
+    descricao: Implementar override de modo (NORMAL/ENDURECIDO/EMERGENCIA) com registro em notes[]
+    arquivos: [app/mac/simulation.py]
+    gates: [G30]
+    done: notes[] contem mode_override; params ajustados
+    evidencias: tests/mac/test_simulation.py — 3 testes (um por modo)
+    ace_context:
+      spec_refs: [Capitulo 3/Bloco 2.md]
+      resumo: Override de modo
+
+  - id: S42-BE-019
+    wave: W1
+    area: backend
+    descricao: Implementar override de sinais com provenance registrada
+    arquivos: [app/mac/simulation.py]
+    gates: [G30]
+    done: provenance contem signal_override; sinais originais preservados
+    evidencias: tests/mac/test_simulation.py — 5+ testes
+    ace_context:
+      spec_refs: [Capitulo 3/Bloco 2.md]
+      resumo: Override de sinais
+
+  - id: S42-BE-020
+    wave: W1
+    area: backend
+    descricao: Implementar replay_token generation (hash deterministico de inputs)
+    arquivos: [app/mac/simulation.py]
+    gates: [G30]
+    done: replay_token reproduzivel; mesmo input = mesmo token
+    evidencias: tests/mac/test_simulation.py
+    ace_context:
+      spec_refs: [Capitulo 6/Bloco 2.md]
+      resumo: Replay token
+
+  # Signals Snapshot
+  - id: S42-BE-021
+    wave: W1
+    area: backend
+    descricao: Implementar SignalsSnapshot.capture() capturando mqv, tds, cvi, ethical, mi com timestamp
+    arquivos: [app/mac/signals_snapshot.py]
+    gates: [G30]
+    done: Snapshot timestampado; todos sinais capturados
+    evidencias: tests/mac/test_signals_snapshot.py
+    ace_context:
+      spec_refs: [Capitulo 1/Bloco 2.md]
+      resumo: Captura de sinais
+
+  - id: S42-BE-022
+    wave: W1
+    area: backend
+    descricao: Implementar SignalsSnapshot.replay() retornando exatamente mesmos sinais
+    arquivos: [app/mac/signals_snapshot.py]
+    gates: [G30]
+    done: Round-trip identico
+    evidencias: tests/mac/test_signals_snapshot.py
+    ace_context:
+      spec_refs: [Capitulo 6/Bloco 2.md]
+      resumo: Replay de sinais
+
+  - id: S42-BE-023
+    wave: W1
+    area: backend
+    descricao: Implementar SignalsSnapshot.validate() verificando freshness e integridade
+    arquivos: [app/mac/signals_snapshot.py]
+    gates: [G30]
+    done: Rejeita snapshots expirados
+    evidencias: tests/mac/test_signals_snapshot.py
+    ace_context:
+      spec_refs: [Capitulo 6/Bloco 2.md]
+      resumo: Validacao de snapshot
+
+  # APIs W1
+  - id: S42-API-001
+    wave: W1
+    area: backend
+    descricao: |
+      Criar rota POST /api/v1/mac/simulate com:
+      request{allegation_id,candidate_transition,options{mode,signals,temperature,params}}
+      response completa MacSimulation
+    arquivos: [app/api/mac_routes.py]
+    gates: [G30]
+    done: Response com todos campos MacSimulation
+    evidencias: tests/api/test_mac_routes.py
+    ace_context:
+      spec_refs: [Capitulo 3/Bloco 2.md]
+      resumo: API simulacao unitaria
+
+  - id: S42-API-002
+    wave: W1
+    area: backend
+    descricao: Criar rota GET /api/v1/mac/simulations/{id} incluindo manifest e exposure_state
+    arquivos: [app/api/mac_routes.py]
+    gates: [G30]
+    done: Manifest presente; exposure_state incluido
+    evidencias: tests/api/test_mac_routes.py
+    ace_context:
+      spec_refs: [Capitulo 3/Bloco 2.md]
+      resumo: Detalhe simulacao
+
+  - id: S42-API-003
+    wave: W1
+    area: backend
+    descricao: |
+      Criar rota GET /api/v1/mac/simulations com paginacao,
+      filtros (domain,policy_version,created_after,created_before,status)
+    arquivos: [app/api/mac_routes.py]
+    gates: [G30]
+    done: Filtros funcionais; paginacao correta
+    evidencias: tests/api/test_mac_routes.py
+    ace_context:
+      spec_refs: [Capitulo 3/Bloco 2.md]
+      resumo: Lista simulacoes
+
+  - id: S42-API-004
+    wave: W1
+    area: backend
+    descricao: Criar rota GET /api/v1/mac/parameters retornando params vigentes com version e hash
+    arquivos: [app/api/mac_routes.py]
+    gates: [G30]
+    done: Version e hash presentes
+    evidencias: tests/api/test_mac_routes.py
+    ace_context:
+      spec_refs: [Capitulo 3/Bloco 2.md]
+      resumo: Params vigentes
+
+  - id: S42-API-005
+    wave: W1
+    area: backend
+    descricao: Criar rota GET /api/v1/mac/mode retornando {mode, since, reason, can_override}
+    arquivos: [app/api/mac_routes.py]
+    gates: [G30]
+    done: Modo atual com metadata
+    evidencias: tests/api/test_mac_routes.py
+    ace_context:
+      spec_refs: [Capitulo 3/Bloco 2.md]
+      resumo: Modo atual
+
+  - id: S42-API-006
+    wave: W1
+    area: backend
+    descricao: Criar rota GET /api/v1/mac/decisions/{id} para buscar decisao real (producao) com lineage
+    arquivos: [app/api/mac_routes.py]
+    gates: [G30]
+    done: Decisao com lineage completo
+    evidencias: tests/api/test_mac_routes.py
+    ace_context:
+      spec_refs: [Capitulo 3/Bloco 2.md]
+      resumo: Buscar decisao
+
+  - id: S42-API-007
+    wave: W1
+    area: backend
+    descricao: Criar rota GET /api/v1/mac/decisions listagem paginada com filtros (domain, mode, action)
+    arquivos: [app/api/mac_routes.py]
+    gates: [G30]
+    done: Filtros por domain, mode, action funcionais
+    evidencias: tests/api/test_mac_routes.py
+    ace_context:
+      spec_refs: [Capitulo 3/Bloco 2.md]
+      resumo: Lista decisoes
+
+  # Testes W1
+  - id: S42-TST-001
+    wave: W1
+    area: testes
+    descricao: "Criar testes de performance: p50<200ms, p95<500ms, p99<2s com T=0"
+    arquivos: [tests/mac/test_simulate_perf.py]
+    gates: [G30]
+    done: pytest-benchmark pass; targets atingidos
+    evidencias: Relatorio benchmark
+    ace_context:
+      spec_refs: [Capitulo 2/Bloco 2.md]
+      resumo: Targets MAC Anexo D
+
+  - id: S42-TST-002
+    wave: W1
+    area: testes
+    descricao: "Criar testes de replay deterministico: 100 replays, diff outputs = 0"
+    arquivos: [tests/mac/test_replay_determinism.py]
+    gates: [G30]
+    done: 100/100 identicos
+    evidencias: Relatorio de replay
+    ace_context:
+      spec_refs: [Capitulo 6/Bloco 2.md]
+      resumo: Determinismo garantido
+
+  # ============================================
+  # W2 - MAC Batch (18 tasks)
+  # ============================================
+
+  # Batch Runner
+  - id: S42-BE-030
+    wave: W2
+    area: backend
+    descricao: Implementar BatchRunner.run() executando N simulacoes com paralelismo configuravel
+    arquivos: [app/mac/batch_runner.py]
+    gates: [G31]
+    done: Paralelismo funcional; progress callback
+    evidencias: tests/mac/test_batch_runner.py
+    ace_context:
+      spec_refs: [Capitulo 3/Bloco 1.md]
+      resumo: Runner de batch
+
+  - id: S42-BE-031
+    wave: W2
+    area: backend
+    descricao: "Implementar estados de lifecycle: queued -> running -> succeeded/failed/canceled"
+    arquivos: [app/mac/batch_runner.py]
+    gates: [G31]
+    done: Transicoes corretas; estados mutuamente exclusivos
+    evidencias: tests/mac/test_batch_runner.py
+    ace_context:
+      spec_refs: [Capitulo 8/Bloco 2.md]
+      resumo: Estados de batch
+
+  - id: S42-BE-032
+    wave: W2
+    area: backend
+    descricao: Implementar BatchRunner.cancel() com graceful shutdown e registro de cancel_reason
+    arquivos: [app/mac/batch_runner.py]
+    gates: [G31]
+    done: Cancel para execucao; reason registrado
+    evidencias: tests/mac/test_batch_runner.py
+    ace_context:
+      spec_refs: [Capitulo 8/Bloco 2.md]
+      resumo: Cancel de batch
+
+  - id: S42-BE-033
+    wave: W2
+    area: backend
+    descricao: Implementar BatchRunner.get_progress() retornando {percent,current_phase,estimated_remaining_seconds,partial_metrics}
+    arquivos: [app/mac/batch_runner.py]
+    gates: [G31]
+    done: Progress tracking funcional
+    evidencias: tests/mac/test_batch_runner.py
+    ace_context:
+      spec_refs: [Capitulo 8/Bloco 2.md]
+      resumo: Progress tracking
+
+  - id: S42-BE-034
+    wave: W2
+    area: backend
+    descricao: Implementar streaming de logs resumidos (sem dados sensiveis) via SSE ou WebSocket
+    arquivos: [app/mac/batch_runner.py]
+    gates: [G31]
+    done: Stream funcional; PII removido
+    evidencias: tests/mac/test_batch_runner.py
+    ace_context:
+      spec_refs: [Capitulo 8/Bloco 2.md]
+      resumo: Streaming de progress
+
+  # Dataset e Comparacao
+  - id: S42-BE-035
+    wave: W2
+    area: backend
+    descricao: Implementar DatasetLoader com validacao contra schema, verificacao de hash, suporte a slices
+    arquivos: [app/mac/datasets.py]
+    gates: [G31]
+    done: Rejeita datasets invalidos; hash verificado
+    evidencias: tests/mac/test_datasets.py
+    ace_context:
+      spec_refs: [Capitulo 6/Bloco 2.md]
+      resumo: Carregar datasets
+
+  - id: S42-BE-036
+    wave: W2
+    area: backend
+    descricao: Implementar ScenarioComparator identificando flip_set[], top_regressions[10], top_improvements[10], delta_metrics{}
+    arquivos: [app/mac/comparator.py]
+    gates: [G31]
+    done: Delta views completos
+    evidencias: tests/mac/test_comparator.py
+    ace_context:
+      spec_refs: [Capitulo 6/Bloco 2.md]
+      resumo: Baseline vs candidate
+
+  - id: S42-BE-037
+    wave: W2
+    area: backend
+    descricao: |
+      Implementar ScorecardGenerator com TODOS campos obrigatorios (Cap.2B3):
+      sprint, gate, status, commit, timestamp_utc, inputs{}, metrics{}, targets{},
+      violations[], evidence_paths[], limitations[]
+    arquivos: [app/mac/scorecard.py]
+    gates: [G31]
+    done: Scorecard completo conforme Cap.2B3
+    evidencias: tests/mac/test_scorecard.py
+    ace_context:
+      spec_refs: [Capitulo 2/Bloco 3.md]
+      resumo: Scorecard completo
+
+  - id: S42-BE-038
+    wave: W2
+    area: backend
+    descricao: |
+      Implementar verificacao de targets MAC Anexo D:
+      accuracy_gold>=95%, attack_detection>=95% (global), >=98% (temporal), >=99% (reversal), replay=100%
+    arquivos: [app/mac/scorecard.py]
+    gates: [G31]
+    done: Targets verificados; violations geradas quando falha
+    evidencias: tests/mac/test_scorecard.py
+    ace_context:
+      spec_refs: [Capitulo 2/Bloco 2.md]
+      resumo: Targets MAC Anexo D
+
+  # Persistencia
+  - id: S42-BE-039
+    wave: W2
+    area: backend
+    descricao: Implementar MacBatchRepository.create() persistindo batch run com manifest
+    arquivos: [app/mac/repository.py]
+    gates: [G31]
+    done: Batch persistido com manifest
+    evidencias: tests/mac/test_repository.py
+    ace_context:
+      spec_refs: [Capitulo 3/Bloco 2.md]
+      resumo: Persistir batch
+
+  - id: S42-BE-040
+    wave: W2
+    area: backend
+    descricao: Implementar MacBatchRepository.update_status() para transicoes de estado
+    arquivos: [app/mac/repository.py]
+    gates: [G31]
+    done: Status atualizado atomicamente
+    evidencias: tests/mac/test_repository.py
+    ace_context:
+      spec_refs: [Capitulo 3/Bloco 2.md]
+      resumo: Update status
+
+  - id: S42-BE-041
+    wave: W2
+    area: backend
+    descricao: Implementar MacBatchRepository.get_results() retornando scorecard e evidencias
+    arquivos: [app/mac/repository.py]
+    gates: [G31]
+    done: Resultados completos com scorecard
+    evidencias: tests/mac/test_repository.py
+    ace_context:
+      spec_refs: [Capitulo 3/Bloco 2.md]
+      resumo: Get results
+
+  # APIs W2
+  - id: S42-API-010
+    wave: W2
+    area: backend
+    descricao: Criar rota POST /api/v1/mac/simulations/batch iniciando batch async
+    arquivos: [app/api/mac_routes.py]
+    gates: [G31]
+    done: Retorna batch_run_id; status 202
+    evidencias: tests/api/test_mac_routes.py
+    ace_context:
+      spec_refs: [Capitulo 3/Bloco 2.md]
+      resumo: Iniciar batch
+
+  - id: S42-API-011
+    wave: W2
+    area: backend
+    descricao: Criar rota GET /api/v1/mac/simulations/batch/{id} com status, progress, scorecard, flip_set
+    arquivos: [app/api/mac_routes.py]
+    gates: [G31]
+    done: Todos campos presentes
+    evidencias: tests/api/test_mac_routes.py
+    ace_context:
+      spec_refs: [Capitulo 3/Bloco 2.md]
+      resumo: Status de batch
+
+  - id: S42-API-012
+    wave: W2
+    area: backend
+    descricao: Criar rota GET /api/v1/mac/simulations/batch listagem paginada
+    arquivos: [app/api/mac_routes.py]
+    gates: [G31]
+    done: Paginacao funcional
+    evidencias: tests/api/test_mac_routes.py
+    ace_context:
+      spec_refs: [Capitulo 3/Bloco 2.md]
+      resumo: Lista batches
+
+  - id: S42-API-013
+    wave: W2
+    area: backend
+    descricao: Criar rota POST /api/v1/mac/simulations/batch/{id}/cancel para cancelamento
+    arquivos: [app/api/mac_routes.py]
+    gates: [G31]
+    done: Cancel funcional; idempotente
+    evidencias: tests/api/test_mac_routes.py
+    ace_context:
+      spec_refs: [Capitulo 8/Bloco 2.md]
+      resumo: Cancel endpoint
+
+  - id: S42-API-014
+    wave: W2
+    area: backend
+    descricao: Criar rota GET /api/v1/mac/simulations/batch/{id}/stream para SSE de progress
+    arquivos: [app/api/mac_routes.py]
+    gates: [G31]
+    done: SSE streaming funcional
+    evidencias: tests/api/test_mac_routes.py
+    ace_context:
+      spec_refs: [Capitulo 8/Bloco 2.md]
+      resumo: Stream endpoint
+
+  # Testes W2
+  - id: S42-TST-010
+    wave: W2
+    area: testes
+    descricao: Criar testes de batch com gold dataset (accuracy>=95%)
+    arquivos: [tests/mac/test_batch_gold.py]
+    gates: [G31]
+    done: Scorecard gerado; accuracy>=95%
+    evidencias: Scorecard gerado
+    ace_context:
+      spec_refs: [Capitulo 6/Bloco 2.md]
+      resumo: Teste gold dataset
+
+  - id: S42-TST-011
+    wave: W2
+    area: testes
+    descricao: Criar testes de batch determinismo (mesmo batch, mesmo resultado)
+    arquivos: [tests/mac/test_batch_determinism.py]
+    gates: [G31]
+    done: Batch deterministico; 10 execucoes identicas
+    evidencias: Relatorio
+    ace_context:
+      spec_refs: [Capitulo 6/Bloco 2.md]
+      resumo: Batch determinism
+
+  # ============================================
+  # W3 - Plano Adiabatico (16 tasks)
+  # ============================================
+
+  # Validador
+  - id: S42-BE-050
+    wave: W3
+    area: backend
+    descricao: |
+      Implementar AdiabaticValidator.validate() verificando:
+      derivative<=max_per_day (default 0.20), phases em ordem, durations>0, rollback definido
+    arquivos: [app/mac/adiabatic.py]
+    gates: [G32]
+    done: Rejeita planos invalidos
+    evidencias: tests/mac/test_adiabatic_validation.py
+    ace_context:
+      spec_refs: [Capitulo 6/Bloco 3.md]
+      resumo: Validacao de derivada
+
+  - id: S42-BE-051
+    wave: W3
+    area: backend
+    descricao: Implementar validacao de constraints por dominio carregando de configs/mac/domains/{domain}.yaml
+    arquivos: [app/mac/adiabatic.py]
+    gates: [G32]
+    done: Domain overrides aplicados
+    evidencias: tests/mac/test_adiabatic_validation.py
+    ace_context:
+      spec_refs: [Capitulo 6/Bloco 3.md]
+      resumo: Constraints por dominio
+
+  - id: S42-BE-052
+    wave: W3
+    area: backend
+    descricao: Implementar validacao de rollback executavel (versao referenciada existe, delta inverso valido)
+    arquivos: [app/mac/adiabatic.py]
+    gates: [G32]
+    done: Rollback validado
+    evidencias: tests/mac/test_adiabatic_validation.py
+    ace_context:
+      spec_refs: [Capitulo 6/Bloco 3.md]
+      resumo: Rollback executavel
+
+  - id: S42-BE-053
+    wave: W3
+    area: backend
+    descricao: |
+      Implementar validacao de monotonicidade quando aplicavel
+      (nao reduzir exigencias em dominios sensiveis sem fase intermediaria)
+    arquivos: [app/mac/adiabatic.py]
+    gates: [G32]
+    done: Monotonicidade verificada
+    evidencias: tests/mac/test_adiabatic_validation.py
+    ace_context:
+      spec_refs: [Capitulo 6/Bloco 3.md]
+      resumo: Monotonicidade
+
+  # Simulador
+  - id: S42-BE-054
+    wave: W3
+    area: backend
+    descricao: Implementar AdiabaticSimulator.simulate_phase() retornando {promotions,demotions,reversions,metrics_delta,flip_set[]}
+    arquivos: [app/mac/adiabatic.py]
+    gates: [G32]
+    done: Metricas por fase
+    evidencias: tests/mac/test_adiabatic_simulation.py
+    ace_context:
+      spec_refs: [Capitulo 6/Bloco 3.md]
+      resumo: Simulacao por fase
+
+  - id: S42-BE-055
+    wave: W3
+    area: backend
+    descricao: |
+      Implementar AdiabaticSimulator.simulate_plan() gerando:
+      timeline[{phase_id,metrics,cumulative_impact,flip_set}], stability_score, high_risk_phases[]
+    arquivos: [app/mac/adiabatic.py]
+    gates: [G32]
+    done: Timeline completa
+    evidencias: tests/mac/test_adiabatic_simulation.py
+    ace_context:
+      spec_refs: [Capitulo 6/Bloco 3.md]
+      resumo: Simulacao plano completo
+
+  - id: S42-BE-056
+    wave: W3
+    area: backend
+    descricao: Implementar calculo de reversion_risk por fase e sensitivity_by_domain
+    arquivos: [app/mac/adiabatic.py]
+    gates: [G32]
+    done: Riscos calculados
+    evidencias: tests/mac/test_adiabatic_simulation.py
+    ace_context:
+      spec_refs: [Capitulo 6/Bloco 3.md]
+      resumo: Risco de reversao
+
+  - id: S42-BE-057
+    wave: W3
+    area: backend
+    descricao: Implementar AdiabaticSimulator.simulate_rollback() para preview de rollback
+    arquivos: [app/mac/adiabatic.py]
+    gates: [G32]
+    done: Rollback simulavel
+    evidencias: tests/mac/test_adiabatic_simulation.py
+    ace_context:
+      spec_refs: [Capitulo 6/Bloco 3.md]
+      resumo: Preview de rollback
+
+  # Persistencia
+  - id: S42-BE-058
+    wave: W3
+    area: backend
+    descricao: Implementar AdiabaticPlanRepository com CRUD e versionamento
+    arquivos: [app/mac/adiabatic_repository.py]
+    gates: [G32]
+    done: CRUD funcional; versoes preservadas
+    evidencias: tests/mac/test_adiabatic_repository.py
+    ace_context:
+      spec_refs: [Capitulo 6/Bloco 3.md]
+      resumo: Repositorio planos
+
+  # APIs W3
+  - id: S42-API-020
+    wave: W3
+    area: backend
+    descricao: Criar rota POST /api/v1/mac/adiabatic-plans criando plano
+    arquivos: [app/api/mac_routes.py]
+    gates: [G32]
+    done: Plano criado; validation_result incluido
+    evidencias: tests/api/test_mac_routes.py
+    ace_context:
+      spec_refs: [Capitulo 3/Bloco 2.md]
+      resumo: Criar plano
+
+  - id: S42-API-021
+    wave: W3
+    area: backend
+    descricao: Criar rota GET /api/v1/mac/adiabatic-plans listagem com filtros
+    arquivos: [app/api/mac_routes.py]
+    gates: [G32]
+    done: Listagem paginada; filtros (scope, status)
+    evidencias: tests/api/test_mac_routes.py
+    ace_context:
+      spec_refs: [Capitulo 3/Bloco 2.md]
+      resumo: Lista planos
+
+  - id: S42-API-022
+    wave: W3
+    area: backend
+    descricao: Criar rota GET /api/v1/mac/adiabatic-plans/{id} com plano completo
+    arquivos: [app/api/mac_routes.py]
+    gates: [G32]
+    done: Plano detalhado com fases
+    evidencias: tests/api/test_mac_routes.py
+    ace_context:
+      spec_refs: [Capitulo 3/Bloco 2.md]
+      resumo: Detalhe plano
+
+  - id: S42-API-023
+    wave: W3
+    area: backend
+    descricao: Criar rota POST /api/v1/mac/adiabatic-plans/{id}/simulate simulando plano
+    arquivos: [app/api/mac_routes.py]
+    gates: [G32]
+    done: Timeline retornada
+    evidencias: tests/api/test_mac_routes.py
+    ace_context:
+      spec_refs: [Capitulo 3/Bloco 2.md]
+      resumo: Simular plano
+
+  - id: S42-API-024
+    wave: W3
+    area: backend
+    descricao: Criar rota POST /api/v1/mac/adiabatic-plans/{id}/validate validando plano
+    arquivos: [app/api/mac_routes.py]
+    gates: [G32]
+    done: Validation result {valid,errors[],warnings[]}
+    evidencias: tests/api/test_mac_routes.py
+    ace_context:
+      spec_refs: [Capitulo 3/Bloco 2.md]
+      resumo: Validar plano
+
+  - id: S42-API-025
+    wave: W3
+    area: backend
+    descricao: Criar rota POST /api/v1/mac/adiabatic-plans/{id}/rollback-preview preview de rollback
+    arquivos: [app/api/mac_routes.py]
+    gates: [G32]
+    done: Rollback preview
+    evidencias: tests/api/test_mac_routes.py
+    ace_context:
+      spec_refs: [Capitulo 3/Bloco 2.md]
+      resumo: Preview rollback
+
+  # Testes W3
+  - id: S42-TST-030
+    wave: W3
+    area: testes
+    descricao: "Criar testes de validacao: 10+ planos validos, 10+ invalidos"
+    arquivos: [tests/mac/test_adiabatic_validation.py]
+    gates: [G32]
+    done: Cobertura validacao
+    evidencias: pytest pass
+    ace_context:
+      spec_refs: [Capitulo 6/Bloco 3.md]
+      resumo: Testes validacao
+
+  # ============================================
+  # W4 - MI/Exp Exposure (20 tasks)
+  # ============================================
+
+  # Modulo MI
+  - id: S42-BE-060
+    wave: W4
+    area: backend
+    descricao: Criar modulo app/mi/ com estrutura base
+    arquivos:
+      - app/mi/__init__.py
+      - app/mi/models.py
+      - app/mi/service.py
+      - app/mi/exceptions.py
+    gates: [G33]
+    done: Modulo importavel
+    evidencias: python -c "from app.mi import service"
+    ace_context:
+      spec_refs: [Capitulo 6/Bloco 4.md]
+      resumo: Estrutura MI
+
+  - id: S42-BE-061
+    wave: W4
+    area: backend
+    descricao: |
+      Implementar AntibodySummary com campos:
+      id, type, short_reason, effect, impact_tags[], provenance, status, redaction_level
+    arquivos: [app/mi/models.py]
+    gates: [G33]
+    done: Sumario com redaction
+    evidencias: tests/mi/test_models.py
+    ace_context:
+      spec_refs: [Capitulo 3/Bloco 2.md]
+      resumo: Antibody summary
+
+  - id: S42-BE-062
+    wave: W4
+    area: backend
+    descricao: Implementar ImmunityPatternSummary com campos similares
+    arquivos: [app/mi/models.py]
+    gates: [G33]
+    done: Pattern summary
+    evidencias: tests/mi/test_models.py
+    ace_context:
+      spec_refs: [Capitulo 3/Bloco 2.md]
+      resumo: Pattern summary
+
+  - id: S42-BE-063
+    wave: W4
+    area: backend
+    descricao: |
+      Implementar ExperienceSummary com anonimizacao:
+      claim_id_hash (NAO raw), outcome, time_window, aggregated_signals,
+      mode_changes[], lessons_summary, experience_source{derived,store}
+    arquivos: [app/mi/models.py]
+    gates: [G33]
+    done: Anonimizacao aplicada; claim_id_hash nao reversivel
+    evidencias: tests/mi/test_models.py
+    ace_context:
+      spec_refs: [Capitulo 6/Bloco 4.md]
+      resumo: Experience anonimizada
+
+  # RBAC e Redaction
+  - id: S42-BE-064
+    wave: W4
+    area: backend
+    descricao: |
+      Implementar RBAC com 3 niveis:
+      ops (ids+tipos), reviewer (detalhes parciais), council (completo, ainda redatado PII)
+    arquivos: [app/mi/rbac.py]
+    gates: [G33]
+    done: 3 roles configuradas
+    evidencias: tests/mi/test_rbac.py — 15+ testes
+    ace_context:
+      spec_refs: [Capitulo 6/Bloco 4.md]
+      resumo: RBAC 3 niveis
+
+  - id: S42-BE-065
+    wave: W4
+    area: backend
+    descricao: |
+      Implementar RedactionService.redact() removendo:
+      PII (nomes, emails, IPs), claim_text raw, source_urls sensiveis
+    arquivos: [app/mi/redaction.py]
+    gates: [G33]
+    done: PII removido; regex patterns completos
+    evidencias: tests/mi/test_redaction.py — 15+ testes
+    ace_context:
+      spec_refs: [Capitulo 6/Bloco 4.md]
+      resumo: Redaction service
+
+  - id: S42-BE-066
+    wave: W4
+    area: backend
+    descricao: "Implementar estados de resposta: redacted, not_authorized, not_available, available"
+    arquivos: [app/mi/service.py]
+    gates: [G33]
+    done: 4 estados distintos
+    evidencias: tests/mi/test_service.py
+    ace_context:
+      spec_refs: [Capitulo 3/Bloco 2.md]
+      resumo: 4 estados MI
+
+  - id: S42-BE-067
+    wave: W4
+    area: backend
+    descricao: |
+      Implementar AuditLogger registrando:
+      user_id, role, resource_type, resource_id, action, timestamp, ip_address, request_id
+    arquivos: [app/mi/audit.py]
+    gates: [G33]
+    done: Audit trail completo; log parseavel
+    evidencias: tests/mi/test_audit.py
+    ace_context:
+      spec_refs: [Capitulo 6/Bloco 4.md]
+      resumo: Audit logger
+
+  # Experience Derivation
+  - id: S42-BE-068
+    wave: W4
+    area: backend
+    descricao: |
+      Implementar ExperienceDeriver derivando experiencias de historico
+      quando ExperienceStore nao existe, marcando experience_source:derived
+    arquivos: [app/mi/experience_deriver.py]
+    gates: [G33]
+    done: Derivation funcional; source:derived marcado
+    evidencias: tests/mi/test_experience_deriver.py
+    ace_context:
+      spec_refs: [Capitulo 3/Bloco 2.md]
+      resumo: Experience derivation
+
+  - id: S42-BE-069
+    wave: W4
+    area: backend
+    descricao: Integrar com ExperienceRepository existente (app.truth.experiences)
+    arquivos: [app/mi/service.py]
+    gates: [G33]
+    done: Integracao funcionando
+    evidencias: tests/mi/test_service.py
+    ace_context:
+      spec_refs: [Capitulo 6/Bloco 4.md]
+      resumo: Integracao ExperienceRepository
+
+  # Integracao MAC
+  - id: S42-BE-070
+    wave: W4
+    area: backend
+    descricao: |
+      Integrar MI/Experiencias na resposta de simulacao:
+      mi_refs[], experience_refs[], exposure_state, mi_used:bool
+    arquivos: [app/mac/simulation.py]
+    gates: [G33]
+    done: Refs presentes na resposta
+    evidencias: tests/mac/test_simulation.py
+    ace_context:
+      spec_refs: [Capitulo 3/Bloco 2.md]
+      resumo: MI refs em simulacao
+
+  - id: S42-BE-071
+    wave: W4
+    area: backend
+    descricao: "Implementar logica de quando MI nao foi consultada: mi_used:false + reason"
+    arquivos: [app/mac/simulation.py]
+    gates: [G33]
+    done: Reason explicito quando mi_used:false
+    evidencias: tests/mac/test_simulation.py
+    ace_context:
+      spec_refs: [Capitulo 3/Bloco 2.md]
+      resumo: MI not used reason
+
+  # APIs W4
+  - id: S42-API-030
+    wave: W4
+    area: backend
+    descricao: Criar rota GET /api/v1/mi/patterns com RBAC, response varia por role
+    arquivos: [app/api/mi_routes.py]
+    gates: [G33]
+    done: RBAC aplicado; response diferente por role
+    evidencias: tests/api/test_mi_routes.py
+    ace_context:
+      spec_refs: [Capitulo 3/Bloco 2.md]
+      resumo: Lista patterns
+
+  - id: S42-API-031
+    wave: W4
+    area: backend
+    descricao: Criar rota GET /api/v1/mi/patterns/{id} com RBAC
+    arquivos: [app/api/mi_routes.py]
+    gates: [G33]
+    done: RBAC aplicado
+    evidencias: tests/api/test_mi_routes.py
+    ace_context:
+      spec_refs: [Capitulo 3/Bloco 2.md]
+      resumo: Detalhe pattern
+
+  - id: S42-API-032
+    wave: W4
+    area: backend
+    descricao: Criar rota GET /api/v1/mi/antibodies com RBAC
+    arquivos: [app/api/mi_routes.py]
+    gates: [G33]
+    done: RBAC aplicado
+    evidencias: tests/api/test_mi_routes.py
+    ace_context:
+      spec_refs: [Capitulo 3/Bloco 2.md]
+      resumo: Lista antibodies
+
+  - id: S42-API-033
+    wave: W4
+    area: backend
+    descricao: Criar rota GET /api/v1/mi/antibodies/{id} com RBAC
+    arquivos: [app/api/mi_routes.py]
+    gates: [G33]
+    done: RBAC aplicado
+    evidencias: tests/api/test_mi_routes.py
+    ace_context:
+      spec_refs: [Capitulo 3/Bloco 2.md]
+      resumo: Detalhe antibody
+
+  - id: S42-API-034
+    wave: W4
+    area: backend
+    descricao: |
+      Criar rota GET /api/v1/mi/analytics/health retornando:
+      {active,patterns_count,antibodies_count,last_update,coverage_domains[]}
+    arquivos: [app/api/mi_routes.py]
+    gates: [G33]
+    done: Health endpoint
+    evidencias: tests/api/test_mi_routes.py
+    ace_context:
+      spec_refs: [Capitulo 3/Bloco 2.md]
+      resumo: MI health
+
+  # Testes W4
+  - id: S42-TST-040
+    wave: W4
+    area: testes
+    descricao: "Criar testes RBAC exaustivos: 15+ testes (3 roles x 5 recursos)"
+    arquivos: [tests/mi/test_rbac.py]
+    gates: [G33]
+    done: Cobertura RBAC completa
+    evidencias: pytest pass; 15+ testes
+    ace_context:
+      spec_refs: [Capitulo 6/Bloco 4.md]
+      resumo: Testes RBAC
+
+  - id: S42-TST-041
+    wave: W4
+    area: testes
+    descricao: "Criar testes de redaction: 15+ testes garantindo PII nunca vaza"
+    arquivos: [tests/mi/test_redaction.py]
+    gates: [G33]
+    done: PII protegido; 15+ testes
+    evidencias: pytest pass
+    ace_context:
+      spec_refs: [Capitulo 6/Bloco 4.md]
+      resumo: Testes redaction
+
+  - id: S42-TST-042
+    wave: W4
+    area: testes
+    descricao: "Criar testes de audit: todo acesso logado, log parseavel"
+    arquivos: [tests/mi/test_audit.py]
+    gates: [G33]
+    done: Audit funcional
+    evidencias: pytest pass
+    ace_context:
+      spec_refs: [Capitulo 6/Bloco 4.md]
+      resumo: Testes audit
+
+  # ============================================
+  # W5 - Frontend P4 (32 tasks)
+  # ============================================
+
+  # Estrutura
+  - id: S42-FE-001
+    wave: W5
+    area: frontend
+    descricao: Criar modulo modules/mac/ com index.ts, routes.tsx, types.ts
+    arquivos: [frontend/inspectah-ui/src/modules/mac/]
+    gates: [G34]
+    done: Build passa; rotas registradas
+    evidencias: npm run build pass
+    ace_context:
+      spec_refs: [Capitulo 8/Bloco 1.md]
+      resumo: Estrutura FE
+
+  - id: S42-FE-002
+    wave: W5
+    area: frontend
+    descricao: Criar hooks useMacSimulation com loading, error, data, refetch, cancel
+    arquivos: [frontend/inspectah-ui/src/modules/mac/hooks/]
+    gates: [G34]
+    done: Hooks funcionais
+    evidencias: tests/mac/hooks
+    ace_context:
+      spec_refs: [Capitulo 8/Bloco 1.md]
+      resumo: Hooks simulation
+
+  - id: S42-FE-003
+    wave: W5
+    area: frontend
+    descricao: Criar hooks useMacBatch com streaming de progress
+    arquivos: [frontend/inspectah-ui/src/modules/mac/hooks/]
+    gates: [G34]
+    done: Streaming funcional
+    evidencias: tests/mac/hooks
+    ace_context:
+      spec_refs: [Capitulo 8/Bloco 2.md]
+      resumo: Hooks batch
+
+  - id: S42-FE-004
+    wave: W5
+    area: frontend
+    descricao: Criar tipos TypeScript para todos contratos MAC/MI
+    arquivos: [frontend/inspectah-ui/src/modules/mac/types.ts]
+    gates: [G34]
+    done: Tipos completos
+    evidencias: tsc --noEmit pass
+    ace_context:
+      spec_refs: [Capitulo 8/Bloco 2.md]
+      resumo: Tipos TypeScript
+
+  # Paginas
+  - id: S42-FE-005
+    wave: W5
+    area: frontend
+    descricao: Criar SimulationLabPage com selecao de dominio, alegacao, modo, overrides, temperature
+    arquivos: [frontend/inspectah-ui/src/modules/mac/pages/SimulationLabPage.tsx]
+    gates: [G34]
+    done: Formulario funcional
+    evidencias: Smoke test
+    ace_context:
+      spec_refs: [Capitulo 8/Bloco 1.md]
+      resumo: Lab de simulacao
+
+  - id: S42-FE-006
+    wave: W5
+    area: frontend
+    descricao: Criar BatchSimulationsPage com lista paginada, status badges, progress
+    arquivos: [frontend/inspectah-ui/src/modules/mac/pages/BatchSimulationsPage.tsx]
+    gates: [G34]
+    done: Lista funcional
+    evidencias: Smoke test
+    ace_context:
+      spec_refs: [Capitulo 8/Bloco 1.md]
+      resumo: Batch page
+
+  - id: S42-FE-007
+    wave: W5
+    area: frontend
+    descricao: Criar BatchDetailPage com scorecard, flip_set, timeline
+    arquivos: [frontend/inspectah-ui/src/modules/mac/pages/BatchDetailPage.tsx]
+    gates: [G34]
+    done: Detalhe completo
+    evidencias: Smoke test
+    ace_context:
+      spec_refs: [Capitulo 8/Bloco 1.md]
+      resumo: Batch detail
+
+  - id: S42-FE-008
+    wave: W5
+    area: frontend
+    descricao: Criar AdiabaticPlanPage com timeline visual, phases, constraints
+    arquivos: [frontend/inspectah-ui/src/modules/mac/pages/AdiabaticPlanPage.tsx]
+    gates: [G34]
+    done: Plano visual
+    evidencias: Smoke test
+    ace_context:
+      spec_refs: [Capitulo 8/Bloco 1.md]
+      resumo: Plan page
+
+  # Componentes Core
+  - id: S42-FE-009
+    wave: W5
+    area: frontend
+    descricao: Criar SimulationForm com validacao, aviso de override, disable durante loading
+    arquivos: [frontend/inspectah-ui/src/modules/mac/components/SimulationForm.tsx]
+    gates: [G34]
+    done: Form validado
+    evidencias: Smoke test
+    ace_context:
+      spec_refs: [Capitulo 8/Bloco 1.md]
+      resumo: Form simulacao
+
+  - id: S42-FE-010
+    wave: W5
+    area: frontend
+    descricao: Criar SimulationResult exibindo recommended_action (badge), costs, signals, notes[], mi_refs[], experience_refs[]
+    arquivos: [frontend/inspectah-ui/src/modules/mac/components/SimulationResult.tsx]
+    gates: [G34]
+    done: Resultado completo
+    evidencias: Smoke test
+    ace_context:
+      spec_refs: [Capitulo 8/Bloco 1.md]
+      resumo: Resultado simulacao
+
+  - id: S42-FE-011
+    wave: W5
+    area: frontend
+    descricao: Criar ScorecardView com accuracy_gold, attack_detection (por tipo), replay_concordance, cores conforme target
+    arquivos: [frontend/inspectah-ui/src/modules/mac/components/ScorecardView.tsx]
+    gates: [G34]
+    done: Cores por target
+    evidencias: Smoke test
+    ace_context:
+      spec_refs: [Capitulo 8/Bloco 1.md]
+      resumo: Scorecard view
+
+  - id: S42-FE-012
+    wave: W5
+    area: frontend
+    descricao: |
+      Criar FlipSetTable com virtualizacao (windowing), paginacao, filtros,
+      busca com debounce, ordenacao deterministica
+    arquivos: [frontend/inspectah-ui/src/modules/mac/components/FlipSetTable.tsx]
+    gates: [G34]
+    done: Virtualizacao ativa
+    evidencias: Smoke test; performance check
+    ace_context:
+      spec_refs: [Capitulo 8/Bloco 3.md]
+      resumo: Flip set com virtualization
+
+  - id: S42-FE-013
+    wave: W5
+    area: frontend
+    descricao: Criar TimelineChart (recharts) com eixo X=fases, Y=metricas, tooltips, highlight high_risk
+    arquivos: [frontend/inspectah-ui/src/modules/mac/components/TimelineChart.tsx]
+    gates: [G34]
+    done: Chart funcional
+    evidencias: Smoke test
+    ace_context:
+      spec_refs: [Capitulo 8/Bloco 1.md]
+      resumo: Timeline chart
+
+  - id: S42-FE-014
+    wave: W5
+    area: frontend
+    descricao: Criar PhaseStepper visual com highlight em high_risk, click abre detalhe
+    arquivos: [frontend/inspectah-ui/src/modules/mac/components/PhaseStepper.tsx]
+    gates: [G34]
+    done: Stepper funcional
+    evidencias: Smoke test
+    ace_context:
+      spec_refs: [Capitulo 8/Bloco 1.md]
+      resumo: Phase stepper
+
+  # Disclaimers e Estados
+  - id: S42-FE-015
+    wave: W5
+    area: frontend
+    descricao: "Criar SimulationDisclaimer banner amarelo: 'SIMULACAO — nao altera producao. Resultados sao hipoteticos.' sempre visivel"
+    arquivos: [frontend/inspectah-ui/src/modules/mac/components/SimulationDisclaimer.tsx]
+    gates: [G34]
+    done: Banner visivel; role=alert
+    evidencias: Smoke test; visual check
+    ace_context:
+      spec_refs: [Capitulo 9/Bloco 1.md]
+      resumo: R1 mitigacao — disclaimer
+
+  - id: S42-FE-016
+    wave: W5
+    area: frontend
+    descricao: |
+      Criar MIExposureState com 4 estados visuais distintos:
+      available (verde), redacted (cinza), not_authorized (laranja), not_available (vermelho)
+    arquivos: [frontend/inspectah-ui/src/modules/mac/components/MIExposureState.tsx]
+    gates: [G34]
+    done: 4 estados visuais
+    evidencias: Smoke test
+    ace_context:
+      spec_refs: [Capitulo 9/Bloco 3.md]
+      resumo: Estados MI
+
+  - id: S42-FE-017
+    wave: W5
+    area: frontend
+    descricao: Criar LimitationsWarning exibindo limitations[] do scorecard
+    arquivos: [frontend/inspectah-ui/src/modules/mac/components/LimitationsWarning.tsx]
+    gates: [G34]
+    done: Limitacoes visiveis
+    evidencias: Smoke test
+    ace_context:
+      spec_refs: [Capitulo 9/Bloco 1.md]
+      resumo: Limitacoes visiveis
+
+  # Provenance e Diff
+  - id: S42-FE-018
+    wave: W5
+    area: frontend
+    descricao: Criar ProvenanceFooter com policy_version, params_version, simulation_id, timestamp, commit, copy to clipboard
+    arquivos: [frontend/inspectah-ui/src/shared/components/ProvenanceFooter.tsx]
+    gates: [G34]
+    done: Provenance visivel; copy funcional
+    evidencias: Smoke test
+    ace_context:
+      spec_refs: [Capitulo 9/Bloco 1.md]
+      resumo: INV_S42_TRAIL_01 — show your work
+
+  - id: S42-FE-019
+    wave: W5
+    area: frontend
+    descricao: "Criar DiffView side-by-side: baseline vs candidate, highlight diferencas, collapse sections"
+    arquivos: [frontend/inspectah-ui/src/modules/mac/components/DiffView.tsx]
+    gates: [G34]
+    done: Diff funcional
+    evidencias: Smoke test
+    ace_context:
+      spec_refs: [Capitulo 9/Bloco 1.md]
+      resumo: Bret Victor diffs
+
+  - id: S42-FE-020
+    wave: W5
+    area: frontend
+    descricao: Criar ManifestViewer exibindo lineage completo do run
+    arquivos: [frontend/inspectah-ui/src/modules/mac/components/ManifestViewer.tsx]
+    gates: [G34]
+    done: Manifest visivel
+    evidencias: Smoke test
+    ace_context:
+      spec_refs: [Capitulo 6/Bloco 2.md]
+      resumo: Manifest viewer
+
+  # Integracao
+  - id: S42-FE-021
+    wave: W5
+    area: frontend
+    descricao: Integrar simulacao em FactCard com botao "Simular" abrindo drawer
+    arquivos: [frontend/inspectah-ui/src/modules/guardian/components/FactCard.tsx]
+    gates: [G34]
+    done: What-if funcional
+    evidencias: Smoke test
+    ace_context:
+      spec_refs: [Capitulo 8/Bloco 1.md]
+      resumo: What-if em FactCard
+
+  - id: S42-FE-022
+    wave: W5
+    area: frontend
+    descricao: Implementar cancelamento e retry de batch na UI
+    arquivos: [frontend/inspectah-ui/src/modules/mac/pages/BatchDetailPage.tsx]
+    gates: [G34]
+    done: Cancel/retry funcionais
+    evidencias: Smoke test
+    ace_context:
+      spec_refs: [Capitulo 8/Bloco 2.md]
+      resumo: Cancel/retry UI
+
+  # Estados e Resiliencia
+  - id: S42-FE-023
+    wave: W5
+    area: frontend
+    descricao: Criar LoadingState com skeleton e cancelamento quando aplicavel
+    arquivos: [frontend/inspectah-ui/src/modules/mac/components/LoadingState.tsx]
+    gates: [G34]
+    done: Skeleton funcional
+    evidencias: Smoke test
+    ace_context:
+      spec_refs: [Capitulo 9/Bloco 1.md]
+      resumo: Loading state
+
+  - id: S42-FE-024
+    wave: W5
+    area: frontend
+    descricao: Criar ErrorState com causa, run_id para debug, retry button
+    arquivos: [frontend/inspectah-ui/src/modules/mac/components/ErrorState.tsx]
+    gates: [G34]
+    done: Retry funcional
+    evidencias: Smoke test
+    ace_context:
+      spec_refs: [Capitulo 9/Bloco 1.md]
+      resumo: Error state
+
+  - id: S42-FE-025
+    wave: W5
+    area: frontend
+    descricao: Criar PartialState para batch em andamento com scorecard parcial
+    arquivos: [frontend/inspectah-ui/src/modules/mac/components/PartialState.tsx]
+    gates: [G34]
+    done: Partial visivel
+    evidencias: Smoke test
+    ace_context:
+      spec_refs: [Capitulo 9/Bloco 1.md]
+      resumo: Partial state
+
+  # UX e A11y
+  - id: S42-FE-026
+    wave: W5
+    area: frontend
+    descricao: "Implementar A11y: aria-labels, role=alert em disclaimers, focus management, contraste WCAG AA"
+    arquivos: [varios componentes]
+    gates: [G34]
+    done: npm run lint:a11y pass
+    evidencias: a11y lint pass
+    ace_context:
+      spec_refs: [Capitulo 9/Bloco 1.md]
+      resumo: Acessibilidade
+
+  - id: S42-UX-001
+    wave: W5
+    area: UX
+    descricao: |
+      Criar constants/copy.ts com copy PT-BR para todos estados e disclaimers
+      conforme Cap.9B3 (estados: redacted, not_authorized, not_available, available)
+    arquivos: [frontend/inspectah-ui/src/modules/mac/constants/copy.ts]
+    gates: [G34]
+    done: Copy completo; PT-BR
+    evidencias: Review de copy
+    ace_context:
+      spec_refs: [Capitulo 9/Bloco 3.md]
+      resumo: Copy PT-BR
+
+  - id: S42-UX-002
+    wave: W5
+    area: UX
+    descricao: "Criar constants/colors.ts com paleta: success=#22c55e, warning=#eab308, error=#ef4444, redacted=#6b7280"
+    arquivos: [frontend/inspectah-ui/src/modules/mac/constants/colors.ts]
+    gates: [G34]
+    done: Cores definidas
+    evidencias: Visual consistency check
+    ace_context:
+      spec_refs: [Capitulo 9/Bloco 1.md]
+      resumo: Paleta cores
+
+  # Testes W5
+  - id: S42-TST-050
+    wave: W5
+    area: testes
+    descricao: "Criar testes de componente (Vitest): cobertura >= 80%, 60+ testes"
+    arquivos: [frontend/inspectah-ui/src/__tests__/mac/]
+    gates: [G34]
+    done: Cobertura >=80%
+    evidencias: Relatorio cobertura
+    ace_context:
+      spec_refs: [Capitulo 8/Bloco 3.md]
+      resumo: Testes FE
+
+  - id: S42-TST-051
+    wave: W5
+    area: testes
+    descricao: Criar testes de estados MI (4 estados) em FE
+    arquivos: [frontend/inspectah-ui/src/__tests__/mac/test_mi_states.tsx]
+    gates: [G34]
+    done: 4 estados testados
+    evidencias: Testes pass
+    ace_context:
+      spec_refs: [Capitulo 8/Bloco 3.md]
+      resumo: Testes estados MI
+
+  - id: S42-TST-052
+    wave: W5
+    area: testes
+    descricao: Criar testes de diff view com payloads reais
+    arquivos: [frontend/inspectah-ui/src/__tests__/mac/test_diff_view.tsx]
+    gates: [G34]
+    done: Diff testado
+    evidencias: Testes pass
+    ace_context:
+      spec_refs: [Capitulo 8/Bloco 3.md]
+      resumo: Testes diff
+
+  - id: S42-TST-053
+    wave: W5
+    area: testes
+    descricao: Criar testes de degradacao com payloads grandes (smoke/perf)
+    arquivos: [frontend/inspectah-ui/src/__tests__/mac/test_large_payloads.tsx]
+    gates: [G34]
+    done: Perf smoke pass; render <3s
+    evidencias: Performance report
+    ace_context:
+      spec_refs: [Capitulo 8/Bloco 3.md]
+      resumo: Testes payloads grandes
+
+  - id: S42-TST-054
+    wave: W5
+    area: testes
+    descricao: "Criar testes E2E (Playwright): fluxo completo SimulationLab, disclaimer visivel"
+    arquivos: [frontend/inspectah-ui/playwright/mac.spec.ts]
+    gates: [G34]
+    done: E2E pass
+    evidencias: Playwright report
+    ace_context:
+      spec_refs: [Capitulo 8/Bloco 3.md]
+      resumo: Testes E2E
+
+  # ============================================
+  # W6 - ORR/Bundle (26 tasks)
+  # ============================================
+
+  # Scripts de Gate
+  - id: S42-CI-001
+    wave: W6
+    area: infra
+    descricao: "Criar bin/s42_g30_mac_simulate.sh: testes unitarios, integracao, performance, replay; gera scorecard"
+    arquivos: [bin/s42_g30_mac_simulate.sh]
+    gates: [G30]
+    done: Exit 0; scorecard gerado
+    evidencias: ./bin/s42_g30_mac_simulate.sh exit 0
+    ace_context:
+      spec_refs: [Capitulo 4/Bloco 4.md]
+      resumo: Gate G30
+
+  - id: S42-CI-002
+    wave: W6
+    area: infra
+    descricao: "Criar bin/s42_g31_mac_batch.sh: batch com gold/adversarial/edge; valida targets; gera scorecard"
+    arquivos: [bin/s42_g31_mac_batch.sh]
+    gates: [G31]
+    done: Exit 0; scorecard gerado
+    evidencias: ./bin/s42_g31_mac_batch.sh exit 0
+    ace_context:
+      spec_refs: [Capitulo 4/Bloco 4.md]
+      resumo: Gate G31
+
+  - id: S42-CI-003
+    wave: W6
+    area: infra
+    descricao: "Criar bin/s42_g32_adiabatic_plan.sh: cria plano teste, valida, simula, gera evidencias"
+    arquivos: [bin/s42_g32_adiabatic_plan.sh]
+    gates: [G32]
+    done: Exit 0
+    evidencias: ./bin/s42_g32_adiabatic_plan.sh exit 0
+    ace_context:
+      spec_refs: [Capitulo 4/Bloco 4.md]
+      resumo: Gate G32
+
+  - id: S42-CI-004
+    wave: W6
+    area: infra
+    descricao: "Criar bin/s42_g33_mi_exposure.sh: testa RBAC (3 roles), redaction (15 casos), audit"
+    arquivos: [bin/s42_g33_mi_exposure.sh]
+    gates: [G33]
+    done: Exit 0
+    evidencias: ./bin/s42_g33_mi_exposure.sh exit 0
+    ace_context:
+      spec_refs: [Capitulo 4/Bloco 4.md]
+      resumo: Gate G33
+
+  - id: S42-CI-005
+    wave: W6
+    area: infra
+    descricao: "Criar bin/s42_g34_ui_smoke.sh: Playwright smoke, disclaimers, screenshots"
+    arquivos: [bin/s42_g34_ui_smoke.sh]
+    gates: [G34]
+    done: Exit 0
+    evidencias: ./bin/s42_g34_ui_smoke.sh exit 0
+    ace_context:
+      spec_refs: [Capitulo 4/Bloco 4.md]
+      resumo: Gate G34
+
+  - id: S42-CI-006
+    wave: W6
+    area: infra
+    descricao: "Criar bin/s42_g35_orr.sh: executa G30-G34, consolida, valida ORR checklist, gera bundle"
+    arquivos: [bin/s42_g35_orr.sh]
+    gates: [G35]
+    done: Exit 0; bundle gerado
+    evidencias: ./bin/s42_g35_orr.sh exit 0
+    ace_context:
+      spec_refs: [Capitulo 2/Bloco 2.md]
+      resumo: ORR consolidado
+
+  # Teste de Carga
+  - id: S42-PERF-001
+    wave: W6
+    area: performance
+    descricao: "Criar teste de carga para simulate (T=0): 100 req/s, p95<500ms, p99<2s"
+    arquivos: [tests/load/test_simulate_load.py]
+    gates: [G35]
+    done: Targets atingidos
+    evidencias: Relatorio de carga
+    ace_context:
+      spec_refs: [Capitulo 2/Bloco 2.md]
+      resumo: Teste carga simulate
+
+  - id: S42-PERF-002
+    wave: W6
+    area: performance
+    descricao: "Criar teste de degradacao graciosa: 500 req/s, sem timeouts silenciosos"
+    arquivos: [tests/load/test_graceful_degradation.py]
+    gates: [G35]
+    done: Degradacao controlada; erros explicitos
+    evidencias: Relatorio degradacao
+    ace_context:
+      spec_refs: [Capitulo 2/Bloco 2.md]
+      resumo: Degradacao graciosa
+
+  # Observabilidade
+  - id: S42-OBS-001
+    wave: W6
+    area: observabilidade
+    descricao: "Criar alertas s42_mac.yaml: mac_simulate_latency_high, mac_batch_failure, mac_rbac_violation, mac_determinism_failure"
+    arquivos: [observability/alerts/s42_mac.yaml]
+    gates: [G35]
+    done: 4+ alertas definidos
+    evidencias: yamllint pass
+    ace_context:
+      spec_refs: [Capitulo 2/Bloco 2.md]
+      resumo: Alertas MAC
+
+  - id: S42-OBS-002
+    wave: W6
+    area: observabilidade
+    descricao: |
+      Criar dashboard s42_mac.json: simulations/hour, batch_runs/day,
+      latency_p50/p95/p99, error_rate, mi_access_by_role, determinism_rate
+    arquivos: [observability/dashboards/s42_mac.json]
+    gates: [G35]
+    done: Dashboard importavel
+    evidencias: JSON valido; Grafana import
+    ace_context:
+      spec_refs: [Capitulo 2/Bloco 2.md]
+      resumo: Dashboard MAC
+
+  - id: S42-OBS-003
+    wave: W6
+    area: observabilidade
+    descricao: |
+      Implementar metricas Prometheus:
+      mac_simulation_duration_seconds, mac_simulation_total, mac_batch_run_total,
+      mac_batch_run_duration_seconds, mac_replay_concordance, mi_access_total
+    arquivos: [app/mac/metrics.py]
+    gates: [G35]
+    done: 6+ metricas
+    evidencias: tests/mac/test_metrics.py
+    ace_context:
+      spec_refs: [Capitulo 2/Bloco 2.md]
+      resumo: Metricas Prometheus
+
+  - id: S42-OBS-004
+    wave: W6
+    area: observabilidade
+    descricao: Implementar correlacao por simulation_id/run_id em todos os logs
+    arquivos: [app/mac/logging.py]
+    gates: [G35]
+    done: Correlacao funcional; trace_id presente
+    evidencias: tests/mac/test_logging.py
+    ace_context:
+      spec_refs: [Capitulo 2/Bloco 2.md]
+      resumo: Correlacao logs
+
+  # Runbooks Operacionais
+  - id: S42-DOC-001
+    wave: W6
+    area: docs
+    descricao: "Criar runbook S42_simulation_timeout.md: sintomas, diagnostico, resolucao"
+    arquivos: [docs/runbooks/S42_simulation_timeout.md]
+    gates: [G35]
+    done: Runbook completo
+    evidencias: Markdown valido
+    ace_context:
+      spec_refs: [Capitulo 2/Bloco 2.md]
+      resumo: Runbook timeout
+
+  - id: S42-DOC-002
+    wave: W6
+    area: docs
+    descricao: Criar runbook S42_batch_failure.md
+    arquivos: [docs/runbooks/S42_batch_failure.md]
+    gates: [G35]
+    done: Runbook completo
+    evidencias: Markdown valido
+    ace_context:
+      spec_refs: [Capitulo 2/Bloco 2.md]
+      resumo: Runbook batch failure
+
+  - id: S42-DOC-003
+    wave: W6
+    area: docs
+    descricao: Criar runbook S42_rbac_violation.md
+    arquivos: [docs/runbooks/S42_rbac_violation.md]
+    gates: [G35]
+    done: Runbook completo
+    evidencias: Markdown valido
+    ace_context:
+      spec_refs: [Capitulo 2/Bloco 2.md]
+      resumo: Runbook RBAC
+
+  - id: S42-DOC-004
+    wave: W6
+    area: docs
+    descricao: Criar runbook S42_replay_mismatch.md
+    arquivos: [docs/runbooks/S42_replay_mismatch.md]
+    gates: [G35]
+    done: Runbook completo
+    evidencias: Markdown valido
+    ace_context:
+      spec_refs: [Capitulo 2/Bloco 2.md]
+      resumo: Runbook replay mismatch
+
+  - id: S42-DOC-005
+    wave: W6
+    area: docs
+    descricao: Criar runbook S42_determinism_failure.md
+    arquivos: [docs/runbooks/S42_determinism_failure.md]
+    gates: [G35]
+    done: Runbook completo
+    evidencias: Markdown valido
+    ace_context:
+      spec_refs: [Capitulo 2/Bloco 2.md]
+      resumo: Runbook determinism
+
+  - id: S42-DOC-006
+    wave: W6
+    area: docs
+    descricao: "Criar politica de retencao S42_retention_policy.md: quanto tempo manter runs, como limpar"
+    arquivos: [docs/runbooks/S42_retention_policy.md]
+    gates: [G35]
+    done: Policy definida
+    evidencias: Markdown valido
+    ace_context:
+      spec_refs: [Capitulo 2/Bloco 2.md]
+      resumo: Politica retencao
+
+  # Bundle e Evidencias
+  - id: S42-BND-001
+    wave: W6
+    area: bundle
+    descricao: Gerar scorecard G30 com TODOS campos obrigatorios
+    arquivos: [out/scorecards/S42_G30_mac_simulate.json]
+    gates: [G30]
+    done: Schema validation pass
+    evidencias: jsonschema validation
+    ace_context:
+      spec_refs: [Capitulo 4/Bloco 4.md]
+      resumo: Scorecard G30
+
+  - id: S42-BND-002
+    wave: W6
+    area: bundle
+    descricao: Gerar scorecard G31 com accuracy, attack_detection, replay_concordance
+    arquivos: [out/scorecards/S42_G31_mac_batch.json]
+    gates: [G31]
+    done: Schema validation pass
+    evidencias: jsonschema validation
+    ace_context:
+      spec_refs: [Capitulo 4/Bloco 4.md]
+      resumo: Scorecard G31
+
+  - id: S42-BND-003
+    wave: W6
+    area: bundle
+    descricao: Gerar scorecard G32
+    arquivos: [out/scorecards/S42_G32_adiabatic_plan.json]
+    gates: [G32]
+    done: Schema validation pass
+    evidencias: jsonschema validation
+    ace_context:
+      spec_refs: [Capitulo 4/Bloco 4.md]
+      resumo: Scorecard G32
+
+  - id: S42-BND-004
+    wave: W6
+    area: bundle
+    descricao: Gerar scorecard G33 com rbac_tests, redaction_tests, pii_leaks=0
+    arquivos: [out/scorecards/S42_G33_mi_exposure.json]
+    gates: [G33]
+    done: pii_leaks=0; Schema validation pass
+    evidencias: jsonschema validation
+    ace_context:
+      spec_refs: [Capitulo 4/Bloco 4.md]
+      resumo: Scorecard G33
+
+  - id: S42-BND-005
+    wave: W6
+    area: bundle
+    descricao: Gerar scorecard G34
+    arquivos: [out/scorecards/S42_G34_ui.json]
+    gates: [G34]
+    done: Schema validation pass
+    evidencias: jsonschema validation
+    ace_context:
+      spec_refs: [Capitulo 4/Bloco 4.md]
+      resumo: Scorecard G34
+
+  - id: S42-BND-006
+    wave: W6
+    area: bundle
+    descricao: Gerar scorecard G35 com ORR checklist completo
+    arquivos: [out/scorecards/S42_G35_orr.json]
+    gates: [G35]
+    done: ORR checklist; Schema validation pass
+    evidencias: jsonschema validation
+    ace_context:
+      spec_refs: [Capitulo 2/Bloco 2.md]
+      resumo: Scorecard ORR
+
+  - id: S42-BND-007
+    wave: W6
+    area: bundle
+    descricao: Implementar redaction automatica de evidencias MI em out/
+    arquivos: [scripts/redact_evidence.py]
+    gates: [G35]
+    done: Redaction aplicada; PII removido
+    evidencias: Script funcional
+    ace_context:
+      spec_refs: [Capitulo 6/Bloco 4.md]
+      resumo: Redaction evidencias
+
+  - id: S42-BND-008
+    wave: W6
+    area: bundle
+    descricao: "Gerar bundle ZIP com scorecards/, evidence/, manifests/, logs/, screenshots/, REDACTED por default"
+    arquivos: [out/bundles/inspectah_s42_evidence_bundle.zip]
+    gates: [G35]
+    done: Bundle completo; manifest com checksums
+    evidencias: ZIP valido
+    ace_context:
+      spec_refs: [Capitulo 4/Bloco 4.md]
+      resumo: Bundle final
+
+# ============================================
+# Totais v3.0 MATURE
+# ============================================
+# Tasks totais: 158
+# - W0 (Fundacao): 24
+# - W1 (Simulate): 22
+# - W2 (Batch): 18
+# - W3 (Adiabatico): 16
+# - W4 (MI Exposure): 20
+# - W5 (Frontend): 32
+# - W6 (ORR/Bundle): 26
+#
+# Por area:
+# - Backend: 71
+# - Frontend: 28
+# - Testes: 17
+# - Infra/CI: 6
+# - Bundle: 8
+# - Observabilidade: 4
+# - Config/Dados: 13
+# - Schemas: 3
+# - UX: 2
+# - Docs/Runbooks: 6
+# - Performance: 2
+#
+# Gates cobertos: G30, G31, G32, G33, G34, G35
+# Invariantes verificados: 5/5
+# Riscos mitigados: 7/7
+# Datasets: ~1100 casos canonicos
+# Runbooks: 6 operacionais
+#
+# Gerado pelo Sprint Planner Tecnico v7
+# 18 rodadas de refinamento aplicadas

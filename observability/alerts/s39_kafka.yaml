@@ -1,0 +1,422 @@
+# S39 - Kafka Alerts Configuration
+# Alertmanager alerts for Kafka streaming infrastructure
+# Reference: observability/kafka_metrics.yaml
+
+groups:
+  # ============================================================================
+  # KAFKA CLUSTER HEALTH
+  # ============================================================================
+  - name: s39_kafka_cluster
+    rules:
+      - alert: KafkaControllerUnavailable
+        expr: kafka_controller_active_count == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: kafka
+          sprint: s39
+        annotations:
+          summary: "No active Kafka controller"
+          description: "Kafka cluster has no active controller for {{ $labels.cluster }}. Cluster is in degraded state."
+          runbook: "docs/runbooks/kafka_controller_unavailable.md"
+
+      - alert: KafkaMultipleControllers
+        expr: kafka_controller_active_count > 1
+        for: 30s
+        labels:
+          severity: critical
+          component: kafka
+          sprint: s39
+        annotations:
+          summary: "Multiple Kafka controllers detected"
+          description: "Kafka cluster {{ $labels.cluster }} has {{ $value }} controllers. This indicates split-brain."
+          runbook: "docs/runbooks/kafka_split_brain.md"
+
+      - alert: KafkaBrokerDown
+        expr: kafka_broker_state == 0
+        for: 2m
+        labels:
+          severity: critical
+          component: kafka
+          sprint: s39
+        annotations:
+          summary: "Kafka broker is offline"
+          description: "Broker {{ $labels.broker_id }} ({{ $labels.host }}) is offline."
+          runbook: "docs/runbooks/kafka_broker_down.md"
+
+      - alert: KafkaBrokerCountLow
+        expr: kafka_brokers_count < 3
+        for: 5m
+        labels:
+          severity: warning
+          component: kafka
+          sprint: s39
+        annotations:
+          summary: "Low Kafka broker count"
+          description: "Cluster {{ $labels.cluster }} has only {{ $value }} brokers. Expected at least 3."
+
+  # ============================================================================
+  # PARTITION HEALTH
+  # ============================================================================
+  - name: s39_kafka_partitions
+    rules:
+      - alert: KafkaUnderReplicatedPartitions
+        expr: sum(kafka_partition_under_replicated) by (topic) > 0
+        for: 5m
+        labels:
+          severity: warning
+          component: kafka
+          sprint: s39
+        annotations:
+          summary: "Under-replicated partitions detected"
+          description: "Topic {{ $labels.topic }} has {{ $value }} under-replicated partitions."
+          runbook: "docs/runbooks/kafka_under_replicated.md"
+
+      - alert: KafkaOfflinePartitions
+        expr: sum(kafka_partition_offline) by (topic) > 0
+        for: 1m
+        labels:
+          severity: critical
+          component: kafka
+          sprint: s39
+        annotations:
+          summary: "Offline partitions detected"
+          description: "Topic {{ $labels.topic }} has {{ $value }} offline partitions. Data loss risk!"
+          runbook: "docs/runbooks/kafka_offline_partitions.md"
+
+      - alert: KafkaISRShrinking
+        expr: rate(kafka_isr_shrinks_total[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          component: kafka
+          sprint: s39
+        annotations:
+          summary: "ISR shrinking frequently"
+          description: "Topic {{ $labels.topic }} partition {{ $labels.partition }} is experiencing ISR shrinks."
+
+  # ============================================================================
+  # CONSUMER LAG
+  # ============================================================================
+  - name: s39_consumer_lag
+    rules:
+      - alert: KafkaConsumerLagHigh
+        expr: s39:kafka_consumer_lag:sum > 1000
+        for: 5m
+        labels:
+          severity: warning
+          component: kafka
+          sprint: s39
+        annotations:
+          summary: "High consumer lag detected"
+          description: "Consumer group {{ $labels.consumer_group }} has lag of {{ $value }} messages."
+
+      - alert: KafkaConsumerLagCritical
+        expr: s39:kafka_consumer_lag:sum > 5000
+        for: 3m
+        labels:
+          severity: critical
+          component: kafka
+          sprint: s39
+        annotations:
+          summary: "Critical consumer lag"
+          description: "Consumer group {{ $labels.consumer_group }} has critical lag of {{ $value }} messages. Processing is falling behind."
+          runbook: "docs/runbooks/kafka_consumer_lag.md"
+
+      - alert: KafkaConsumerLagEmergency
+        expr: s39:kafka_consumer_lag:sum > 10000
+        for: 1m
+        labels:
+          severity: critical
+          component: kafka
+          sprint: s39
+        annotations:
+          summary: "Emergency consumer lag - processing paused"
+          description: "Consumer group {{ $labels.consumer_group }} has emergency lag of {{ $value }}. Backpressure likely active."
+          runbook: "docs/runbooks/kafka_emergency_lag.md"
+
+      - alert: KafkaConsumerLagIncreasing
+        expr: delta(s39:kafka_consumer_lag:sum[10m]) > 500
+        for: 10m
+        labels:
+          severity: warning
+          component: kafka
+          sprint: s39
+        annotations:
+          summary: "Consumer lag is increasing"
+          description: "Consumer group {{ $labels.consumer_group }} lag increased by {{ $value }} in last 10 minutes."
+
+  # ============================================================================
+  # BACKPRESSURE
+  # ============================================================================
+  - name: s39_backpressure
+    rules:
+      - alert: BackpressureThrottled
+        expr: s39_backpressure_state == 1
+        for: 5m
+        labels:
+          severity: warning
+          component: streaming
+          sprint: s39
+        annotations:
+          summary: "Backpressure throttling active"
+          description: "Consumer {{ $labels.consumer_group }} is throttled due to high lag."
+
+      - alert: BackpressurePaused
+        expr: s39_backpressure_state == 2
+        for: 1m
+        labels:
+          severity: critical
+          component: streaming
+          sprint: s39
+        annotations:
+          summary: "Backpressure paused processing"
+          description: "Consumer {{ $labels.consumer_group }} has paused processing. Rate: {{ $value }}%"
+          runbook: "docs/runbooks/backpressure_paused.md"
+
+      - alert: BackpressureLowRate
+        expr: s39_backpressure_rate_percent < 25
+        for: 10m
+        labels:
+          severity: warning
+          component: streaming
+          sprint: s39
+        annotations:
+          summary: "Backpressure rate very low"
+          description: "Consumer {{ $labels.consumer_group }} operating at only {{ $value }}% capacity."
+
+      - alert: BackpressureFrequentPauses
+        expr: increase(s39_backpressure_pauses_total[1h]) > 5
+        for: 5m
+        labels:
+          severity: warning
+          component: streaming
+          sprint: s39
+        annotations:
+          summary: "Frequent backpressure pauses"
+          description: "Consumer {{ $labels.consumer_group }} paused {{ $value }} times in the last hour."
+
+  # ============================================================================
+  # DEAD LETTER QUEUE
+  # ============================================================================
+  - name: s39_dlq
+    rules:
+      - alert: DLQMessagesAccumulating
+        expr: s39_dlq_pending_count > 10
+        for: 10m
+        labels:
+          severity: warning
+          component: dlq
+          sprint: s39
+        annotations:
+          summary: "DLQ messages accumulating"
+          description: "Topic {{ $labels.original_topic }} has {{ $value }} pending DLQ messages."
+
+      - alert: DLQMessagesHigh
+        expr: s39_dlq_pending_count > 50
+        for: 5m
+        labels:
+          severity: critical
+          component: dlq
+          sprint: s39
+        annotations:
+          summary: "High DLQ message count"
+          description: "Topic {{ $labels.original_topic }} has {{ $value }} pending DLQ messages requiring attention."
+          runbook: "docs/runbooks/dlq_high_count.md"
+
+      - alert: DLQIncomingRateHigh
+        expr: s39:dlq_incoming_rate:5m > 1
+        for: 5m
+        labels:
+          severity: warning
+          component: dlq
+          sprint: s39
+        annotations:
+          summary: "High DLQ incoming rate"
+          description: "DLQ receiving {{ $value }} messages/second. Check for processing issues."
+
+      - alert: DLQRetryFailures
+        expr: increase(s39_dlq_retries_total{success="false"}[1h]) > 10
+        for: 5m
+        labels:
+          severity: warning
+          component: dlq
+          sprint: s39
+        annotations:
+          summary: "DLQ retry failures"
+          description: "Topic {{ $labels.original_topic }} had {{ $value }} failed retries in the last hour."
+
+      - alert: DLQDeserializationErrors
+        expr: increase(s39_dlq_messages_total{failure_reason="deserialization_error"}[1h]) > 5
+        for: 5m
+        labels:
+          severity: warning
+          component: dlq
+          sprint: s39
+        annotations:
+          summary: "Deserialization errors in DLQ"
+          description: "{{ $value }} deserialization errors for topic {{ $labels.original_topic }}. Check message schema."
+
+  # ============================================================================
+  # SIGNAL PROCESSING
+  # ============================================================================
+  - name: s39_signals
+    rules:
+      - alert: SignalProcessingErrors
+        expr: s39:signal_error_rate:5m > 0.01
+        for: 5m
+        labels:
+          severity: warning
+          component: signals
+          sprint: s39
+        annotations:
+          summary: "Signal processing errors"
+          description: "Signal type {{ $labels.signal_type }} has error rate of {{ $value | humanizePercentage }}."
+
+      - alert: SignalProcessingErrorsCritical
+        expr: s39:signal_error_rate:5m > 0.05
+        for: 3m
+        labels:
+          severity: critical
+          component: signals
+          sprint: s39
+        annotations:
+          summary: "Critical signal processing errors"
+          description: "Signal type {{ $labels.signal_type }} has critical error rate of {{ $value | humanizePercentage }}."
+          runbook: "docs/runbooks/signal_processing_errors.md"
+
+      - alert: SignalProcessingSlow
+        expr: histogram_quantile(0.95, rate(s39_signals_processing_duration_seconds_bucket[5m])) > 5
+        for: 10m
+        labels:
+          severity: warning
+          component: signals
+          sprint: s39
+        annotations:
+          summary: "Slow signal processing"
+          description: "Signal type {{ $labels.signal_type }} P95 latency is {{ $value }}s."
+
+      - alert: SignalProcessingVeryLow
+        expr: s39:signal_processing_rate:5m < 1
+        for: 15m
+        labels:
+          severity: warning
+          component: signals
+          sprint: s39
+        annotations:
+          summary: "Very low signal processing rate"
+          description: "Signal processing rate is {{ $value }}/s. Check if consumers are running."
+
+  # ============================================================================
+  # WEBSOCKET STREAMING
+  # ============================================================================
+  - name: s39_websocket
+    rules:
+      - alert: WebSocketConnectionsHigh
+        expr: s39_websocket_connections_active > 1000
+        for: 5m
+        labels:
+          severity: warning
+          component: websocket
+          sprint: s39
+        annotations:
+          summary: "High WebSocket connections"
+          description: "{{ $value }} active WebSocket connections. Monitor memory usage."
+
+      - alert: WebSocketErrorsHigh
+        expr: rate(s39_websocket_errors_total[5m]) > 1
+        for: 5m
+        labels:
+          severity: warning
+          component: websocket
+          sprint: s39
+        annotations:
+          summary: "High WebSocket error rate"
+          description: "WebSocket error type {{ $labels.error_type }} occurring at {{ $value }}/s."
+
+  # ============================================================================
+  # PRODUCER HEALTH
+  # ============================================================================
+  - name: s39_producer
+    rules:
+      - alert: ProducerSendErrors
+        expr: rate(kafka_producer_record_error_total[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          component: kafka
+          sprint: s39
+        annotations:
+          summary: "Producer send errors"
+          description: "Producer {{ $labels.client_id }} topic {{ $labels.topic }} has error rate {{ $value }}/s."
+
+      - alert: ProducerHighRetries
+        expr: rate(kafka_producer_record_retry_total[5m]) > 1
+        for: 5m
+        labels:
+          severity: warning
+          component: kafka
+          sprint: s39
+        annotations:
+          summary: "High producer retry rate"
+          description: "Producer {{ $labels.client_id }} retrying {{ $value }}/s. Check broker connectivity."
+
+      - alert: ProducerLatencyHigh
+        expr: kafka_producer_request_latency_p95 > 500
+        for: 5m
+        labels:
+          severity: warning
+          component: kafka
+          sprint: s39
+        annotations:
+          summary: "High producer latency"
+          description: "Producer {{ $labels.client_id }} P95 latency is {{ $value }}ms."
+
+      - alert: ProducerBufferLow
+        expr: kafka_producer_buffer_available_bytes < 10485760
+        for: 5m
+        labels:
+          severity: warning
+          component: kafka
+          sprint: s39
+        annotations:
+          summary: "Low producer buffer"
+          description: "Producer {{ $labels.client_id }} has only {{ $value | humanize1024 }}B buffer available."
+
+      - alert: ProducerThreadsWaiting
+        expr: kafka_producer_waiting_threads > 0
+        for: 5m
+        labels:
+          severity: warning
+          component: kafka
+          sprint: s39
+        annotations:
+          summary: "Producer threads waiting for buffer"
+          description: "Producer {{ $labels.client_id }} has {{ $value }} threads waiting. Increase buffer or reduce rate."
+
+  # ============================================================================
+  # TOPIC HEALTH
+  # ============================================================================
+  - name: s39_topics
+    rules:
+      - alert: TopicLogSizeHigh
+        expr: kafka_topic_log_size_bytes > 107374182400
+        for: 30m
+        labels:
+          severity: warning
+          component: kafka
+          sprint: s39
+        annotations:
+          summary: "Topic log size high"
+          description: "Topic {{ $labels.topic }} size is {{ $value | humanize1024 }}B. Check retention settings."
+
+      - alert: CriticalTopicNoMessages
+        expr: rate(kafka_topic_messages_in_total{topic=~"signals.raw|signals.computed|alerts.stream"}[10m]) == 0
+        for: 15m
+        labels:
+          severity: warning
+          component: kafka
+          sprint: s39
+        annotations:
+          summary: "Critical topic has no incoming messages"
+          description: "Topic {{ $labels.topic }} received no messages in 15 minutes."

@@ -1,0 +1,313 @@
+# S39 - Kafka Metrics Configuration
+# Prometheus metrics for Kafka monitoring
+# Reference: JMX Exporter + kafka_exporter
+
+# ==============================================================================
+# KAFKA BROKER METRICS
+# ==============================================================================
+
+kafka_broker_metrics:
+  # Cluster health
+  - name: kafka_controller_active_count
+    help: "Number of active controllers in cluster (should be 1)"
+    type: gauge
+    labels: ["cluster"]
+
+  - name: kafka_brokers_count
+    help: "Total number of brokers in cluster"
+    type: gauge
+    labels: ["cluster"]
+
+  - name: kafka_broker_state
+    help: "Broker state (1=running, 0=offline)"
+    type: gauge
+    labels: ["broker_id", "host"]
+
+  # Partition metrics
+  - name: kafka_topic_partitions
+    help: "Number of partitions per topic"
+    type: gauge
+    labels: ["topic"]
+
+  - name: kafka_partition_under_replicated
+    help: "Number of under-replicated partitions"
+    type: gauge
+    labels: ["topic"]
+
+  - name: kafka_partition_offline
+    help: "Number of offline partitions"
+    type: gauge
+    labels: ["topic"]
+
+  - name: kafka_partition_leader_is_preferred
+    help: "1 if partition leader is preferred replica"
+    type: gauge
+    labels: ["topic", "partition"]
+
+  # ISR metrics
+  - name: kafka_isr_shrinks_total
+    help: "Total number of ISR shrinks"
+    type: counter
+    labels: ["topic", "partition"]
+
+  - name: kafka_isr_expands_total
+    help: "Total number of ISR expands"
+    type: counter
+    labels: ["topic", "partition"]
+
+# ==============================================================================
+# PRODUCER METRICS
+# ==============================================================================
+
+kafka_producer_metrics:
+  - name: kafka_producer_record_send_total
+    help: "Total records sent by producer"
+    type: counter
+    labels: ["client_id", "topic"]
+
+  - name: kafka_producer_record_error_total
+    help: "Total record send errors"
+    type: counter
+    labels: ["client_id", "topic"]
+
+  - name: kafka_producer_record_retry_total
+    help: "Total record retries"
+    type: counter
+    labels: ["client_id", "topic"]
+
+  - name: kafka_producer_request_latency_avg
+    help: "Average request latency in ms"
+    type: gauge
+    labels: ["client_id"]
+
+  - name: kafka_producer_request_latency_p95
+    help: "P95 request latency in ms"
+    type: gauge
+    labels: ["client_id"]
+
+  - name: kafka_producer_batch_size_avg
+    help: "Average batch size in bytes"
+    type: gauge
+    labels: ["client_id"]
+
+  - name: kafka_producer_buffer_available_bytes
+    help: "Available buffer memory"
+    type: gauge
+    labels: ["client_id"]
+
+  - name: kafka_producer_waiting_threads
+    help: "Number of threads waiting for buffer"
+    type: gauge
+    labels: ["client_id"]
+
+# ==============================================================================
+# CONSUMER METRICS
+# ==============================================================================
+
+kafka_consumer_metrics:
+  - name: kafka_consumer_lag
+    help: "Consumer lag (messages behind)"
+    type: gauge
+    labels: ["consumer_group", "topic", "partition"]
+
+  - name: kafka_consumer_lag_sum
+    help: "Total consumer lag across all partitions"
+    type: gauge
+    labels: ["consumer_group", "topic"]
+
+  - name: kafka_consumer_records_consumed_total
+    help: "Total records consumed"
+    type: counter
+    labels: ["consumer_group", "topic"]
+
+  - name: kafka_consumer_bytes_consumed_total
+    help: "Total bytes consumed"
+    type: counter
+    labels: ["consumer_group", "topic"]
+
+  - name: kafka_consumer_fetch_latency_avg
+    help: "Average fetch latency in ms"
+    type: gauge
+    labels: ["consumer_group"]
+
+  - name: kafka_consumer_fetch_rate
+    help: "Fetch requests per second"
+    type: gauge
+    labels: ["consumer_group"]
+
+  - name: kafka_consumer_commit_latency_avg
+    help: "Average commit latency in ms"
+    type: gauge
+    labels: ["consumer_group"]
+
+  - name: kafka_consumer_assigned_partitions
+    help: "Number of assigned partitions"
+    type: gauge
+    labels: ["consumer_group"]
+
+  - name: kafka_consumer_rebalance_total
+    help: "Total number of rebalances"
+    type: counter
+    labels: ["consumer_group"]
+
+# ==============================================================================
+# TOPIC METRICS
+# ==============================================================================
+
+kafka_topic_metrics:
+  - name: kafka_topic_messages_in_total
+    help: "Total messages produced to topic"
+    type: counter
+    labels: ["topic"]
+
+  - name: kafka_topic_bytes_in_total
+    help: "Total bytes produced to topic"
+    type: counter
+    labels: ["topic"]
+
+  - name: kafka_topic_bytes_out_total
+    help: "Total bytes consumed from topic"
+    type: counter
+    labels: ["topic"]
+
+  - name: kafka_topic_log_size_bytes
+    help: "Total log size for topic"
+    type: gauge
+    labels: ["topic"]
+
+  - name: kafka_topic_log_segments
+    help: "Number of log segments"
+    type: gauge
+    labels: ["topic"]
+
+# ==============================================================================
+# APPLICATION METRICS (S39 Specific)
+# ==============================================================================
+
+s39_streaming_metrics:
+  # Signal processing
+  - name: s39_signals_produced_total
+    help: "Total signals produced"
+    type: counter
+    labels: ["signal_type", "domain"]
+
+  - name: s39_signals_consumed_total
+    help: "Total signals consumed"
+    type: counter
+    labels: ["signal_type", "domain"]
+
+  - name: s39_signals_processing_duration_seconds
+    help: "Signal processing duration histogram"
+    type: histogram
+    labels: ["signal_type"]
+    buckets: [0.01, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0]
+
+  - name: s39_signals_processing_errors_total
+    help: "Signal processing errors"
+    type: counter
+    labels: ["signal_type", "error_type"]
+
+  # Backpressure
+  - name: s39_backpressure_state
+    help: "Current backpressure state (0=normal, 1=throttled, 2=paused, 3=recovering)"
+    type: gauge
+    labels: ["consumer_group"]
+
+  - name: s39_backpressure_rate_percent
+    help: "Current processing rate percentage"
+    type: gauge
+    labels: ["consumer_group"]
+
+  - name: s39_backpressure_pauses_total
+    help: "Total number of backpressure pauses"
+    type: counter
+    labels: ["consumer_group"]
+
+  # DLQ
+  - name: s39_dlq_messages_total
+    help: "Total messages sent to DLQ"
+    type: counter
+    labels: ["original_topic", "failure_reason"]
+
+  - name: s39_dlq_pending_count
+    help: "Current pending DLQ messages"
+    type: gauge
+    labels: ["original_topic"]
+
+  - name: s39_dlq_retries_total
+    help: "Total DLQ retry attempts"
+    type: counter
+    labels: ["original_topic", "success"]
+
+  - name: s39_dlq_resolved_total
+    help: "Total resolved DLQ messages"
+    type: counter
+    labels: ["original_topic"]
+
+  # WebSocket bridge
+  - name: s39_websocket_connections_active
+    help: "Active WebSocket connections"
+    type: gauge
+    labels: []
+
+  - name: s39_websocket_messages_sent_total
+    help: "Total messages sent via WebSocket"
+    type: counter
+    labels: ["subscription_type"]
+
+  - name: s39_websocket_errors_total
+    help: "WebSocket errors"
+    type: counter
+    labels: ["error_type"]
+
+# ==============================================================================
+# RECORDING RULES
+# ==============================================================================
+
+recording_rules:
+  - record: s39:kafka_consumer_lag:sum
+    expr: sum(kafka_consumer_lag) by (consumer_group)
+
+  - record: s39:kafka_consumer_lag:max
+    expr: max(kafka_consumer_lag) by (consumer_group)
+
+  - record: s39:signal_processing_rate:5m
+    expr: rate(s39_signals_consumed_total[5m])
+
+  - record: s39:signal_error_rate:5m
+    expr: rate(s39_signals_processing_errors_total[5m])
+
+  - record: s39:dlq_incoming_rate:5m
+    expr: rate(s39_dlq_messages_total[5m])
+
+# ==============================================================================
+# SCRAPE CONFIG
+# ==============================================================================
+
+scrape_configs:
+  kafka_exporter:
+    job_name: kafka_exporter
+    static_configs:
+      - targets: ["kafka-exporter:9308"]
+    metrics_path: /metrics
+    scrape_interval: 15s
+    scrape_timeout: 10s
+
+  jmx_exporter:
+    job_name: kafka_jmx
+    static_configs:
+      - targets:
+          - "kafka-1:9999"
+          - "kafka-2:9999"
+          - "kafka-3:9999"
+    metrics_path: /metrics
+    scrape_interval: 15s
+    scrape_timeout: 10s
+
+  app_streaming:
+    job_name: s39_streaming
+    static_configs:
+      - targets: ["api:8000"]
+    metrics_path: /metrics
+    scrape_interval: 10s
+    scrape_timeout: 5s

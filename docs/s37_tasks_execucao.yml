@@ -1,0 +1,385 @@
+sprint: S37
+programa: "2, 3, 4"
+epico: "P2-E3 (ClaimGraph), P2-E5 (Motor Sinais), P3-E1 (Truth Policy DSL), P3-E6 (Guardião)"
+
+ace_resumo:
+  objetivo_sprint: >
+    Integrar componentes de interpretação com núcleo lógico: ClaimGraph organizando narrativas,
+    Motor de Sinais agregando diagnósticos, Truth Policy DSL habilitando políticas declarativas,
+    e Guardião v0 orquestrando comitês — com SLAs de Decisão ≤20s, Reversão ≤10%, Abuso ≤5%.
+  leitura_minima_spec:
+    - docs/Agents/Planejamento/Programa 2/Sprint 37/S37_spec.md
+    - docs/Agents/Planejamento/Programa 2 - Interpretacao, claims, entidades, sinais.md
+    - docs/Agents/Planejamento/Programa 3 - Truth DB, sistema de blocos, logica, memoria, contestacaomd.md
+    - docs/Agents/Planejamento/Programa 4 - Exposica, produtos, apis.md
+  instrucoes_para_ace: >
+    Trabalhe wave a wave. S37 assume S36 entregue (traces, feedback, schemas base).
+    Foco em integração entre P2/P3/P4, não em retrabalho de fundações.
+    G5-G9 exigem evidências reais (grafos, sinais, policies, métricas).
+
+waves:
+  - id: W0
+    nome: "ClaimGraph modelo e persistência"
+    descricao: "Definir modelo de grafo, schemas, índices e operações básicas para claims/entidades/relações."
+    ace_context:
+      spec_refs:
+        - docs/Agents/Planejamento/Programa 2/Sprint 37/S37_spec.md#3.1
+        - docs/Agents/Planejamento/Programa 2 - Interpretacao, claims, entidades, sinais.md
+      resumo_para_ace: >
+        Criar estrutura de grafo com nós (claims, entidades, casos) e arestas (apoio, oposição,
+        temporalidade, causalidade). Persistência em DB com índices para queries frequentes.
+      observacoes_execucao: >
+        Não otimizar prematuramente. Foco em modelo correto e operações básicas funcionando.
+
+  - id: W1
+    nome: "Motor de Sinais batch"
+    descricao: "Implementar cálculo periódico de 4 sinais agregados sobre ClaimGraph."
+    ace_context:
+      spec_refs:
+        - docs/Agents/Planejamento/Programa 2/Sprint 37/S37_spec.md#3.2
+        - docs/DNA/Guias/Tensor_Deformacao_Semantica/
+      resumo_para_ace: >
+        Sinais: mentiras_em_circulacao, campo_batalha, radar_silencio, fragilidade_narrativa.
+        Batch 1h, persistir snapshots, expor métricas para Guia 2 (entropia).
+      observacoes_execucao: >
+        Começar com queries simples sobre ClaimGraph. Thresholds configuráveis por domínio.
+
+  - id: W2
+    nome: "Truth Policy DSL v1"
+    descricao: "Parser e executor de linguagem declarativa para políticas de decisão por domínio."
+    ace_context:
+      spec_refs:
+        - docs/Agents/Planejamento/Programa 2/Sprint 37/S37_spec.md#3.3
+        - docs/Agents/Planejamento/Programa 3 - Truth DB, sistema de blocos, logica, memoria, contestacaomd.md
+      resumo_para_ace: >
+        DSL com POLICY, DOMAIN, GATE, REQUIRE, ON...THEN. Parser valida sintaxe,
+        executor aplica regras em E40.5. Versionamento de policies obrigatório.
+      observacoes_execucao: >
+        DSL simples primeiro. Não implementar herança/composição (S38+).
+
+  - id: W3
+    nome: "Guardião v0 e integração E40.5"
+    descricao: "Orquestrador de comitês com papéis, fluxo de validação e integração com E40.5."
+    ace_context:
+      spec_refs:
+        - docs/Agents/Planejamento/Programa 2/Sprint 37/S37_spec.md#3.4
+        - docs/DNA/Guias/Maquina_Adiabatica_de_Consenso/
+      resumo_para_ace: >
+        Papéis: Proponente, Validadores, Revisor, Árbitro. Fluxo: submissão → policy →
+        E40.5 → quórum → human_review (se necessário) → DecisionBlock.
+      observacoes_execucao: >
+        Métricas de latência são críticas (target ≤20s). Implementar timeouts e fallbacks.
+
+  - id: W4
+    nome: "API Gateway, Cockpit e Fact Cards"
+    descricao: "Expor ClaimGraph, sinais e estados via APIs; UIs de Cockpit e Fact Cards v0."
+    ace_context:
+      spec_refs:
+        - docs/Agents/Planejamento/Programa 2/Sprint 37/S37_spec.md
+        - docs/Agents/Planejamento/Programa 4 - Exposica, produtos, apis.md
+      resumo_para_ace: >
+        API Gateway com rotas, auth, rate limiting básico. Cockpit Casos com claims/sinais.
+        Fact Cards com MQV/entropia/tensor e disclaimers por domínio.
+      observacoes_execucao: >
+        Contratos de API devem declarar source.guia conforme P4 regras de exposição.
+
+  - id: W5
+    nome: "Métricas, ORR e GO/NO-GO"
+    descricao: "Consolidar métricas G5-G9, executar ORR e documentar GO/NO-GO."
+    ace_context:
+      spec_refs:
+        - docs/Agents/Planejamento/Programa 2/Sprint 37/S37_spec.md#4
+      resumo_para_ace: >
+        Verificar todos os gates, coletar métricas, revisar qualidade, executar ORR.
+        Documentar riscos remanescentes e itens para S38.
+      observacoes_execucao: >
+        Use scripts para métricas automatizadas. ORR deve ter evidências concretas.
+
+tasks:
+  # === W0: ClaimGraph ===
+  - id: S37-BE-001
+    wave: W0
+    area: backend
+    gate_relacionado: G5
+    descricao: "Definir modelo de dados do ClaimGraph (nós, arestas, propriedades)."
+    arquivos_alvo:
+      - docs/architecture/p2_s37_claimgraph_model.md
+      - app/claims/graph_models.py
+    criterios_aceite:
+      - "Modelo documentado com tipos de nós e arestas."
+      - "Schema versionado (claimgraph_schema_v1)."
+
+  - id: S37-DB-001
+    wave: W0
+    area: dados/db
+    gate_relacionado: G5
+    descricao: "Criar migrations e índices para ClaimGraph."
+    arquivos_alvo:
+      - db/migrations/027_sprint37_claimgraph.sql
+    criterios_aceite:
+      - "Tabelas nodes/edges criadas com índices."
+      - "Queries de cluster/contradictions com planos aceitáveis."
+
+  - id: S37-BE-002
+    wave: W0
+    area: backend
+    gate_relacionado: G5
+    descricao: "Implementar operações básicas do ClaimGraph (add, get, query)."
+    arquivos_alvo:
+      - app/claims/graph_service.py
+      - app/claims/graph_repository.py
+    criterios_aceite:
+      - "add_claim, add_relation, get_cluster, get_contradictions funcionando."
+      - "Testes unitários passando."
+
+  - id: S37-BE-003
+    wave: W0
+    area: backend
+    gate_relacionado: G5
+    descricao: "Integrar pipeline de claims existente com ClaimGraph."
+    arquivos_alvo:
+      - app/agents/flows/claim_pipeline.py
+      - app/claims/graph_service.py
+    criterios_aceite:
+      - "Claims extraídas são automaticamente adicionadas ao grafo."
+      - "Relações inferidas (temporalidade, entidade comum) criadas."
+
+  # === W1: Motor de Sinais ===
+  - id: S37-BE-010
+    wave: W1
+    area: backend
+    gate_relacionado: G6
+    descricao: "Implementar cálculo de sinal mentiras_em_circulacao."
+    arquivos_alvo:
+      - app/signals/calculators/lies_in_circulation.py
+    criterios_aceite:
+      - "Query sobre ClaimGraph para claims false ativas."
+      - "Snapshot persistido com timestamp e domain."
+
+  - id: S37-BE-011
+    wave: W1
+    area: backend
+    gate_relacionado: G6
+    descricao: "Implementar cálculo de sinal campo_batalha."
+    arquivos_alvo:
+      - app/signals/calculators/battleground.py
+    criterios_aceite:
+      - "Identificar pares claim/contra-claim com alta tensão."
+      - "Métrica de intensidade do conflito."
+
+  - id: S37-BE-012
+    wave: W1
+    area: backend
+    gate_relacionado: G6
+    descricao: "Implementar cálculo de sinal radar_silencio."
+    arquivos_alvo:
+      - app/signals/calculators/silence_radar.py
+    criterios_aceite:
+      - "Detectar tópicos com queda súbita de cobertura."
+      - "Baseline temporal para comparação."
+
+  - id: S37-BE-013
+    wave: W1
+    area: backend
+    gate_relacionado: G6
+    descricao: "Implementar cálculo de sinal fragilidade_narrativa."
+    arquivos_alvo:
+      - app/signals/calculators/narrative_fragility.py
+    criterios_aceite:
+      - "Claims com evidence_trail fraco identificadas."
+      - "Score de fragilidade por cluster."
+
+  - id: S37-BE-014
+    wave: W1
+    area: backend
+    gate_relacionado: G6
+    descricao: "Implementar batch job para cálculo periódico de sinais."
+    arquivos_alvo:
+      - app/signals/batch_calculator.py
+      - app/signals/signal_repository.py
+    criterios_aceite:
+      - "Job executando a cada 1h."
+      - "Snapshots persistidos e consultáveis."
+
+  # === W2: Truth Policy DSL ===
+  - id: S37-BE-020
+    wave: W2
+    area: backend
+    gate_relacionado: G7
+    descricao: "Definir gramática e parser do Truth Policy DSL v1."
+    arquivos_alvo:
+      - app/truth/policy_dsl/grammar.py
+      - app/truth/policy_dsl/parser.py
+    criterios_aceite:
+      - "Gramática suporta POLICY, DOMAIN, GATE, REQUIRE, ON...THEN."
+      - "Parser com mensagens de erro claras."
+
+  - id: S37-BE-021
+    wave: W2
+    area: backend
+    gate_relacionado: G7
+    descricao: "Implementar executor do Truth Policy DSL."
+    arquivos_alvo:
+      - app/truth/policy_dsl/executor.py
+      - app/truth/policy_engine.py
+    criterios_aceite:
+      - "Executor aplica regras REQUIRE e ON...THEN."
+      - "Integração com E40.5 para verificação de invariantes."
+
+  - id: S37-DOC-020
+    wave: W2
+    area: docs
+    gate_relacionado: G7
+    descricao: "Criar policies iniciais para domínios piloto."
+    arquivos_alvo:
+      - policies/pilot_politics_v1.policy
+      - policies/saude_v1.policy
+      - policies/economia_v1.policy
+    criterios_aceite:
+      - "Pelo menos 3 policies válidas criadas."
+      - "Policies versionadas e documentadas."
+
+  # === W3: Guardião v0 ===
+  - id: S37-BE-030
+    wave: W3
+    area: backend
+    gate_relacionado: G8
+    descricao: "Implementar modelo de papéis do Guardião."
+    arquivos_alvo:
+      - app/guardian/roles.py
+      - app/guardian/models.py
+    criterios_aceite:
+      - "Papéis Proponente, Validadores, Revisor, Árbitro definidos."
+      - "Atribuição de papéis por tipo de decisão."
+
+  - id: S37-BE-031
+    wave: W3
+    area: backend
+    gate_relacionado: G8
+    descricao: "Implementar fluxo de validação do Guardião."
+    arquivos_alvo:
+      - app/guardian/flow.py
+      - app/guardian/service.py
+    criterios_aceite:
+      - "Fluxo: submissão → policy → E40.5 → quórum → DecisionBlock."
+      - "Timeout e fallback implementados."
+
+  - id: S37-BE-032
+    wave: W3
+    area: backend
+    gate_relacionado: G8
+    descricao: "Integrar Guardião com E40.5 e Truth Policy Engine."
+    arquivos_alvo:
+      - app/guardian/service.py
+      - app/truth/e40_5/checker.py
+    criterios_aceite:
+      - "Guardião carrega policy por domain/gate."
+      - "E40.5 verifica invariantes antes de decisão."
+
+  - id: S37-BE-033
+    wave: W3
+    area: backend
+    gate_relacionado: G8
+    descricao: "Implementar human_review flow no Guardião."
+    arquivos_alvo:
+      - app/guardian/human_review.py
+      - app/guardian/service.py
+    criterios_aceite:
+      - "Decisões que exigem human_review são pausadas."
+      - "UI permite aprovar/rejeitar."
+
+  # === W4: API Gateway, Cockpit, Fact Cards ===
+  - id: S37-BE-040
+    wave: W4
+    area: backend
+    gate_relacionado: G9
+    descricao: "Setup API Gateway com rotas principais."
+    arquivos_alvo:
+      - app/api/gateway.py
+      - app/api/routes/claimgraph.py
+      - app/api/routes/signals.py
+    criterios_aceite:
+      - "Rotas /api/claimgraph/*, /api/signals/* funcionando."
+      - "Autenticação via IdP integrada."
+
+  - id: S37-FE-040
+    wave: W4
+    area: frontend
+    gate_relacionado: G9
+    descricao: "Implementar Cockpit Casos com claims, sinais, estados."
+    arquivos_alvo:
+      - frontend/inspectah-ui/src/modules/cases/pages/CaseCockpitPage.tsx
+      - frontend/inspectah-ui/src/modules/cases/components/ClaimGraphView.tsx
+    criterios_aceite:
+      - "Visualização de claims e relações."
+      - "Sinais exibidos com valores e timestamps."
+
+  - id: S37-FE-041
+    wave: W4
+    area: frontend
+    gate_relacionado: G9
+    descricao: "Implementar Fact Cards v0 com MQV/entropia."
+    arquivos_alvo:
+      - frontend/inspectah-ui/src/modules/products/components/FactCard.tsx
+    criterios_aceite:
+      - "Card com estado, confidence, métricas."
+      - "Disclaimers por domínio."
+      - "source.guia declarado em todas as métricas."
+
+  - id: S37-FE-042
+    wave: W4
+    area: frontend
+    gate_relacionado: G9
+    descricao: "Integrar Explore API no frontend."
+    arquivos_alvo:
+      - frontend/inspectah-ui/src/core/api/endpoints.ts
+      - frontend/inspectah-ui/src/modules/explore/pages/ExplorePage.tsx
+    criterios_aceite:
+      - "ClaimGraph consultável via UI."
+      - "Filtros por domain/gate funcionando."
+
+  # === W5: Métricas e ORR ===
+  - id: S37-QA-050
+    wave: W5
+    area: qa_dados
+    gate_relacionado: G5
+    descricao: "Implementar scripts para métricas de ClaimGraph."
+    arquivos_alvo:
+      - scripts/metrics/s37_claimgraph_metrics.py
+    criterios_aceite:
+      - "claimgraph_nodes, claimgraph_edges calculados."
+      - "Output em JSON para ORR."
+
+  - id: S37-QA-051
+    wave: W5
+    area: qa_dados
+    gate_relacionado: G8
+    descricao: "Implementar scripts para métricas de Guardião."
+    arquivos_alvo:
+      - scripts/metrics/s37_guardian_metrics.py
+    criterios_aceite:
+      - "guardian_coverage, decision_latency_p95, reversal_rate calculados."
+
+  - id: S37-OPS-050
+    wave: W5
+    area: ops
+    gate_relacionado: G9
+    descricao: "Preparar checklist e script de ORR S37."
+    arquivos_alvo:
+      - bin/s37_orr.sh
+      - docs/runbooks/S37_orr_checklist.md
+    criterios_aceite:
+      - "Checklist cobrindo G5-G9."
+      - "Script consolidando métricas."
+
+  - id: S37-OPS-051
+    wave: W5
+    area: ops
+    gate_relacionado: G9
+    descricao: "Executar ORR S37 e documentar GO/NO-GO."
+    arquivos_alvo:
+      - out/scorecards/S37_ORR.json
+      - out/evidence/S37_ORR_summary.txt
+    criterios_aceite:
+      - "ORR executado com evidências."
+      - "GO/NO-GO documentado com ações de follow-up."

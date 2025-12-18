@@ -187,9 +187,17 @@ class DadosGovClient:
 
         Args:
             category: saude, economia, educacao, meio_ambiente, politica
-            rows: numero de resultados
-            start: offset para paginacao
+            rows: numero de resultados (1-100)
+            start: offset para paginacao (>= 0)
+
+        Raises:
+            ValueError: If rows or start invalid
         """
+        if rows < 1 or rows > 100:
+            raise ValueError(f"rows must be 1-100, got {rows}")
+        if start < 0:
+            raise ValueError(f"start must be >= 0, got {start}")
+
         keywords = PRIORITY_DATASETS.get(category, [])
         if not keywords:
             logger.warning(f"[dados_gov] Unknown category: {category}")
@@ -221,7 +229,24 @@ class DadosGovClient:
         rows: int = 10,
         start: int = 0,
     ) -> List[DadosGovDocument]:
-        """Busca datasets no portal dados.gov.br."""
+        """
+        Busca datasets no portal dados.gov.br.
+
+        Args:
+            query: Search query string
+            rows: Number of results (1-100)
+            start: Offset for pagination (>= 0)
+
+        Raises:
+            ValueError: If query empty, rows or start invalid
+        """
+        if not query or not query.strip():
+            raise ValueError("query must not be empty")
+        if rows < 1 or rows > 100:
+            raise ValueError(f"rows must be 1-100, got {rows}")
+        if start < 0:
+            raise ValueError(f"start must be >= 0, got {start}")
+
         url = f"{self.BASE_URL}/action/package_search"
         params = {
             "q": query,

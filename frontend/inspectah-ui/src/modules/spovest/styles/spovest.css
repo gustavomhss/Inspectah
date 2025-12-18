@@ -1,0 +1,272 @@
+/* Spovest Theme - Fantasy Sports Stock Exchange */
+
+/* ===== CSS Variables ===== */
+:root {
+  /* Primary Colors */
+  --spovest-primary: #7c3aed;
+  --spovest-primary-light: #8b5cf6;
+  --spovest-primary-dark: #6d28d9;
+
+  /* Secondary/Accent */
+  --spovest-accent: #06b6d4;
+  --spovest-accent-light: #22d3ee;
+  --spovest-accent-dark: #0891b2;
+
+  /* Success/Positive (for gains) */
+  --spovest-success: #10b981;
+  --spovest-success-light: #34d399;
+  --spovest-success-dark: #059669;
+
+  /* Danger/Negative (for losses) */
+  --spovest-danger: #ef4444;
+  --spovest-danger-light: #f87171;
+  --spovest-danger-dark: #dc2626;
+
+  /* Warning */
+  --spovest-warning: #f59e0b;
+  --spovest-warning-light: #fbbf24;
+  --spovest-warning-dark: #d97706;
+
+  /* Gradients */
+  --spovest-gradient-primary: linear-gradient(135deg, #7c3aed 0%, #06b6d4 100%);
+  --spovest-gradient-hero: linear-gradient(135deg, #1e1b4b 0%, #0f172a 50%, #042f2e 100%);
+  --spovest-gradient-card: linear-gradient(145deg, rgba(124, 58, 237, 0.1) 0%, rgba(6, 182, 212, 0.05) 100%);
+  --spovest-gradient-button: linear-gradient(135deg, #7c3aed 0%, #8b5cf6 100%);
+
+  /* Light Theme */
+  --spovest-bg-light: #ffffff;
+  --spovest-surface-light: #f8fafc;
+  --spovest-surface-alt-light: #f1f5f9;
+  --spovest-border-light: #e2e8f0;
+  --spovest-text-light: #0f172a;
+  --spovest-text-secondary-light: #64748b;
+  --spovest-text-muted-light: #94a3b8;
+
+  /* Dark Theme (default) */
+  --spovest-bg-dark: #0a0a1a;
+  --spovest-surface-dark: #12122a;
+  --spovest-surface-alt-dark: #1a1a3a;
+  --spovest-border-dark: #2a2a4a;
+  --spovest-text-dark: #f8fafc;
+  --spovest-text-secondary-dark: #94a3b8;
+  --spovest-text-muted-dark: #64748b;
+
+  /* Shadows */
+  --spovest-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  --spovest-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
+  --spovest-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
+  --spovest-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
+  --spovest-shadow-glow: 0 0 20px rgba(124, 58, 237, 0.3);
+  --spovest-shadow-glow-accent: 0 0 20px rgba(6, 182, 212, 0.3);
+
+  /* Border Radius */
+  --spovest-radius-sm: 0.375rem;
+  --spovest-radius-md: 0.5rem;
+  --spovest-radius-lg: 0.75rem;
+  --spovest-radius-xl: 1rem;
+  --spovest-radius-2xl: 1.5rem;
+  --spovest-radius-full: 9999px;
+
+  /* Spacing */
+  --spovest-spacing-xs: 0.25rem;
+  --spovest-spacing-sm: 0.5rem;
+  --spovest-spacing-md: 1rem;
+  --spovest-spacing-lg: 1.5rem;
+  --spovest-spacing-xl: 2rem;
+  --spovest-spacing-2xl: 3rem;
+  --spovest-spacing-3xl: 4rem;
+
+  /* Typography */
+  --spovest-font-display: 'Manrope', 'Inter', system-ui, sans-serif;
+  --spovest-font-body: 'Manrope', 'Inter', system-ui, sans-serif;
+  --spovest-font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  /* Transitions */
+  --spovest-transition-fast: 150ms ease;
+  --spovest-transition-normal: 250ms ease;
+  --spovest-transition-slow: 350ms ease;
+}
+
+/* ===== Dark Theme (Default) ===== */
+.spovest-theme-dark,
+[data-spovest-theme="dark"] {
+  --spovest-bg: var(--spovest-bg-dark);
+  --spovest-surface: var(--spovest-surface-dark);
+  --spovest-surface-alt: var(--spovest-surface-alt-dark);
+  --spovest-border: var(--spovest-border-dark);
+  --spovest-text: var(--spovest-text-dark);
+  --spovest-text-secondary: var(--spovest-text-secondary-dark);
+  --spovest-text-muted: var(--spovest-text-muted-dark);
+}
+
+/* ===== Light Theme ===== */
+.spovest-theme-light,
+[data-spovest-theme="light"] {
+  --spovest-bg: var(--spovest-bg-light);
+  --spovest-surface: var(--spovest-surface-light);
+  --spovest-surface-alt: var(--spovest-surface-alt-light);
+  --spovest-border: var(--spovest-border-light);
+  --spovest-text: var(--spovest-text-light);
+  --spovest-text-secondary: var(--spovest-text-secondary-light);
+  --spovest-text-muted: var(--spovest-text-muted-light);
+}
+
+/* ===== Base Styles ===== */
+.spovest-app {
+  font-family: var(--spovest-font-body);
+  background-color: var(--spovest-bg);
+  color: var(--spovest-text);
+  min-height: 100vh;
+}
+
+.spovest-app * {
+  transition: background-color var(--spovest-transition-normal),
+              border-color var(--spovest-transition-normal),
+              color var(--spovest-transition-normal);
+}
+
+/* ===== Utility Classes ===== */
+.spovest-gradient-text {
+  background: var(--spovest-gradient-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.spovest-gradient-bg {
+  background: var(--spovest-gradient-primary);
+}
+
+.spovest-gradient-hero {
+  background: var(--spovest-gradient-hero);
+}
+
+.spovest-glow {
+  box-shadow: var(--spovest-shadow-glow);
+}
+
+.spovest-glow-accent {
+  box-shadow: var(--spovest-shadow-glow-accent);
+}
+
+/* Price change indicators */
+.spovest-price-up {
+  color: var(--spovest-success);
+}
+
+.spovest-price-down {
+  color: var(--spovest-danger);
+}
+
+.spovest-price-neutral {
+  color: var(--spovest-text-muted);
+}
+
+/* ===== Animations ===== */
+@keyframes spovest-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes spovest-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes spovest-slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes spovest-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes spovest-pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(124, 58, 237, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(124, 58, 237, 0.5);
+  }
+}
+
+@keyframes spovest-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.spovest-animate-fade-in {
+  animation: spovest-fade-in 0.3s ease-out;
+}
+
+.spovest-animate-slide-up {
+  animation: spovest-slide-up 0.4s ease-out;
+}
+
+.spovest-animate-slide-down {
+  animation: spovest-slide-down 0.4s ease-out;
+}
+
+.spovest-animate-scale-in {
+  animation: spovest-scale-in 0.3s ease-out;
+}
+
+.spovest-animate-pulse-glow {
+  animation: spovest-pulse-glow 2s ease-in-out infinite;
+}
+
+/* Skeleton loading */
+.spovest-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--spovest-surface) 25%,
+    var(--spovest-surface-alt) 50%,
+    var(--spovest-surface) 75%
+  );
+  background-size: 200% 100%;
+  animation: spovest-shimmer 1.5s ease-in-out infinite;
+}
+
+/* ===== Scrollbar ===== */
+.spovest-app ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.spovest-app ::-webkit-scrollbar-track {
+  background: var(--spovest-surface);
+  border-radius: var(--spovest-radius-full);
+}
+
+.spovest-app ::-webkit-scrollbar-thumb {
+  background: var(--spovest-border);
+  border-radius: var(--spovest-radius-full);
+}
+
+.spovest-app ::-webkit-scrollbar-thumb:hover {
+  background: var(--spovest-text-muted);
+}

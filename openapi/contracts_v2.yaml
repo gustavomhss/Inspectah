@@ -1,0 +1,2183 @@
+openapi: 3.1.0
+info:
+  title: Inspectah API
+  description: |
+    Inspectah API v2 - Sistema de verificacao e validacao de claims.
+
+    Semver Policy:
+    - MAJOR: Breaking changes (schema removals, required field additions)
+    - MINOR: New features, new optional fields
+    - PATCH: Bug fixes, documentation updates
+  version: 2.0.0
+  contact:
+    name: Inspectah Team
+  license:
+    name: Proprietary
+
+servers:
+  - url: https://api.inspectah.local/v2
+    description: Production
+  - url: http://localhost:8000/api/v2
+    description: Development
+
+tags:
+  - name: claims
+    description: Claim management and analysis
+  - name: sources
+    description: Source management
+  - name: signals
+    description: Signal detection and queries
+  - name: policies
+    description: Policy management
+  - name: verdicts
+    description: Verdict management
+  - name: memory
+    description: Memory controller operations
+  - name: explain
+    description: Explainability and reasoning
+  - name: admin
+    description: Administrative operations
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    apiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
+
+  schemas:
+    # ===========================================
+    # Common Schemas
+    # ===========================================
+
+    ContractVersion:
+      type: object
+      required:
+        - version
+        - min_supported
+      properties:
+        version:
+          type: string
+          pattern: ^\d+\.\d+\.\d+$
+          example: "2.0.0"
+        min_supported:
+          type: string
+          pattern: ^\d+\.\d+\.\d+$
+          example: "2.0.0"
+
+    ResponseMeta:
+      type: object
+      required:
+        - version
+        - timestamp
+        - request_id
+      properties:
+        version:
+          type: string
+          example: "2.0.0"
+        timestamp:
+          type: string
+          format: date-time
+        request_id:
+          type: string
+          format: uuid
+        deprecation_warning:
+          type: string
+          description: Warning for deprecated endpoints/fields
+
+    Pagination:
+      type: object
+      required:
+        - page
+        - page_size
+        - total_items
+        - total_pages
+        - has_next
+        - has_previous
+      properties:
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+          maximum: 200
+        total_items:
+          type: integer
+          minimum: 0
+        total_pages:
+          type: integer
+          minimum: 0
+        has_next:
+          type: boolean
+        has_previous:
+          type: boolean
+
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          enum:
+            - VALIDATION_ERROR
+            - NOT_FOUND
+            - UNAUTHORIZED
+            - FORBIDDEN
+            - CONFLICT
+            - RATE_LIMITED
+            - INTERNAL_ERROR
+            - SERVICE_UNAVAILABLE
+            - CONTRACT_VIOLATION
+            - VERSION_MISMATCH
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+        field:
+          type: string
+        trace_id:
+          type: string
+
+    # ===========================================
+    # Response Envelopes
+    # ===========================================
+
+    SuccessResponse:
+      type: object
+      required:
+        - status
+        - meta
+        - data
+      properties:
+        status:
+          type: string
+          enum: [success]
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+        data:
+          type: object
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    ErrorResponse:
+      type: object
+      required:
+        - status
+        - meta
+        - errors
+      properties:
+        status:
+          type: string
+          enum: [error]
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
+          minItems: 1
+
+    PartialResponse:
+      type: object
+      required:
+        - status
+        - meta
+        - data
+        - errors
+      properties:
+        status:
+          type: string
+          enum: [partial]
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+        data:
+          type: object
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    # ===========================================
+    # Domain Schemas - Claims
+    # ===========================================
+
+    ClaimId:
+      type: string
+      pattern: ^clm_[a-zA-Z0-9]{26}$
+      example: clm_01HQ5YZ0000000000000000000
+
+    ClaimText:
+      type: string
+      minLength: 10
+      maxLength: 5000
+
+    ClaimVerdict:
+      type: string
+      enum:
+        - true
+        - false
+        - unverified
+        - inconclusive
+        - misleading
+        - out_of_scope
+
+    ClaimConfidence:
+      type: number
+      format: float
+      minimum: 0.0
+      maximum: 1.0
+
+    Claim:
+      type: object
+      required:
+        - id
+        - text
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: '#/components/schemas/ClaimId'
+        text:
+          $ref: '#/components/schemas/ClaimText'
+        source_id:
+          $ref: '#/components/schemas/SourceId'
+        verdict:
+          $ref: '#/components/schemas/ClaimVerdict'
+        confidence:
+          $ref: '#/components/schemas/ClaimConfidence'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        entities:
+          type: array
+          items:
+            type: string
+          maxItems: 50
+        topics:
+          type: array
+          items:
+            type: string
+          maxItems: 20
+        evidence_count:
+          type: integer
+          minimum: 0
+        metadata:
+          type: object
+          additionalProperties: true
+
+    ClaimCreate:
+      type: object
+      required:
+        - text
+      properties:
+        text:
+          $ref: '#/components/schemas/ClaimText'
+        source_id:
+          $ref: '#/components/schemas/SourceId'
+        entities:
+          type: array
+          items:
+            type: string
+          maxItems: 50
+        topics:
+          type: array
+          items:
+            type: string
+          maxItems: 20
+        metadata:
+          type: object
+          additionalProperties: true
+
+    ClaimUpdate:
+      type: object
+      properties:
+        verdict:
+          $ref: '#/components/schemas/ClaimVerdict'
+        confidence:
+          $ref: '#/components/schemas/ClaimConfidence'
+        entities:
+          type: array
+          items:
+            type: string
+          maxItems: 50
+        topics:
+          type: array
+          items:
+            type: string
+          maxItems: 20
+        metadata:
+          type: object
+          additionalProperties: true
+
+    ClaimRelation:
+      type: object
+      required:
+        - source_claim_id
+        - target_claim_id
+        - relation_type
+        - confidence
+        - method
+        - created_at
+      properties:
+        source_claim_id:
+          $ref: '#/components/schemas/ClaimId'
+        target_claim_id:
+          $ref: '#/components/schemas/ClaimId'
+        relation_type:
+          type: string
+          enum:
+            - supports
+            - contradicts
+            - is_subset_of
+            - is_superset_of
+            - related
+            - duplicate
+            - refines
+        confidence:
+          $ref: '#/components/schemas/ClaimConfidence'
+        method:
+          type: string
+          enum:
+            - semantic_similarity
+            - entity_overlap
+            - temporal_proximity
+            - manual
+            - llm_inference
+        created_at:
+          type: string
+          format: date-time
+
+    # ===========================================
+    # Domain Schemas - Sources
+    # ===========================================
+
+    SourceId:
+      type: string
+      pattern: ^src_[a-zA-Z0-9]{26}$
+      example: src_01HQ5YZ0000000000000000000
+
+    SourceType:
+      type: string
+      enum:
+        - rss
+        - api
+        - website
+        - social
+        - official
+        - factcheck
+
+    SourceState:
+      type: string
+      enum:
+        - active
+        - paused
+        - error
+        - disabled
+        - pending_approval
+
+    HealthStatus:
+      type: string
+      enum:
+        - healthy
+        - degraded
+        - unhealthy
+        - unknown
+
+    Source:
+      type: object
+      required:
+        - id
+        - name
+        - slug
+        - source_type
+        - url
+        - enabled
+        - state
+        - health_status
+        - created_at
+      properties:
+        id:
+          $ref: '#/components/schemas/SourceId'
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        slug:
+          type: string
+          pattern: ^[a-z0-9-]+$
+          maxLength: 100
+        source_type:
+          $ref: '#/components/schemas/SourceType'
+        url:
+          type: string
+          format: uri
+        enabled:
+          type: boolean
+        state:
+          $ref: '#/components/schemas/SourceState'
+        health_status:
+          $ref: '#/components/schemas/HealthStatus'
+        credibility_score:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+        created_at:
+          type: string
+          format: date-time
+        last_ingestion_at:
+          type: string
+          format: date-time
+        config:
+          $ref: '#/components/schemas/SourceConfig'
+
+    SourceConfig:
+      type: object
+      properties:
+        poll_interval_seconds:
+          type: integer
+          minimum: 60
+          maximum: 86400
+        rate_limit_per_minute:
+          type: integer
+          minimum: 1
+          maximum: 1000
+        auth_type:
+          type: string
+          enum: [none, basic, bearer, oauth2]
+        timeout_seconds:
+          type: integer
+          minimum: 5
+          maximum: 300
+        retry_count:
+          type: integer
+          minimum: 0
+          maximum: 10
+
+    SourceCreate:
+      type: object
+      required:
+        - name
+        - source_type
+        - url
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        source_type:
+          $ref: '#/components/schemas/SourceType'
+        url:
+          type: string
+          format: uri
+        config:
+          $ref: '#/components/schemas/SourceConfig'
+
+    # ===========================================
+    # Domain Schemas - Signals
+    # ===========================================
+
+    SignalType:
+      type: string
+      enum:
+        - mentiras
+        - batalha
+        - silencio
+        - fragilidade
+        - credibility
+        - velocity
+        - contradiction
+
+    SignalScope:
+      type: string
+      enum:
+        - global
+        - source
+        - topic
+        - entity
+        - claim
+
+    SignalLevel:
+      type: string
+      enum:
+        - none
+        - low
+        - medium
+        - high
+        - critical
+
+    Signal:
+      type: object
+      required:
+        - type
+        - scope
+        - value
+        - confidence
+        - level
+        - calculated_at
+        - expires_at
+      properties:
+        type:
+          $ref: '#/components/schemas/SignalType'
+        scope:
+          $ref: '#/components/schemas/SignalScope'
+        scope_id:
+          type: string
+        value:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+        confidence:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+        level:
+          $ref: '#/components/schemas/SignalLevel'
+        calculated_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        metadata:
+          type: object
+          additionalProperties: true
+
+    SignalQuery:
+      type: object
+      properties:
+        types:
+          type: array
+          items:
+            $ref: '#/components/schemas/SignalType'
+        scopes:
+          type: array
+          items:
+            $ref: '#/components/schemas/SignalScope'
+        scope_id:
+          type: string
+        min_value:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+        max_value:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+        levels:
+          type: array
+          items:
+            $ref: '#/components/schemas/SignalLevel'
+        include_expired:
+          type: boolean
+          default: false
+
+    # ===========================================
+    # Domain Schemas - Policies
+    # ===========================================
+
+    PolicyId:
+      type: string
+      pattern: ^pol_[a-zA-Z0-9]{26}$
+      example: pol_01HQ5YZ0000000000000000000
+
+    PolicyStatus:
+      type: string
+      enum:
+        - draft
+        - active
+        - deprecated
+        - archived
+
+    PolicyDomain:
+      type: string
+      enum:
+        - health
+        - politics
+        - science
+        - economy
+        - general
+        - environment
+        - security
+
+    Policy:
+      type: object
+      required:
+        - id
+        - name
+        - domain
+        - version
+        - status
+        - min_confidence
+        - min_sources
+        - created_at
+      properties:
+        id:
+          $ref: '#/components/schemas/PolicyId'
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        domain:
+          $ref: '#/components/schemas/PolicyDomain'
+        version:
+          type: integer
+          minimum: 1
+        status:
+          $ref: '#/components/schemas/PolicyStatus'
+        min_confidence:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+        min_sources:
+          type: integer
+          minimum: 1
+          maximum: 100
+        sensitive:
+          type: boolean
+          default: false
+        created_at:
+          type: string
+          format: date-time
+        activated_at:
+          type: string
+          format: date-time
+        rules:
+          type: array
+          items:
+            $ref: '#/components/schemas/PolicyRule'
+
+    PolicyRule:
+      type: object
+      required:
+        - condition
+        - action
+      properties:
+        condition:
+          type: string
+          description: DSL condition expression
+        action:
+          type: string
+          enum:
+            - approve
+            - reject
+            - escalate
+            - flag
+        weight:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          default: 1.0
+
+    PolicyCreate:
+      type: object
+      required:
+        - name
+        - domain
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        domain:
+          $ref: '#/components/schemas/PolicyDomain'
+        min_confidence:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          default: 0.7
+        min_sources:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 2
+        sensitive:
+          type: boolean
+          default: false
+        rules:
+          type: array
+          items:
+            $ref: '#/components/schemas/PolicyRule'
+
+    # ===========================================
+    # Domain Schemas - Verdicts
+    # ===========================================
+
+    VerdictId:
+      type: string
+      pattern: ^vrd_[a-zA-Z0-9]{26}$
+      example: vrd_01HQ5YZ0000000000000000000
+
+    Verdict:
+      type: object
+      required:
+        - id
+        - claim_id
+        - verdict
+        - confidence
+        - reasoning
+        - decided_at
+        - decided_by
+      properties:
+        id:
+          $ref: '#/components/schemas/VerdictId'
+        claim_id:
+          $ref: '#/components/schemas/ClaimId'
+        verdict:
+          $ref: '#/components/schemas/ClaimVerdict'
+        confidence:
+          $ref: '#/components/schemas/ClaimConfidence'
+        reasoning:
+          type: string
+          maxLength: 10000
+        evidence_ids:
+          type: array
+          items:
+            type: string
+        sources_count:
+          type: integer
+          minimum: 0
+        decided_at:
+          type: string
+          format: date-time
+        decided_by:
+          type: string
+          enum:
+            - system
+            - human
+            - llm
+            - policy
+        policy_id:
+          $ref: '#/components/schemas/PolicyId'
+
+    VerdictCreate:
+      type: object
+      required:
+        - claim_id
+        - verdict
+        - confidence
+        - reasoning
+      properties:
+        claim_id:
+          $ref: '#/components/schemas/ClaimId'
+        verdict:
+          $ref: '#/components/schemas/ClaimVerdict'
+        confidence:
+          $ref: '#/components/schemas/ClaimConfidence'
+        reasoning:
+          type: string
+          maxLength: 10000
+        evidence_ids:
+          type: array
+          items:
+            type: string
+        policy_id:
+          $ref: '#/components/schemas/PolicyId'
+
+    # ===========================================
+    # Domain Schemas - Memory
+    # ===========================================
+
+    MemoryScope:
+      type: string
+      enum:
+        - session
+        - flow
+        - agent
+        - global
+
+    MemoryEntry:
+      type: object
+      required:
+        - scope
+        - scope_id
+        - key
+        - value
+        - importance
+        - created_at
+        - expires_at
+      properties:
+        scope:
+          $ref: '#/components/schemas/MemoryScope'
+        scope_id:
+          type: string
+          maxLength: 255
+        key:
+          type: string
+          maxLength: 255
+        value:
+          type: object
+          additionalProperties: true
+        importance:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        access_count:
+          type: integer
+          minimum: 0
+        last_accessed_at:
+          type: string
+          format: date-time
+
+    MemoryHealthStatus:
+      type: string
+      enum:
+        - healthy
+        - warning
+        - critical
+
+    MemoryHealthReport:
+      type: object
+      required:
+        - status
+        - score
+        - issues
+        - metrics
+        - checked_at
+      properties:
+        status:
+          $ref: '#/components/schemas/MemoryHealthStatus'
+        score:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 100.0
+        issues:
+          type: array
+          items:
+            $ref: '#/components/schemas/MemoryHealthIssue'
+        metrics:
+          $ref: '#/components/schemas/MemoryMetrics'
+        checked_at:
+          type: string
+          format: date-time
+
+    MemoryHealthIssue:
+      type: object
+      required:
+        - code
+        - severity
+        - message
+      properties:
+        code:
+          type: string
+        severity:
+          type: string
+          enum: [info, warning, error]
+        message:
+          type: string
+        recommendation:
+          type: string
+
+    MemoryMetrics:
+      type: object
+      required:
+        - total_entries
+        - expired_entries
+        - avg_importance
+        - total_size_bytes
+      properties:
+        total_entries:
+          type: integer
+          minimum: 0
+        expired_entries:
+          type: integer
+          minimum: 0
+        avg_importance:
+          type: number
+          format: float
+        total_size_bytes:
+          type: integer
+          minimum: 0
+        entries_by_scope:
+          type: object
+          additionalProperties:
+            type: integer
+        hit_rate:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+
+    MemoryDashboard:
+      type: object
+      required:
+        - health
+        - metrics
+        - trends
+      properties:
+        health:
+          $ref: '#/components/schemas/MemoryHealthReport'
+        metrics:
+          $ref: '#/components/schemas/MemoryMetrics'
+        trends:
+          type: array
+          items:
+            $ref: '#/components/schemas/MemoryTrendPoint'
+        breakdowns:
+          type: object
+          properties:
+            by_scope:
+              type: object
+              additionalProperties:
+                type: integer
+            by_importance:
+              type: object
+              additionalProperties:
+                type: integer
+
+    MemoryTrendPoint:
+      type: object
+      required:
+        - timestamp
+        - total_entries
+        - expired_ratio
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        total_entries:
+          type: integer
+        expired_ratio:
+          type: number
+          format: float
+        health_score:
+          type: number
+          format: float
+
+    # ===========================================
+    # Domain Schemas - Explainability
+    # ===========================================
+
+    ExplanationId:
+      type: string
+      pattern: ^exp_[a-zA-Z0-9]{26}$
+      example: exp_01HQ5YZ0000000000000000000
+
+    ExplanationType:
+      type: string
+      enum:
+        - verdict
+        - signal
+        - relation
+        - policy
+        - flow
+
+    ReasoningStep:
+      type: object
+      required:
+        - step_number
+        - description
+        - inputs
+        - output
+      properties:
+        step_number:
+          type: integer
+          minimum: 1
+        description:
+          type: string
+        inputs:
+          type: array
+          items:
+            type: string
+        output:
+          type: string
+        confidence:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+        evidence_refs:
+          type: array
+          items:
+            type: string
+
+    Explanation:
+      type: object
+      required:
+        - id
+        - type
+        - target_id
+        - summary
+        - reasoning_path
+        - created_at
+      properties:
+        id:
+          $ref: '#/components/schemas/ExplanationId'
+        type:
+          $ref: '#/components/schemas/ExplanationType'
+        target_id:
+          type: string
+        summary:
+          type: string
+          maxLength: 1000
+        reasoning_path:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReasoningStep'
+        factors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExplanationFactor'
+        counterfactuals:
+          type: array
+          items:
+            $ref: '#/components/schemas/Counterfactual'
+        created_at:
+          type: string
+          format: date-time
+
+    ExplanationFactor:
+      type: object
+      required:
+        - name
+        - weight
+        - direction
+      properties:
+        name:
+          type: string
+        value:
+          type: string
+        weight:
+          type: number
+          format: float
+          minimum: -1.0
+          maximum: 1.0
+        direction:
+          type: string
+          enum: [positive, negative, neutral]
+        description:
+          type: string
+
+    Counterfactual:
+      type: object
+      required:
+        - condition
+        - outcome
+      properties:
+        condition:
+          type: string
+          description: What would need to change
+        outcome:
+          type: string
+          description: Predicted outcome if condition were different
+        likelihood:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+
+    DecisionComparison:
+      type: object
+      required:
+        - decision_a
+        - decision_b
+        - differences
+        - similarity_score
+      properties:
+        decision_a:
+          $ref: '#/components/schemas/Explanation'
+        decision_b:
+          $ref: '#/components/schemas/Explanation'
+        differences:
+          type: array
+          items:
+            $ref: '#/components/schemas/ComparisonDifference'
+        similarity_score:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+
+    ComparisonDifference:
+      type: object
+      required:
+        - aspect
+        - value_a
+        - value_b
+        - impact
+      properties:
+        aspect:
+          type: string
+        value_a:
+          type: string
+        value_b:
+          type: string
+        impact:
+          type: string
+          enum: [high, medium, low]
+        explanation:
+          type: string
+
+    # ===========================================
+    # Admin Schemas
+    # ===========================================
+
+    SystemHealth:
+      type: object
+      required:
+        - status
+        - components
+        - checked_at
+      properties:
+        status:
+          $ref: '#/components/schemas/HealthStatus'
+        components:
+          type: array
+          items:
+            $ref: '#/components/schemas/ComponentHealth'
+        checked_at:
+          type: string
+          format: date-time
+
+    ComponentHealth:
+      type: object
+      required:
+        - name
+        - status
+      properties:
+        name:
+          type: string
+        status:
+          $ref: '#/components/schemas/HealthStatus'
+        message:
+          type: string
+        latency_ms:
+          type: number
+        last_check:
+          type: string
+          format: date-time
+
+paths:
+  # ===========================================
+  # Contract Version
+  # ===========================================
+
+  /version:
+    get:
+      tags: [admin]
+      summary: Get API version information
+      operationId: getVersion
+      responses:
+        '200':
+          description: Version information
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ContractVersion'
+
+  # ===========================================
+  # Claims API
+  # ===========================================
+
+  /claims:
+    get:
+      tags: [claims]
+      summary: List claims with filtering
+      operationId: listClaims
+      security:
+        - bearerAuth: []
+        - apiKey: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+            default: 50
+        - name: verdict
+          in: query
+          schema:
+            $ref: '#/components/schemas/ClaimVerdict'
+        - name: source_id
+          in: query
+          schema:
+            $ref: '#/components/schemas/SourceId'
+        - name: min_confidence
+          in: query
+          schema:
+            type: number
+            format: float
+            minimum: 0.0
+            maximum: 1.0
+        - name: entities
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+        - name: topics
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+        - name: created_after
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: created_before
+          in: query
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: List of claims
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Claim'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      tags: [claims]
+      summary: Create a new claim
+      operationId: createClaim
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClaimCreate'
+      responses:
+        '201':
+          description: Claim created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Claim'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /claims/{claim_id}:
+    get:
+      tags: [claims]
+      summary: Get a claim by ID
+      operationId: getClaim
+      security:
+        - bearerAuth: []
+        - apiKey: []
+      parameters:
+        - name: claim_id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/ClaimId'
+      responses:
+        '200':
+          description: Claim details
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Claim'
+        '404':
+          description: Claim not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    patch:
+      tags: [claims]
+      summary: Update a claim
+      operationId: updateClaim
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: claim_id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/ClaimId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClaimUpdate'
+      responses:
+        '200':
+          description: Claim updated
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Claim'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Claim not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /claims/{claim_id}/relations:
+    get:
+      tags: [claims]
+      summary: Get relations for a claim
+      operationId: getClaimRelations
+      security:
+        - bearerAuth: []
+        - apiKey: []
+      parameters:
+        - name: claim_id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/ClaimId'
+        - name: direction
+          in: query
+          schema:
+            type: string
+            enum: [incoming, outgoing, both]
+            default: both
+        - name: relation_type
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+      responses:
+        '200':
+          description: Claim relations
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/ClaimRelation'
+        '404':
+          description: Claim not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ===========================================
+  # Sources API
+  # ===========================================
+
+  /sources:
+    get:
+      tags: [sources]
+      summary: List sources
+      operationId: listSources
+      security:
+        - bearerAuth: []
+        - apiKey: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+            default: 50
+        - name: source_type
+          in: query
+          schema:
+            $ref: '#/components/schemas/SourceType'
+        - name: state
+          in: query
+          schema:
+            $ref: '#/components/schemas/SourceState'
+        - name: health_status
+          in: query
+          schema:
+            $ref: '#/components/schemas/HealthStatus'
+        - name: enabled
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: List of sources
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Source'
+
+    post:
+      tags: [sources]
+      summary: Create a new source
+      operationId: createSource
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SourceCreate'
+      responses:
+        '201':
+          description: Source created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Source'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /sources/{source_id}:
+    get:
+      tags: [sources]
+      summary: Get a source by ID
+      operationId: getSource
+      security:
+        - bearerAuth: []
+        - apiKey: []
+      parameters:
+        - name: source_id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/SourceId'
+      responses:
+        '200':
+          description: Source details
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Source'
+        '404':
+          description: Source not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ===========================================
+  # Signals API
+  # ===========================================
+
+  /signals:
+    get:
+      tags: [signals]
+      summary: Query signals
+      operationId: querySignals
+      security:
+        - bearerAuth: []
+        - apiKey: []
+      parameters:
+        - name: types
+          in: query
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/SignalType'
+        - name: scopes
+          in: query
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/SignalScope'
+        - name: scope_id
+          in: query
+          schema:
+            type: string
+        - name: min_value
+          in: query
+          schema:
+            type: number
+            format: float
+        - name: levels
+          in: query
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/SignalLevel'
+        - name: include_expired
+          in: query
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: List of signals
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Signal'
+
+    post:
+      tags: [signals]
+      summary: Query signals with complex filter
+      operationId: querySignalsPost
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignalQuery'
+      responses:
+        '200':
+          description: List of signals
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Signal'
+
+  /signals/calculate:
+    post:
+      tags: [signals]
+      summary: Calculate signals on demand
+      operationId: calculateSignals
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - types
+                - scope
+              properties:
+                types:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/SignalType'
+                scope:
+                  $ref: '#/components/schemas/SignalScope'
+                scope_id:
+                  type: string
+                force_refresh:
+                  type: boolean
+                  default: false
+      responses:
+        '200':
+          description: Calculated signals
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Signal'
+
+  # ===========================================
+  # Memory API
+  # ===========================================
+
+  /ops/memory/dashboard:
+    get:
+      tags: [memory]
+      summary: Get memory controller dashboard
+      operationId: getMemoryDashboard
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Memory dashboard
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/MemoryDashboard'
+
+  /ops/memory/health:
+    get:
+      tags: [memory]
+      summary: Get memory health report
+      operationId: getMemoryHealth
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Memory health report
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/MemoryHealthReport'
+
+  /ops/memory/trends:
+    get:
+      tags: [memory]
+      summary: Get memory trends
+      operationId: getMemoryTrends
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: hours
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 168
+            default: 24
+      responses:
+        '200':
+          description: Memory trends
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/MemoryTrendPoint'
+
+  /ops/memory/top-scopes:
+    get:
+      tags: [memory]
+      summary: Get top memory scopes by entry count
+      operationId: getTopMemoryScopes
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+      responses:
+        '200':
+          description: Top memory scopes
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            scope:
+                              $ref: '#/components/schemas/MemoryScope'
+                            scope_id:
+                              type: string
+                            entry_count:
+                              type: integer
+
+  /ops/memory/cleanup:
+    post:
+      tags: [memory]
+      summary: Trigger memory cleanup
+      operationId: triggerMemoryCleanup
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                force:
+                  type: boolean
+                  default: false
+                aggressive:
+                  type: boolean
+                  default: false
+                scope:
+                  $ref: '#/components/schemas/MemoryScope'
+      responses:
+        '200':
+          description: Cleanup result
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          entries_removed:
+                            type: integer
+                          bytes_freed:
+                            type: integer
+
+  # ===========================================
+  # Explain API
+  # ===========================================
+
+  /explain/verdict/{verdict_id}:
+    get:
+      tags: [explain]
+      summary: Get explanation for a verdict
+      operationId: explainVerdict
+      security:
+        - bearerAuth: []
+        - apiKey: []
+      parameters:
+        - name: verdict_id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/VerdictId'
+        - name: include_counterfactuals
+          in: query
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Verdict explanation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Explanation'
+        '404':
+          description: Verdict not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /explain/signal/{signal_type}:
+    get:
+      tags: [explain]
+      summary: Get explanation for a signal
+      operationId: explainSignal
+      security:
+        - bearerAuth: []
+        - apiKey: []
+      parameters:
+        - name: signal_type
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/SignalType'
+        - name: scope
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/SignalScope'
+        - name: scope_id
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Signal explanation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Explanation'
+
+  /explain/compare:
+    post:
+      tags: [explain]
+      summary: Compare two decisions
+      operationId: compareDecisions
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - decision_a_id
+                - decision_b_id
+                - type
+              properties:
+                decision_a_id:
+                  type: string
+                decision_b_id:
+                  type: string
+                type:
+                  $ref: '#/components/schemas/ExplanationType'
+      responses:
+        '200':
+          description: Decision comparison
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/DecisionComparison'
+
+  /explain/drilldown/{explanation_id}:
+    get:
+      tags: [explain]
+      summary: Get detailed drilldown for an explanation
+      operationId: drilldownExplanation
+      security:
+        - bearerAuth: []
+        - apiKey: []
+      parameters:
+        - name: explanation_id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/ExplanationId'
+        - name: step
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        '200':
+          description: Explanation drilldown
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          step:
+                            $ref: '#/components/schemas/ReasoningStep'
+                          evidence:
+                            type: array
+                            items:
+                              type: object
+                          related_factors:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/ExplanationFactor'
+
+  # ===========================================
+  # Admin API
+  # ===========================================
+
+  /admin/health:
+    get:
+      tags: [admin]
+      summary: Get system health
+      operationId: getSystemHealth
+      responses:
+        '200':
+          description: System health status
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/SystemHealth'
+
+  /admin/policies:
+    get:
+      tags: [admin]
+      summary: List policies
+      operationId: listPolicies
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: domain
+          in: query
+          schema:
+            $ref: '#/components/schemas/PolicyDomain'
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/PolicyStatus'
+      responses:
+        '200':
+          description: List of policies
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Policy'
+
+    post:
+      tags: [admin]
+      summary: Create a new policy
+      operationId: createPolicy
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PolicyCreate'
+      responses:
+        '201':
+          description: Policy created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Policy'
+
+  /admin/policies/{policy_id}:
+    get:
+      tags: [admin]
+      summary: Get a policy by ID
+      operationId: getPolicy
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: policy_id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/PolicyId'
+      responses:
+        '200':
+          description: Policy details
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Policy'
+        '404':
+          description: Policy not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /admin/policies/{policy_id}/activate:
+    post:
+      tags: [admin]
+      summary: Activate a policy
+      operationId: activatePolicy
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: policy_id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/PolicyId'
+      responses:
+        '200':
+          description: Policy activated
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Policy'
+
+  /admin/policies/{policy_id}/rollback:
+    post:
+      tags: [admin]
+      summary: Rollback a policy to previous version
+      operationId: rollbackPolicy
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: policy_id
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/PolicyId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                target_version:
+                  type: integer
+                  minimum: 1
+      responses:
+        '200':
+          description: Policy rolled back
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Policy'
+
+security:
+  - bearerAuth: []
+  - apiKey: []

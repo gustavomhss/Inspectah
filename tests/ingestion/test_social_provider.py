@@ -542,3 +542,180 @@ class TestRawSocialItemS40:
         # collected_at should be set automatically
         assert item.collected_at is not None
         assert isinstance(item.collected_at, datetime)
+
+
+# =============================================================================
+# S40-BE-018: W3 Refinement Tests - Extended validation and edge cases
+# =============================================================================
+
+
+class TestSocialProviderValidation:
+    """Tests for input validation in social provider."""
+
+    @pytest.mark.asyncio
+    async def test_fetch_negative_limit_raises(self):
+        """fetch raises ValueError for negative limit."""
+        client = SocialProviderClient()
+        profile = IngestionProfile.create(
+            id="p_neg",
+            provider_id="prov",
+            slug="test-neg",
+            name="Test",
+            kind=ProfileKind.SOCIAL,
+            country="BR",
+            language="pt",
+        )
+
+        with pytest.raises(ValueError) as exc_info:
+            await client.fetch(profile, limit=-1)
+
+        assert "limit must be > 0" in str(exc_info.value)
+
+    @pytest.mark.asyncio
+    async def test_fetch_zero_limit_raises(self):
+        """fetch raises ValueError for zero limit."""
+        client = SocialProviderClient()
+        profile = IngestionProfile.create(
+            id="p_zero",
+            provider_id="prov",
+            slug="test-zero",
+            name="Test",
+            kind=ProfileKind.SOCIAL,
+            country="BR",
+            language="pt",
+        )
+
+        with pytest.raises(ValueError) as exc_info:
+            await client.fetch(profile, limit=0)
+
+        assert "limit must be > 0" in str(exc_info.value)
+
+    @pytest.mark.asyncio
+    async def test_fetch_for_domain_negative_limit_raises(self):
+        """fetch_for_domain raises ValueError for negative limit."""
+        client = SocialProviderClient()
+
+        with pytest.raises(ValueError) as exc_info:
+            await client.fetch_for_domain("saude", ["vacina"], limit=-5)
+
+        assert "limit must be > 0" in str(exc_info.value)
+
+    @pytest.mark.asyncio
+    async def test_fetch_for_domain_empty_keywords_raises(self):
+        """fetch_for_domain raises ValueError for empty keywords."""
+        client = SocialProviderClient()
+
+        with pytest.raises(ValueError) as exc_info:
+            await client.fetch_for_domain("saude", [], limit=5)
+
+        assert "keywords must not be empty" in str(exc_info.value)
+
+
+class TestSocialProviderJitter:
+    """Tests for jitter in retry delays."""
+
+    def test_add_jitter_varies_delay(self):
+        """_add_jitter adds variation to delay."""
+        client = SocialProviderClient()
+        base_delay = 1.0
+
+        # Generate multiple jittered values
+        jittered_values = [client._add_jitter(base_delay) for _ in range(100)]
+
+        # Should have variation (not all identical)
+        unique_values = set(round(v, 4) for v in jittered_values)
+        assert len(unique_values) > 1
+
+        # All values should be within reasonable range (10% jitter)
+        for v in jittered_values:
+            assert 0.89 <= v <= 1.11  # Allow slight overage due to rounding
+
+    def test_add_jitter_minimum_delay(self):
+        """_add_jitter ensures minimum delay of 0.01."""
+        client = SocialProviderClient()
+
+        # Very small delay should still return at least 0.01
+        result = client._add_jitter(0.001)
+        assert result >= 0.01
+
+
+class TestSocialProviderResetStats:
+    """Tests for reset_stats method."""
+
+    def test_reset_stats_clears_counters(self):
+        """reset_stats clears all counters."""
+        client = SocialProviderClient()
+        client._request_count = 50
+        client._error_count = 10
+        client._rate_limit.requests_made = 30
+
+        client.reset_stats()
+
+        assert client._request_count == 0
+        assert client._error_count == 0
+        assert client._rate_limit.requests_made == 0
+
+    def test_reset_stats_resets_window(self):
+        """reset_stats resets rate limit window."""
+        import time
+
+        client = SocialProviderClient()
+        old_window = client._rate_limit.window_start - 100  # Old window
+        client._rate_limit.window_start = old_window
+
+        client.reset_stats()
+
+        # Window should be reset to recent time
+        assert client._rate_limit.window_start > old_window
+        assert client._rate_limit.window_start >= time.time() - 1
+
+
+class TestSocialProviderCaseInsensitive:
+    """Tests for case-insensitive domain handling."""
+
+    def test_is_pilot_domain_uppercase(self):
+        """is_pilot_domain handles uppercase."""
+        client = SocialProviderClient()
+        assert client.is_pilot_domain("SAUDE") is True
+        assert client.is_pilot_domain("POLITICA") is True
+
+    def test_is_pilot_domain_mixed_case(self):
+        """is_pilot_domain handles mixed case."""
+        client = SocialProviderClient()
+        assert client.is_pilot_domain("Saude") is True
+        assert client.is_pilot_domain("PoLiTiCa") is True
+
+    def test_is_pilot_domain_non_pilot_case(self):
+        """is_pilot_domain returns False for non-pilot regardless of case."""
+        client = SocialProviderClient()
+        assert client.is_pilot_domain("ECONOMIA") is False
+        assert client.is_pilot_domain("Esporte") is False
+
+
+class TestAsyncRateLimiting:
+    """Tests for async rate limiting."""
+
+    @pytest.mark.asyncio
+    async def test_async_rate_limit_increments(self):
+        """_check_rate_limit_async increments request count."""
+        client = SocialProviderClient(rate_limit_per_minute=100)
+        initial = client._rate_limit.requests_made
+
+        await client._check_rate_limit_async()
+
+        assert client._rate_limit.requests_made == initial + 1
+
+    @pytest.mark.asyncio
+    async def test_async_rate_limit_window_reset(self):
+        """_check_rate_limit_async resets window after 60s."""
+        import time
+
+        client = SocialProviderClient(rate_limit_per_minute=100)
+        client._rate_limit.window_start = time.time() - 61  # 61 seconds ago
+        client._rate_limit.requests_made = 50
+
+        await client._check_rate_limit_async()
+
+        # Window should be reset, count should be 1
+        assert client._rate_limit.requests_made == 1
+        assert client._rate_limit.window_start > time.time() - 2

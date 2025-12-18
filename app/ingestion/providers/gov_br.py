@@ -141,8 +141,14 @@ class GovBrClient:
         Args:
             data_inicial: Data inicial (DD/MM/AAAA)
             data_final: Data final (DD/MM/AAAA)
-            pagina: Numero da pagina (1-indexed)
+            pagina: Numero da pagina (1-indexed, must be >= 1)
+
+        Raises:
+            ValueError: If pagina < 1
         """
+        if pagina < 1:
+            raise ValueError(f"pagina must be >= 1, got {pagina}")
+
         url = f"{self.TRANSPARENCIA_BASE}/contratos"
         params = {
             "dataInicial": data_inicial,
@@ -181,7 +187,24 @@ class GovBrClient:
         mes: int,
         pagina: int = 1,
     ) -> List[GovBrDocument]:
-        """Busca despesas publicas."""
+        """
+        Busca despesas publicas.
+
+        Args:
+            ano: Year (e.g., 2024)
+            mes: Month (1-12)
+            pagina: Page number (1-indexed, must be >= 1)
+
+        Raises:
+            ValueError: If pagina < 1, mes invalid, or ano invalid
+        """
+        if pagina < 1:
+            raise ValueError(f"pagina must be >= 1, got {pagina}")
+        if not 1 <= mes <= 12:
+            raise ValueError(f"mes must be 1-12, got {mes}")
+        if ano < 2000 or ano > 2100:
+            raise ValueError(f"ano must be between 2000-2100, got {ano}")
+
         url = f"{self.TRANSPARENCIA_BASE}/despesas/documentos"
         params = {
             "ano": ano,
@@ -224,7 +247,24 @@ class GovBrClient:
         rows: int = 10,
         start: int = 0,
     ) -> List[GovBrDocument]:
-        """Busca datasets no portal dados.gov.br."""
+        """
+        Busca datasets no portal dados.gov.br.
+
+        Args:
+            query: Search query string
+            rows: Number of results (1-100)
+            start: Offset for pagination (>= 0)
+
+        Raises:
+            ValueError: If rows or start invalid
+        """
+        if not query or not query.strip():
+            raise ValueError("query must not be empty")
+        if rows < 1 or rows > 100:
+            raise ValueError(f"rows must be 1-100, got {rows}")
+        if start < 0:
+            raise ValueError(f"start must be >= 0, got {start}")
+
         url = f"{self.DADOS_GOV_BASE}/action/package_search"
         params = {
             "q": query,

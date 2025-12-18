@@ -1223,3 +1223,216 @@ class TestGovBrClientRetryEdgeCases:
                 result = await client._request_with_retry("https://test.api/persistent-error")
 
         assert result is None
+
+
+# =============================================================================
+# W3 Refinement: Input Validation Tests
+# =============================================================================
+
+
+class TestGovBrClientValidation:
+    """Tests for GovBrClient input validation."""
+
+    @pytest.mark.asyncio
+    async def test_fetch_contratos_invalid_pagina(self):
+        """fetch_contratos raises ValueError for pagina < 1."""
+        client = GovBrClient()
+
+        with pytest.raises(ValueError) as exc_info:
+            await client.fetch_contratos("01/01/2024", "31/01/2024", pagina=0)
+
+        assert "pagina must be >= 1" in str(exc_info.value)
+
+    @pytest.mark.asyncio
+    async def test_fetch_contratos_negative_pagina(self):
+        """fetch_contratos raises ValueError for negative pagina."""
+        client = GovBrClient()
+
+        with pytest.raises(ValueError) as exc_info:
+            await client.fetch_contratos("01/01/2024", "31/01/2024", pagina=-5)
+
+        assert "pagina must be >= 1" in str(exc_info.value)
+
+    @pytest.mark.asyncio
+    async def test_fetch_despesas_invalid_pagina(self):
+        """fetch_despesas raises ValueError for pagina < 1."""
+        client = GovBrClient()
+
+        with pytest.raises(ValueError) as exc_info:
+            await client.fetch_despesas(2024, 1, pagina=0)
+
+        assert "pagina must be >= 1" in str(exc_info.value)
+
+    @pytest.mark.asyncio
+    async def test_fetch_despesas_invalid_mes_low(self):
+        """fetch_despesas raises ValueError for mes < 1."""
+        client = GovBrClient()
+
+        with pytest.raises(ValueError) as exc_info:
+            await client.fetch_despesas(2024, 0, pagina=1)
+
+        assert "mes must be 1-12" in str(exc_info.value)
+
+    @pytest.mark.asyncio
+    async def test_fetch_despesas_invalid_mes_high(self):
+        """fetch_despesas raises ValueError for mes > 12."""
+        client = GovBrClient()
+
+        with pytest.raises(ValueError) as exc_info:
+            await client.fetch_despesas(2024, 13, pagina=1)
+
+        assert "mes must be 1-12" in str(exc_info.value)
+
+    @pytest.mark.asyncio
+    async def test_fetch_despesas_invalid_ano_low(self):
+        """fetch_despesas raises ValueError for ano < 2000."""
+        client = GovBrClient()
+
+        with pytest.raises(ValueError) as exc_info:
+            await client.fetch_despesas(1999, 1, pagina=1)
+
+        assert "ano must be between 2000-2100" in str(exc_info.value)
+
+    @pytest.mark.asyncio
+    async def test_fetch_despesas_invalid_ano_high(self):
+        """fetch_despesas raises ValueError for ano > 2100."""
+        client = GovBrClient()
+
+        with pytest.raises(ValueError) as exc_info:
+            await client.fetch_despesas(2101, 1, pagina=1)
+
+        assert "ano must be between 2000-2100" in str(exc_info.value)
+
+    @pytest.mark.asyncio
+    async def test_search_datasets_empty_query(self):
+        """search_datasets raises ValueError for empty query."""
+        client = GovBrClient()
+
+        with pytest.raises(ValueError) as exc_info:
+            await client.search_datasets("")
+
+        assert "query must not be empty" in str(exc_info.value)
+
+    @pytest.mark.asyncio
+    async def test_search_datasets_whitespace_query(self):
+        """search_datasets raises ValueError for whitespace-only query."""
+        client = GovBrClient()
+
+        with pytest.raises(ValueError) as exc_info:
+            await client.search_datasets("   ")
+
+        assert "query must not be empty" in str(exc_info.value)
+
+    @pytest.mark.asyncio
+    async def test_search_datasets_invalid_rows_low(self):
+        """search_datasets raises ValueError for rows < 1."""
+        client = GovBrClient()
+
+        with pytest.raises(ValueError) as exc_info:
+            await client.search_datasets("test", rows=0)
+
+        assert "rows must be 1-100" in str(exc_info.value)
+
+    @pytest.mark.asyncio
+    async def test_search_datasets_invalid_rows_high(self):
+        """search_datasets raises ValueError for rows > 100."""
+        client = GovBrClient()
+
+        with pytest.raises(ValueError) as exc_info:
+            await client.search_datasets("test", rows=101)
+
+        assert "rows must be 1-100" in str(exc_info.value)
+
+    @pytest.mark.asyncio
+    async def test_search_datasets_invalid_start(self):
+        """search_datasets raises ValueError for start < 0."""
+        client = GovBrClient()
+
+        with pytest.raises(ValueError) as exc_info:
+            await client.search_datasets("test", start=-1)
+
+        assert "start must be >= 0" in str(exc_info.value)
+
+
+class TestDadosGovClientValidation:
+    """Tests for DadosGovClient input validation."""
+
+    @pytest.mark.asyncio
+    async def test_fetch_by_category_invalid_rows_low(self):
+        """fetch_by_category raises ValueError for rows < 1."""
+        client = DadosGovClient()
+
+        with pytest.raises(ValueError) as exc_info:
+            await client.fetch_by_category("saude", rows=0)
+
+        assert "rows must be 1-100" in str(exc_info.value)
+
+    @pytest.mark.asyncio
+    async def test_fetch_by_category_invalid_rows_high(self):
+        """fetch_by_category raises ValueError for rows > 100."""
+        client = DadosGovClient()
+
+        with pytest.raises(ValueError) as exc_info:
+            await client.fetch_by_category("saude", rows=101)
+
+        assert "rows must be 1-100" in str(exc_info.value)
+
+    @pytest.mark.asyncio
+    async def test_fetch_by_category_invalid_start(self):
+        """fetch_by_category raises ValueError for start < 0."""
+        client = DadosGovClient()
+
+        with pytest.raises(ValueError) as exc_info:
+            await client.fetch_by_category("saude", start=-1)
+
+        assert "start must be >= 0" in str(exc_info.value)
+
+    @pytest.mark.asyncio
+    async def test_search_datasets_empty_query(self):
+        """search_datasets raises ValueError for empty query."""
+        client = DadosGovClient()
+
+        with pytest.raises(ValueError) as exc_info:
+            await client.search_datasets("")
+
+        assert "query must not be empty" in str(exc_info.value)
+
+    @pytest.mark.asyncio
+    async def test_search_datasets_whitespace_query(self):
+        """search_datasets raises ValueError for whitespace-only query."""
+        client = DadosGovClient()
+
+        with pytest.raises(ValueError) as exc_info:
+            await client.search_datasets("   ")
+
+        assert "query must not be empty" in str(exc_info.value)
+
+    @pytest.mark.asyncio
+    async def test_search_datasets_invalid_rows_low(self):
+        """search_datasets raises ValueError for rows < 1."""
+        client = DadosGovClient()
+
+        with pytest.raises(ValueError) as exc_info:
+            await client.search_datasets("test", rows=0)
+
+        assert "rows must be 1-100" in str(exc_info.value)
+
+    @pytest.mark.asyncio
+    async def test_search_datasets_invalid_rows_high(self):
+        """search_datasets raises ValueError for rows > 100."""
+        client = DadosGovClient()
+
+        with pytest.raises(ValueError) as exc_info:
+            await client.search_datasets("test", rows=101)
+
+        assert "rows must be 1-100" in str(exc_info.value)
+
+    @pytest.mark.asyncio
+    async def test_search_datasets_invalid_start(self):
+        """search_datasets raises ValueError for start < 0."""
+        client = DadosGovClient()
+
+        with pytest.raises(ValueError) as exc_info:
+            await client.search_datasets("test", start=-1)
+
+        assert "start must be >= 0" in str(exc_info.value)

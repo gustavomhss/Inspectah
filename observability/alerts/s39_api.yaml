@@ -1,0 +1,217 @@
+# S39-W4: API Alerts (T-OBS-API-001)
+# Prometheus alerting rules for API monitoring
+
+groups:
+  - name: s39_api_alerts
+    rules:
+      # High latency alert
+      - alert: APIHighLatency
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job="inspectah-api"}[5m])) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+          sprint: s39
+        annotations:
+          summary: "API P95 latency above 100ms"
+          description: "API P95 latency is {{ $value | humanizeDuration }} (threshold: 100ms)"
+          runbook_url: "https://docs.inspectah.io/runbooks/S39_api_down.md"
+
+      - alert: APICriticalLatency
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job="inspectah-api"}[5m])) > 0.5
+        for: 2m
+        labels:
+          severity: critical
+          team: platform
+          sprint: s39
+        annotations:
+          summary: "API P95 latency above 500ms"
+          description: "API P95 latency is {{ $value | humanizeDuration }} - CRITICAL"
+          runbook_url: "https://docs.inspectah.io/runbooks/S39_api_down.md"
+
+      # Error rate alerts
+      - alert: APIHighErrorRate
+        expr: |
+          (
+            sum(rate(http_requests_total{job="inspectah-api", status=~"5.."}[5m]))
+            /
+            sum(rate(http_requests_total{job="inspectah-api"}[5m]))
+          ) > 0.01
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+          sprint: s39
+        annotations:
+          summary: "API error rate above 1%"
+          description: "API error rate is {{ $value | humanizePercentage }}"
+          runbook_url: "https://docs.inspectah.io/runbooks/S39_api_down.md"
+
+      - alert: APICriticalErrorRate
+        expr: |
+          (
+            sum(rate(http_requests_total{job="inspectah-api", status=~"5.."}[5m]))
+            /
+            sum(rate(http_requests_total{job="inspectah-api"}[5m]))
+          ) > 0.05
+        for: 2m
+        labels:
+          severity: critical
+          team: platform
+          sprint: s39
+        annotations:
+          summary: "API error rate above 5%"
+          description: "API error rate is {{ $value | humanizePercentage }} - CRITICAL"
+          runbook_url: "https://docs.inspectah.io/runbooks/S39_api_down.md"
+
+      # Request rate alerts
+      - alert: APILowRequestRate
+        expr: sum(rate(http_requests_total{job="inspectah-api"}[5m])) < 1
+        for: 10m
+        labels:
+          severity: warning
+          team: platform
+          sprint: s39
+        annotations:
+          summary: "API request rate very low"
+          description: "API receiving less than 1 req/s for 10 minutes"
+          runbook_url: "https://docs.inspectah.io/runbooks/S39_api_down.md"
+
+      - alert: APIHighRequestRate
+        expr: sum(rate(http_requests_total{job="inspectah-api"}[1m])) > 1000
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+          sprint: s39
+        annotations:
+          summary: "API request rate very high"
+          description: "API receiving {{ $value | humanize }} req/s"
+          runbook_url: "https://docs.inspectah.io/runbooks/S39_throughput.md"
+
+      # Endpoint-specific alerts
+      - alert: ExplainEndpointSlow
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job="inspectah-api", endpoint="/api/explain.*"}[5m])) > 0.3
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+          sprint: s39
+          endpoint: explain
+        annotations:
+          summary: "Explain endpoint P95 above 300ms"
+          description: "Explain endpoint latency is {{ $value | humanizeDuration }}"
+          runbook_url: "https://docs.inspectah.io/runbooks/S39_api_down.md"
+
+      - alert: SignalsEndpointSlow
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job="inspectah-api", endpoint="/api/signals.*"}[5m])) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+          sprint: s39
+          endpoint: signals
+        annotations:
+          summary: "Signals endpoint P95 above 100ms"
+          description: "Signals endpoint latency is {{ $value | humanizeDuration }}"
+          runbook_url: "https://docs.inspectah.io/runbooks/S39_api_down.md"
+
+      - alert: ClaimsEndpointSlow
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job="inspectah-api", endpoint="/api/claims.*"}[5m])) > 0.2
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+          sprint: s39
+          endpoint: claims
+        annotations:
+          summary: "Claims endpoint P95 above 200ms"
+          description: "Claims endpoint latency is {{ $value | humanizeDuration }}"
+          runbook_url: "https://docs.inspectah.io/runbooks/S39_api_down.md"
+
+      # WebSocket alerts
+      - alert: WebSocketConnectionsHigh
+        expr: websocket_connections_active{job="inspectah-api"} > 10000
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+          sprint: s39
+        annotations:
+          summary: "High number of WebSocket connections"
+          description: "{{ $value | humanize }} active WebSocket connections"
+          runbook_url: "https://docs.inspectah.io/runbooks/S39_api_down.md"
+
+      - alert: WebSocketMessageRate
+        expr: rate(websocket_messages_total{job="inspectah-api"}[1m]) > 5000
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+          sprint: s39
+        annotations:
+          summary: "High WebSocket message rate"
+          description: "{{ $value | humanize }} messages/s"
+          runbook_url: "https://docs.inspectah.io/runbooks/S39_api_down.md"
+
+      # Throughput SLA alerts
+      - alert: ThroughputBelowTarget
+        expr: sum(increase(claims_processed_total{job="inspectah-api"}[24h])) < 30000
+        for: 1h
+        labels:
+          severity: warning
+          team: platform
+          sprint: s39
+        annotations:
+          summary: "Claims throughput below 30K/day"
+          description: "Processing {{ $value | humanize }} claims/day (target: 50K)"
+          runbook_url: "https://docs.inspectah.io/runbooks/S39_throughput.md"
+
+      - alert: ThroughputCritical
+        expr: sum(increase(claims_processed_total{job="inspectah-api"}[24h])) < 20000
+        for: 1h
+        labels:
+          severity: critical
+          team: platform
+          sprint: s39
+        annotations:
+          summary: "Claims throughput below 20K/day - CRITICAL"
+          description: "Processing {{ $value | humanize }} claims/day (target: 50K)"
+          runbook_url: "https://docs.inspectah.io/runbooks/S39_throughput.md"
+
+      # Instance health
+      - alert: APIInstanceDown
+        expr: up{job="inspectah-api"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          team: platform
+          sprint: s39
+        annotations:
+          summary: "API instance down"
+          description: "API instance {{ $labels.instance }} is not responding"
+          runbook_url: "https://docs.inspectah.io/runbooks/S39_api_down.md"
+
+      - alert: APIInstanceHighMemory
+        expr: process_resident_memory_bytes{job="inspectah-api"} / 1024 / 1024 / 1024 > 4
+        for: 10m
+        labels:
+          severity: warning
+          team: platform
+          sprint: s39
+        annotations:
+          summary: "API instance high memory usage"
+          description: "API instance using {{ $value | humanize }}GB memory"
+          runbook_url: "https://docs.inspectah.io/runbooks/S39_api_down.md"
+
+      - alert: APIInstanceHighCPU
+        expr: rate(process_cpu_seconds_total{job="inspectah-api"}[5m]) * 100 > 80
+        for: 10m
+        labels:
+          severity: warning
+          team: platform
+          sprint: s39
+        annotations:
+          summary: "API instance high CPU usage"
+          description: "API instance at {{ $value | humanize }}% CPU"
+          runbook_url: "https://docs.inspectah.io/runbooks/S39_api_down.md"

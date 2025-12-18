@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://inspectah.dev/schemas/response_envelope_v1.json",
+  "title": "Response Envelope v1",
+  "description": "Standard API response envelope for all Inspectah endpoints",
+  "type": "object",
+  "required": ["status", "meta"],
+  "properties": {
+    "status": {
+      "type": "string",
+      "enum": ["success", "error", "partial"],
+      "description": "Overall response status"
+    },
+    "data": {
+      "description": "Response payload - type varies by endpoint"
+    },
+    "meta": {
+      "$ref": "#/$defs/ResponseMeta"
+    },
+    "errors": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/ApiError"
+      },
+      "description": "List of errors if status is error or partial"
+    },
+    "pagination": {
+      "$ref": "#/$defs/Pagination"
+    }
+  },
+  "$defs": {
+    "ResponseMeta": {
+      "type": "object",
+      "required": ["version", "timestamp"],
+      "properties": {
+        "version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$",
+          "description": "API version (semver format)"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Response timestamp in ISO 8601 format"
+        },
+        "request_id": {
+          "type": "string",
+          "description": "Unique request identifier for tracing"
+        },
+        "duration_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Request processing duration in milliseconds"
+        }
+      }
+    },
+    "ApiError": {
+      "type": "object",
+      "required": ["code", "message"],
+      "properties": {
+        "code": {
+          "type": "string",
+          "description": "Error code for programmatic handling"
+        },
+        "message": {
+          "type": "string",
+          "description": "Human-readable error message"
+        },
+        "field": {
+          "type": "string",
+          "description": "Field that caused the error, if applicable"
+        },
+        "details": {
+          "type": "object",
+          "description": "Additional error details"
+        }
+      }
+    },
+    "Pagination": {
+      "type": "object",
+      "required": ["page", "page_size", "total_items", "total_pages"],
+      "properties": {
+        "page": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Current page number"
+        },
+        "page_size": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "description": "Items per page"
+        },
+        "total_items": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total number of items"
+        },
+        "total_pages": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total number of pages"
+        },
+        "has_next": {
+          "type": "boolean",
+          "description": "Whether more pages exist"
+        },
+        "has_prev": {
+          "type": "boolean",
+          "description": "Whether previous pages exist"
+        }
+      }
+    }
+  }
+}
