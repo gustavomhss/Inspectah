@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { AdminContent, Badge, Button } from '@/ui/admin';
 import { runNewsdataIngest } from './api';
 import { useRollout, useRolloutActions } from './hooks';
-import type { Flow, NewsdataItem } from './types';
+import type { Flow, NewsdataItem, SloStatusEntry } from './types';
 
 interface Props {
   flow: Flow;
@@ -115,7 +115,7 @@ export function FlowRolloutPanel({ flow, onUpdated }: Props) {
           )}
           {sloStatus.length > 0 && (
             <div className="rounded border border-emerald-400/60 bg-emerald-900/30 p-3 text-sm text-emerald-100">
-              SLOs: {sloStatus.map((s) => `${s.slo_id}:${s.status}`).join(', ')}
+              SLOs: {sloStatus.map((s: SloStatusEntry) => `${s.slo_id}:${s.status}`).join(', ')}
             </div>
           )}
         </div>

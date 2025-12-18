@@ -350,7 +350,7 @@ export function useRolloutActions(flowId: string | null, onUpdated?: (flow: Flow
     [flowId, onUpdated],
   );
 
-  const promote = useCallback(async (payload?: { actor?: string }) => {
+  const promote = useCallback(async (payload?: { actor?: string; operation_id?: string; catalog_hash?: string }) => {
     if (!flowId) return;
     setSaving(true);
     setError(null);

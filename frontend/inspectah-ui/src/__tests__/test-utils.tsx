@@ -6,6 +6,7 @@ import { LoggerProvider } from '../app/providers/LoggerProvider';
 
 interface WrapperOptions {
   route?: string;
+  withRouter?: boolean;
 }
 
 export function renderWithProviders(

@@ -21,8 +21,7 @@ function createWrapper() {
       null,
       createElement(
         WebSocketProvider,
-        { url: 'ws://test:8000/ws', autoConnect: false },
-        children
+        { url: 'ws://test:8000/ws', autoConnect: false, children }
       )
     );
   };

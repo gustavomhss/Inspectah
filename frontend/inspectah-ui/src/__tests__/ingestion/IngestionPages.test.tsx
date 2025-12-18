@@ -58,9 +58,9 @@ describe('IngestionListPage', () => {
       { route: '/admin/ingestion' },
     );
 
-    await screen.findByText(/Fonte RSS/, { timeout: 8000 });
+    await screen.findByText(/Fonte RSS/, {}, { timeout: 8000 });
     await userEvent.click(screen.getAllByText(/Rodar ingestão/)[1]);
-    await screen.findByText(/Ingestão iniciada/, { timeout: 8000 });
+    await screen.findByText(/Ingestão iniciada/, {}, { timeout: 8000 });
   });
 });
 
@@ -100,9 +100,9 @@ describe('IngestionSourceDetailPage', () => {
       { route: '/admin/ingestion/sources/src-1' },
     );
 
-    await screen.findByText(/Fonte RSS/, { timeout: 8000 });
+    await screen.findByText(/Fonte RSS/, {}, { timeout: 8000 });
     await userEvent.click(screen.getByText(/Rodar ingestão agora/));
-    await screen.findByText(/Ingestão iniciada/, { timeout: 8000 });
+    await screen.findByText(/Ingestão iniciada/, {}, { timeout: 8000 });
     expect(screen.getByText(/run-1/)).toBeInTheDocument();
   });
 });
@@ -155,14 +155,14 @@ describe('Ingestion – ops_only e meta', () => {
       { route: '/admin/ingestion' },
     );
 
-    const slugCells = await screen.findAllByText(/newsdata_br/, { timeout: 8000 });
+    const slugCells = await screen.findAllByText(/newsdata_br/, {}, { timeout: 8000 });
     expect(slugCells.length).toBeGreaterThan(0);
     expect(screen.getByText(/CTA ops_ingest aciona pipeline real/i)).toBeInTheDocument();
     expect(screen.getByText(/Modo fixo/)).toBeInTheDocument();
     expect(screen.getAllByText(/Ver histórico/).length).toBeGreaterThanOrEqual(1);
     const runButtons = screen.getAllByText(/Rodar ingestão/i);
     await userEvent.click(runButtons[0]);
-    await screen.findByText(/Ingestão iniciada/i, { timeout: 8000 });
+    await screen.findByText(/Ingestão iniciada/i, {}, { timeout: 8000 });
   }, 10000);
 
   it('mostra meta e erro no detalhe e permite retry ops_only', async () => {
@@ -213,7 +213,7 @@ describe('Ingestion – ops_only e meta', () => {
       { route: '/admin/ingestion/sources/newsdata_br' },
     );
 
-    await screen.findByText(/Newsdata/, { timeout: 8000 });
+    await screen.findByText(/Newsdata/, {}, { timeout: 8000 });
     expect(screen.getByText(/Histórico é só leitura/i)).toBeInTheDocument();
     expect(screen.getByText(/Tentar novamente/)).toBeInTheDocument();
     expect(screen.getByText(/Size por requisição/i)).toBeInTheDocument();

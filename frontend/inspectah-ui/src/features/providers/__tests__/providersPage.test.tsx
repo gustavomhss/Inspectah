@@ -17,8 +17,7 @@ beforeAll(() => {
     if (typeof message === 'string' && message.includes('not wrapped in act')) {
       return;
     }
-    // @ts-expect-error mock
-    originalError(...args);
+    originalError.apply(console, args as Parameters<typeof console.error>);
   });
 
   vi.spyOn(console, 'warn').mockImplementation((...args: unknown[]) => {
@@ -26,8 +25,7 @@ beforeAll(() => {
     if (typeof message === 'string' && message.includes('React Router Future Flag Warning')) {
       return;
     }
-    // @ts-expect-error mock
-    originalWarn(...args);
+    originalWarn.apply(console, args as Parameters<typeof console.warn>);
   });
 });
 
