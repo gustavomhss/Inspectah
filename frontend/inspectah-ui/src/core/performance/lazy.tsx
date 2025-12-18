@@ -105,9 +105,9 @@ export function withSuspense<P extends object>(
 export function lazyLoad<P extends object>(
   importFn: () => Promise<{ default: ComponentType<P> }>,
   options: LazyOptions = {}
-): ComponentType<P> {
+): FC<P> {
   const LazyComponent = lazyWithRetry(importFn, options);
-  return withSuspense(LazyComponent, options);
+  return withSuspense(LazyComponent, options) as FC<P>;
 }
 
 /**
@@ -131,7 +131,7 @@ export function createLazyComponent<P extends object>(
   Component: FC<P>;
   preload: () => void;
 } {
-  const Component = lazyLoad<P>(importFn, options);
+  const Component = lazyLoad<P>(importFn, options) as FC<P>;
   const preload = () => preloadComponent(importFn as () => Promise<{ default: ComponentType<unknown> }>);
 
   return { Component, preload };
@@ -164,7 +164,8 @@ export function lazyLoadAll<T extends Record<string, object>>(
   const result = {} as { [K in keyof T]: FC<T[K]> };
 
   for (const key of Object.keys(imports) as Array<keyof T>) {
-    result[key] = lazyLoad<T[K]>(imports[key], options);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    result[key] = lazyLoad(imports[key], options) as any;
   }
 
   return result;

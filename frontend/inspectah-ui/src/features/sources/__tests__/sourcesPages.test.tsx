@@ -19,7 +19,6 @@ beforeAll(() => {
     if (typeof message === 'string' && message.includes('not wrapped in act')) {
       return;
     }
-    // @ts-expect-error mock
     originalError(...args);
   });
 
@@ -28,7 +27,6 @@ beforeAll(() => {
     if (typeof message === 'string' && message.includes('React Router Future Flag Warning')) {
       return;
     }
-    // @ts-expect-error mock
     originalWarn(...args);
   });
 });

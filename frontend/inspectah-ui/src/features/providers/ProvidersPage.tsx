@@ -132,7 +132,7 @@ export default function ProvidersPage() {
       pushToast({ title: 'Provider salvo', description: `Provider ${saved.name} salvo com sucesso`, variant: 'success' });
       setProviderForm(buildEmptyProvider());
     } catch (err) {
-      pushToast({ title: 'Erro ao salvar provider', description: (err as Error).message, variant: 'error' });
+      pushToast({ title: 'Erro ao salvar provider', description: (err as Error).message, variant: 'danger' });
     }
   };
 
@@ -148,7 +148,7 @@ export default function ProvidersPage() {
       pushToast({ title: 'Perfil salvo', description: `Perfil ${saved.name} salvo`, variant: 'success' });
       setProfileForm(null);
     } catch (err) {
-      pushToast({ title: 'Erro ao salvar perfil', description: (err as Error).message, variant: 'error' });
+      pushToast({ title: 'Erro ao salvar perfil', description: (err as Error).message, variant: 'danger' });
     }
   };
 
@@ -164,7 +164,7 @@ export default function ProvidersPage() {
       void reload();
       void reloadDetail();
     } catch (err) {
-      pushToast({ title: 'Erro ao alternar status', description: (err as Error).message, variant: 'error' });
+      pushToast({ title: 'Erro ao alternar status', description: (err as Error).message, variant: 'danger' });
     }
   };
 
@@ -177,7 +177,7 @@ export default function ProvidersPage() {
         variant: 'success',
       });
     } catch (err) {
-      pushToast({ title: 'Falha ao rodar perfil', description: (err as Error).message, variant: 'error' });
+      pushToast({ title: 'Falha ao rodar perfil', description: (err as Error).message, variant: 'danger' });
     }
   };
 
