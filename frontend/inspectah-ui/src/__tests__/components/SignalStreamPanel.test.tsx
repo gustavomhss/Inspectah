@@ -19,10 +19,10 @@ function createWrapper() {
     return createElement(
       StoreProvider,
       null,
+      // eslint-disable-next-line react/no-children-prop
       createElement(
         WebSocketProvider,
-        { url: 'ws://test:8000/ws', autoConnect: false },
-        children
+        { url: 'ws://test:8000/ws', autoConnect: false, children }
       )
     );
   };
