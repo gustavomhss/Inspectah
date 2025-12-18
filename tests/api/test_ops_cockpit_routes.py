@@ -25,7 +25,9 @@ class TestListComponents:
     def test_list_components_success(self):
         """List components successfully."""
         mock_comp = MagicMock()
-        mock_comp.__dict__ = {"id": "comp_1", "name": "Test Component"}
+        mock_comp.id = "comp_1"
+        mock_comp.name = "Test Component"
+        mock_comp.configure_mock(**{"__dict__": {"id": "comp_1", "name": "Test Component"}})
 
         with patch("app.api.ops_cockpit_routes.load_components_map", return_value=[mock_comp]):
             client = _client()
@@ -92,7 +94,9 @@ class TestOverview:
     def test_overview_success(self):
         """Get overview successfully."""
         mock_comp = MagicMock()
-        mock_comp.__dict__ = {"id": "comp_1", "name": "Test"}
+        mock_comp.id = "comp_1"
+        mock_comp.name = "Test"
+        mock_comp.configure_mock(**{"__dict__": {"id": "comp_1", "name": "Test"}})
 
         with patch("app.api.ops_cockpit_routes.load_components_map", return_value=[mock_comp]):
             with patch("app.api.ops_cockpit_routes.incident_service") as mock_inc_service:
