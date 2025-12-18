@@ -63,7 +63,7 @@ export function useTruthTwin(
   const [error, setError] = useState<TruthApiError | null>(null);
 
   const mountedRef = useRef(false);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Set mounted on first render
   useEffect(() => {

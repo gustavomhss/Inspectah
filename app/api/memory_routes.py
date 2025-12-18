@@ -287,7 +287,7 @@ async def get_context(
         "scope": context.scope.value,
         "scope_id": context.scope_id,
         "entry_count": context.entry_count,
-        "entries": {k: _to_response(v).dict() for k, v in context.entries.items()},
+        "entries": {k: _to_response(v).model_dump() for k, v in context.entries.items()},
     }
 
 

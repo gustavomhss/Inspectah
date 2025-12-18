@@ -105,7 +105,7 @@ export function withSuspense<P extends object>(
 export function lazyLoad<P extends object>(
   importFn: () => Promise<{ default: ComponentType<P> }>,
   options: LazyOptions = {}
-): FC<P> {
+): ComponentType<P> {
   const LazyComponent = lazyWithRetry(importFn, options);
   return withSuspense(LazyComponent, options);
 }

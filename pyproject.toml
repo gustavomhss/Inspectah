@@ -14,8 +14,7 @@ dependencies = [
   "python-multipart>=0.0.6",
   "pyjwt[crypto]>=2.10.1",
   "cryptography>=46.0.0",
-  "beautifulsoup4>=4.12.0",
-  "pytest-asyncio>=0.24.0"
+  "beautifulsoup4>=4.12.0"
 ]
 
 [project.optional-dependencies]
@@ -33,5 +32,3 @@ addopts = [
   "--ignore=tests/s8_t2_unit_contracts",
   "--ignore=tests/s8_t4_golden_flows",
 ]
-asyncio_mode = "auto"
-asyncio_default_fixture_loop_scope = "function"

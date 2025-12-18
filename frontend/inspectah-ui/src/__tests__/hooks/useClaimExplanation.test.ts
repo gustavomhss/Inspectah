@@ -420,8 +420,7 @@ describe('useClaimExplanation', () => {
   });
 
   describe('autoFetch', () => {
-    // TODO: Fix flaky test in CI (timing issue with mockFetch in autoFetch)
-    it.skip('should call fetch when claimId is provided and autoFetch is true', async () => {
+    it('should call fetch when claimId is provided and autoFetch is true', async () => {
       const mockData = createMockExplanation('claim_456');
       mockFetch.mockResolvedValueOnce({
         ok: true,
