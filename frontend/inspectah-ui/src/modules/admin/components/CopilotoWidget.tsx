@@ -8,9 +8,9 @@ interface Props {
   attachedFiles: CopilotoFileInfo[];
   loading?: boolean;
   error?: string | null;
-  onSend: (message: string) => Promise<CopilotoAction[]>;
+  onSend: (message: string) => Promise<CopilotoAction[] | void>;
   onNewChat: () => Promise<void>;
-  onAttach: (file: globalThis.File) => Promise<void>;
+  onAttach: (file: globalThis.File) => Promise<CopilotoFileInfo | void>;
   agentMode: boolean;
   onToggleAgentMode: (value: boolean) => void;
   autoOpen?: boolean;

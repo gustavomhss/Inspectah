@@ -4,7 +4,7 @@ import PageHeader from '../../../shared/layout/PageHeader';
 import LoadingState from '../../admin/components/LoadingState';
 import ErrorState from '../../admin/components/ErrorState';
 import Button from '../../../shared/components/Button';
-import type { IngestionMode } from '../../../core/api/api-types';
+import type { IngestionMode, IngestionStatus } from '../../../core/api/api-types';
 import { useIngestionSources } from '../hooks/useIngestionSources';
 import IngestionFiltersBar from '../components/IngestionFiltersBar';
 import IngestionSourceTable from '../components/IngestionSourceTable';
@@ -14,7 +14,7 @@ import { HttpError } from '../../../core/api/http-client';
 function IngestionListPage() {
   const { rows, loading, error, reload, runNow, changeMode } = useIngestionSources();
   const [typeFilter, setTypeFilter] = useState<'all' | string>('all');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'SUCCESS' | 'FAIL' | 'RUNNING' | 'NEVER'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | IngestionStatus | 'NEVER'>('all');
   const [search, setSearch] = useState('');
   const [message, setMessage] = useState<{ tone: 'success' | 'danger'; text: string } | null>(null);
   const [runningIds, setRunningIds] = useState<Set<string>>(new Set());

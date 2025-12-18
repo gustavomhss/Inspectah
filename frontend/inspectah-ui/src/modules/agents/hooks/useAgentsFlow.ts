@@ -211,6 +211,7 @@ function buildDefaultLayer(layerType: FlowLayerType, idx: number): EditableLayer
   const names: Record<FlowLayerType, string> = {
     interpretation_layer: 'Interpretação',
     classification_layer: 'Classificação',
+    intermediate_layer: 'Intermediária',
     decision_maker_layer: 'Decision Maker',
     librarian_layer: 'Librarian',
   };

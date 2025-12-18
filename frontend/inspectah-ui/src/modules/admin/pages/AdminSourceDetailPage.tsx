@@ -129,16 +129,15 @@ function AdminSourceDetailPage() {
     if (!sourceId) return;
     setActionError(null);
     try {
-      const payload = {
-        name: form.name || source?.name,
-        description: form.description ?? source?.description ?? '',
-        endpoint: form.endpoint || source?.endpoint || source?.url_base,
+      const payload: Partial<AdminSourceDetail> = {
+        name: (form.name as string) || source?.name,
+        description: (form.description as string) ?? source?.description ?? '',
+        endpoint: (form.endpoint as string) || source?.endpoint || source?.url_base,
         themes: (form.themes as string[]) || source?.themes || [],
         info_types: (form.info_types as string[]) || source?.info_types || [],
-        refresh_interval: form.refresh_interval ?? source?.refresh_interval ?? 1440,
+        refresh_interval: (form.refresh_interval as number) ?? source?.refresh_interval ?? 1440,
         type: (form.type as string) || source?.type,
         category: (form.category as string) || source?.category,
-        updated_by: 'admin-ui',
       };
       await updateSource(sourceId, payload, token || undefined);
       await load();

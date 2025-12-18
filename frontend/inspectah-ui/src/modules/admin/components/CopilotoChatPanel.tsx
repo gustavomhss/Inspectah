@@ -14,7 +14,7 @@ interface Props {
   error?: string | null;
   onSend: (message: string) => Promise<void>;
   onNewChat: () => Promise<void>;
-  onAttach: (file: globalThis.File) => Promise<void>;
+  onAttach: (file: globalThis.File) => Promise<CopilotoFileInfo | void>;
   agentMode: boolean;
   onToggleAgentMode: (value: boolean) => void;
   onClose: () => void;

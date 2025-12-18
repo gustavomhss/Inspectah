@@ -269,9 +269,9 @@ export function SpTruthTwinPage() {
               <p className="text-xs text-slate-500 font-mono">
                 ID: {truthTwin.claim_id}
               </p>
-              {truthTwin.metadata?.source_url && (
+              {typeof truthTwin.metadata?.source_url === 'string' && truthTwin.metadata.source_url && (
                 <a
-                  href={truthTwin.metadata.source_url as string}
+                  href={truthTwin.metadata.source_url}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 text-xs text-violet-400 hover:text-violet-300 transition-colors"

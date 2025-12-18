@@ -1,7 +1,7 @@
 import { renderWithProviders } from '../../../../__tests__/test-utils';
 import { screen, waitFor } from '@testing-library/react';
 import { vi } from 'vitest';
-import type { AgentFlowLayer, AgentProfile } from '../../../core/api/api-types';
+import type { AgentFlowLayer, AgentProfile } from '../../../../core/api/api-types';
 import { useAgents } from '../useAgents';
 import { useAgentsFlow } from '../useAgentsFlow';
 import * as agentsApi from '../../api/agentsApi';
