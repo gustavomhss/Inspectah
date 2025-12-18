@@ -318,7 +318,7 @@ export function DecisionInspector({
 }: DecisionInspectorProps) {
   // Close on Escape key
   const handleKeyDown = useCallback(
-    (e: KeyboardEvent) => {
+    (e: globalThis.KeyboardEvent) => {
       if (e.key === 'Escape' && onClose) {
         onClose();
       }

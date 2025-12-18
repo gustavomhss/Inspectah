@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, within } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { type ReactNode } from 'react';
 import { createElement } from 'react';
 import { SignalStreamPanel } from '../../modules/signals/components/SignalStreamPanel';
@@ -21,7 +21,8 @@ function createWrapper() {
       null,
       createElement(
         WebSocketProvider,
-        { url: 'ws://test:8000/ws', autoConnect: false, children }
+        { url: 'ws://test:8000/ws', autoConnect: false },
+        children
       )
     );
   };
