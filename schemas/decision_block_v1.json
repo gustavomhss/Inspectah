@@ -1,0 +1,251 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://inspectah.io/schemas/decision_block_v1.json",
+  "title": "DecisionBlock",
+  "description": "Unidade de verdade: registro imutável de uma decisão sobre um claim com provenance completa.",
+  "type": "object",
+  "required": [
+    "decision_id",
+    "claim_id",
+    "domain",
+    "gate",
+    "state_transition",
+    "references",
+    "policy_version",
+    "created_at"
+  ],
+  "properties": {
+    "decision_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Identificador único do DecisionBlock (ULID ou UUID)"
+    },
+    "claim_id": {
+      "type": "string",
+      "description": "ID do claim sendo avaliado"
+    },
+    "domain": {
+      "type": "string",
+      "description": "Domínio do claim (ex: saude, politica, economia)",
+      "minLength": 1
+    },
+    "gate": {
+      "type": "string",
+      "description": "Gate que originou a decisão (ex: G23, AUTO_APPROVE)",
+      "minLength": 1
+    },
+    "state_transition": {
+      "type": "object",
+      "description": "Transição de estado do claim",
+      "required": ["from_state", "to_state", "reason"],
+      "properties": {
+        "from_state": {
+          "type": "string",
+          "enum": ["UNKNOWN", "CLAIMED", "UNDER_REVIEW", "PROVISIONAL", "ESTABLISHED_FACT", "UNDER_DISPUTE", "RETRACTED", "BLOCKED", "DEGRADED"]
+        },
+        "to_state": {
+          "type": "string",
+          "enum": ["UNKNOWN", "CLAIMED", "UNDER_REVIEW", "PROVISIONAL", "ESTABLISHED_FACT", "UNDER_DISPUTE", "RETRACTED", "BLOCKED", "DEGRADED"]
+        },
+        "reason": {
+          "type": "string",
+          "description": "Justificativa para a transição",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "references": {
+      "type": "object",
+      "description": "Provenance completa da decisão",
+      "required": ["guias", "pilares", "e40_5"],
+      "properties": {
+        "guias": {
+          "type": "array",
+          "description": "Referências aos guias/quadros aplicados",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["guia", "documento"],
+            "properties": {
+              "guia": {
+                "type": "string",
+                "description": "Nome do guia (ex: MQV, MAC)"
+              },
+              "documento": {
+                "type": "string",
+                "description": "ID do documento de referência"
+              },
+              "tabela": {
+                "type": "string",
+                "description": "Tabela/quadro específico"
+              },
+              "secao": {
+                "type": "string",
+                "description": "Seção do documento"
+              },
+              "dominio": {
+                "type": "string",
+                "description": "Domínio de aplicação"
+              },
+              "gate": {
+                "type": "string",
+                "description": "Gate associado"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "pilares": {
+          "type": "array",
+          "description": "Referências aos pilares éticos/constitucionais",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["pilar", "documento"],
+            "properties": {
+              "pilar": {
+                "type": "string",
+                "description": "ID do pilar (ex: P1, P5)"
+              },
+              "documento": {
+                "type": "string",
+                "description": "Documento de referência do pilar"
+              },
+              "secao": {
+                "type": "string",
+                "description": "Seção específica"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "policy": {
+          "type": "object",
+          "description": "Informações da policy aplicada",
+          "properties": {
+            "version": {
+              "type": "string",
+              "description": "Versão da policy"
+            },
+            "rules_applied": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Lista de regras aplicadas"
+            }
+          },
+          "additionalProperties": false
+        },
+        "e40_5": {
+          "type": "object",
+          "description": "Resultado da verificação E40.5",
+          "required": ["status"],
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": ["PASS", "FAIL", "SKIP", "TIMEOUT", "DEGRADED"],
+              "description": "Status da verificação E40.5"
+            },
+            "invariants_checked": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Lista de invariantes verificados"
+            },
+            "violations": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "invariant": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "description": "Violações detectadas"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "policy_name": {
+      "type": "string",
+      "description": "Nome da policy aplicada"
+    },
+    "policy_version": {
+      "type": "string",
+      "description": "Versão da policy aplicada",
+      "minLength": 1
+    },
+    "committee_summary": {
+      "type": "string",
+      "description": "Resumo da decisão do comitê interno"
+    },
+    "evidence_refs": {
+      "type": "array",
+      "description": "Referências a evidências utilizadas",
+      "items": {
+        "type": "object",
+        "properties": {
+          "evidence_id": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["source", "fact_check", "expert_opinion", "official_data", "user_report"]
+          },
+          "url": {
+            "type": "string",
+            "format": "uri"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "experience_ref": {
+      "type": "array",
+      "description": "Referências a experiências similares consultadas",
+      "items": {
+        "type": "string",
+        "description": "ID da experiência"
+      }
+    },
+    "latency_ms": {
+      "type": "integer",
+      "description": "Latência da decisão em milissegundos",
+      "minimum": 0
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp de criação (ISO 8601)"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Metadados adicionais",
+      "properties": {
+        "sprint": {
+          "type": "string"
+        },
+        "commit": {
+          "type": "string"
+        },
+        "environment": {
+          "type": "string",
+          "enum": ["development", "staging", "production", "pilot"]
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

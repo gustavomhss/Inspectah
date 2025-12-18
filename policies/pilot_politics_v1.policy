@@ -1,0 +1,22 @@
+# Policy: Pilot Politics v1
+# Domain: politics
+# Description: Policy for political claims in the pilot domain
+
+POLICY pilot_politics_v1
+DOMAIN politics
+GATE G7
+
+# Requirements for claim verification
+REQUIRE sources >= 2 independent
+REQUIRE evidence_strength >= 0.6
+REQUIRE no_contradiction strong
+REQUIRE temporal_consistency
+
+# Decision rules based on confidence and risk
+ON high_confidence THEN auto_approve
+ON low_confidence THEN human_review
+ON disputed THEN human_review
+ON risk_level = "high" THEN committee_quorum(3)
+ON no_evidence THEN flag_for_review
+
+VERSION "1.0.0"

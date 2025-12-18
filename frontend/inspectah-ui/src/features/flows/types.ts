@@ -152,6 +152,11 @@ export interface FlowCatalogEntry {
   signature?: string;
 }
 
+export interface SloStatusEntry {
+  slo_id: string;
+  status: string;
+}
+
 export interface FlowRolloutStatus {
   flow_id: string;
   flow_version_id?: string | null;
@@ -166,6 +171,7 @@ export interface FlowRolloutStatus {
   rollout_criteria?: Record<string, unknown>;
   alerts?: string[];
   policy_violations?: string[];
+  slo_status?: SloStatusEntry[];
 }
 
 export interface NewsdataItem {

@@ -253,11 +253,118 @@ class Decision:
 
 
 @dataclass
+class GuiaReference:
+    """Reference to a Guia/Quadro document (S40)."""
+
+    guia: str
+    documento: str
+    tabela: Optional[str] = None
+    secao: Optional[str] = None
+    dominio: Optional[str] = None
+    gate: Optional[str] = None
+
+
+@dataclass
+class PilarReference:
+    """Reference to a Pilar document (S40)."""
+
+    pilar: str
+    documento: str
+    secao: Optional[str] = None
+
+
+@dataclass
+class E40_5Result:
+    """Result of E40.5 invariant check (S40)."""
+
+    status: str  # PASS, FAIL, SKIP, TIMEOUT, DEGRADED
+    invariants_checked: List[str] = field(default_factory=list)
+    violations: List[Dict[str, str]] = field(default_factory=list)
+
+
+@dataclass
+class PolicyReference:
+    """Reference to policy applied (S40)."""
+
+    version: str
+    rules_applied: List[str] = field(default_factory=list)
+
+
+@dataclass
+class References:
+    """
+    Complete provenance for a DecisionBlock (S40).
+
+    Invariants:
+    - INV-DB-01: guias[] cannot be empty
+    - INV-DB-04: pilares[] cannot be empty
+    - INV-DB-02: e40_5 must exist with status
+    """
+
+    guias: List[GuiaReference]
+    pilares: List[PilarReference]
+    e40_5: E40_5Result
+    policy: Optional[PolicyReference] = None
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary for serialization."""
+        return {
+            "guias": [
+                {
+                    "guia": g.guia,
+                    "documento": g.documento,
+                    "tabela": g.tabela,
+                    "secao": g.secao,
+                    "dominio": g.dominio,
+                    "gate": g.gate,
+                }
+                for g in self.guias
+            ],
+            "pilares": [
+                {
+                    "pilar": p.pilar,
+                    "documento": p.documento,
+                    "secao": p.secao,
+                }
+                for p in self.pilares
+            ],
+            "e40_5": {
+                "status": self.e40_5.status,
+                "invariants_checked": self.e40_5.invariants_checked,
+                "violations": self.e40_5.violations,
+            },
+            "policy": (
+                {
+                    "version": self.policy.version,
+                    "rules_applied": self.policy.rules_applied,
+                }
+                if self.policy
+                else None
+            ),
+        }
+
+
+@dataclass
+class StateTransition:
+    """State transition for DecisionBlock (S40)."""
+
+    from_state: str
+    to_state: str
+    reason: str
+
+
+@dataclass
 class DecisionBlock:
     """
-    Final output of a Guardian decision.
+    Final output of a Guardian decision (S40 enhanced).
 
-    Contains all references and evidence for audit trail.
+    Contains all references and evidence for audit trail with full provenance.
+
+    Invariants (S40):
+    - INV-DB-01: references.guias[] cannot be empty
+    - INV-DB-02: references.e40_5 must exist
+    - INV-DB-03: state_transition must exist with reason
+    - INV-DB-04: references.pilares[] cannot be empty
     """
 
     id: str
@@ -275,6 +382,10 @@ class DecisionBlock:
     evidence_refs: List[str]
     created_at: datetime = field(default_factory=_utcnow)
     latency_ms: Optional[int] = None
+    # S40 additions
+    state_transition: Optional[StateTransition] = None
+    references: Optional[References] = None
+    experience_ref: List[str] = field(default_factory=list)
 
     @classmethod
     def create(
@@ -315,7 +426,7 @@ class DecisionBlock:
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for serialization."""
-        return {
+        result = {
             "id": self.id,
             "decision_id": self.decision_id,
             "claim_id": self.claim_id,
@@ -331,4 +442,17 @@ class DecisionBlock:
             "evidence_refs": self.evidence_refs,
             "created_at": self.created_at.isoformat(),
             "latency_ms": self.latency_ms,
+            # S40 additions
+            "state_transition": (
+                {
+                    "from_state": self.state_transition.from_state,
+                    "to_state": self.state_transition.to_state,
+                    "reason": self.state_transition.reason,
+                }
+                if self.state_transition
+                else None
+            ),
+            "references": self.references.to_dict() if self.references else None,
+            "experience_ref": self.experience_ref,
         }
+        return result

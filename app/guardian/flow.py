@@ -49,6 +49,9 @@ class FlowState(str, Enum):
     COMPLETED = "completed"
     TIMED_OUT = "timed_out"
     FAILED = "failed"
+    # S40: New states for E40.5 enforcement
+    BLOCKED = "blocked"  # S40-BE-005: E40.5 check failed, transition blocked
+    DEGRADED = "degraded"  # S40-BE-029: Running in degraded mode
 
 
 class FlowEvent(str, Enum):
@@ -69,6 +72,12 @@ class FlowEvent(str, Enum):
     TIMEOUT = "timeout"
     ESCALATE = "escalate"
     ERROR = "error"
+    # S40: New events for E40.5 enforcement
+    E40_5_BLOCKED = "e40_5_blocked"  # S40-BE-005: Critical invariant violated
+    NOGO_BLOCKED = "nogo_blocked"  # S40-BE-015: NO-GO signal blocks transition
+    ENTER_DEGRADED = "enter_degraded"  # S40-BE-029: Enter degraded mode
+    EXIT_DEGRADED = "exit_degraded"  # S40-BE-029: Exit degraded mode
+    UNBLOCK = "unblock"  # After blocked issue is resolved
 
 
 @dataclass
@@ -83,6 +92,29 @@ class FlowTransition:
 
 
 @dataclass
+class E40_5CheckResult:
+    """Result of E40.5 invariant check (S40-BE-005)."""
+
+    status: str  # PASS, FAIL, SKIP, TIMEOUT, DEGRADED
+    invariants_checked: List[str] = field(default_factory=list)
+    violations: List[Dict[str, Any]] = field(default_factory=list)
+    checked_at: datetime = field(default_factory=_utcnow)
+
+    @classmethod
+    def from_invariants(cls, invariants: Dict[str, bool]) -> "E40_5CheckResult":
+        """Create from invariants dict."""
+        checked = list(invariants.keys())
+        failed = [k for k, v in invariants.items() if not v]
+        status = "PASS" if not failed else "FAIL"
+        violations = [{"invariant": k, "passed": False} for k in failed]
+        return cls(
+            status=status,
+            invariants_checked=checked,
+            violations=violations,
+        )
+
+
+@dataclass
 class FlowContext:
     """Context for a Guardian flow execution."""
 
@@ -94,6 +126,16 @@ class FlowContext:
     transitions: List[FlowTransition] = field(default_factory=list)
     start_time: float = field(default_factory=time.time)
     error: Optional[str] = None
+    # S40: E40.5 enforcement (S40-BE-005)
+    e40_5_result: Optional[E40_5CheckResult] = None
+    e40_5_required: bool = True  # Default: E40.5 is mandatory
+    blocked_reason: Optional[str] = None
+    # S40: Degraded mode (S40-BE-029)
+    degraded_mode: bool = False
+    degraded_reason: Optional[str] = None
+    # S40-BE-015: NO-GO signal references
+    signal_refs: List[str] = field(default_factory=list)
+    nogo_blocked: bool = False
 
     def elapsed_ms(self) -> int:
         """Get elapsed time in milliseconds."""
@@ -115,34 +157,79 @@ class FlowContext:
         self.transitions.append(transition)
         self.current_state = to_state
 
+    def is_e40_5_passed(self) -> bool:
+        """Check if E40.5 passed (S40-BE-005)."""
+        if not self.e40_5_required:
+            return True
+        if self.e40_5_result is None:
+            return False
+        return self.e40_5_result.status in ("PASS", "SKIP")
+
+    def is_blocked(self) -> bool:
+        """Check if flow is blocked due to E40.5 failure."""
+        return self.current_state == FlowState.BLOCKED
+
+    def enter_degraded_mode(self, reason: str) -> None:
+        """Enter degraded mode (S40-BE-029)."""
+        self.degraded_mode = True
+        self.degraded_reason = reason
+
+    def exit_degraded_mode(self) -> None:
+        """Exit degraded mode (S40-BE-029)."""
+        self.degraded_mode = False
+        self.degraded_reason = None
+
+    def has_nogo_signals(self) -> bool:
+        """Check if there are active NO-GO signals (S40-BE-015)."""
+        return self.nogo_blocked or len(self.signal_refs) > 0
+
+    def add_nogo_signal(self, signal_id: str) -> None:
+        """Add a NO-GO signal reference (S40-BE-015)."""
+        if signal_id not in self.signal_refs:
+            self.signal_refs.append(signal_id)
+
+    def clear_nogo_signals(self) -> None:
+        """Clear NO-GO signals after resolution (S40-BE-015)."""
+        self.signal_refs = []
+        self.nogo_blocked = False
+
 
 # State transition table
 TRANSITIONS: Dict[FlowState, Dict[FlowEvent, FlowState]] = {
     FlowState.INIT: {
         FlowEvent.START: FlowState.POLICY_CHECK,
         FlowEvent.ERROR: FlowState.FAILED,
+        FlowEvent.ENTER_DEGRADED: FlowState.DEGRADED,  # S40-BE-029
     },
     FlowState.POLICY_CHECK: {
         FlowEvent.POLICY_PASSED: FlowState.INVARIANT_CHECK,
         FlowEvent.POLICY_REQUIRES_REVIEW: FlowState.AWAITING_REVIEW,
         FlowEvent.POLICY_REQUIRES_QUORUM: FlowState.AWAITING_QUORUM,
+        FlowEvent.NOGO_BLOCKED: FlowState.BLOCKED,  # S40-BE-015: NO-GO signal blocks
         FlowEvent.TIMEOUT: FlowState.TIMED_OUT,
         FlowEvent.ERROR: FlowState.FAILED,
+        FlowEvent.ENTER_DEGRADED: FlowState.DEGRADED,  # S40-BE-029
     },
     FlowState.INVARIANT_CHECK: {
         FlowEvent.INVARIANTS_PASSED: FlowState.AUTO_APPROVE,
         FlowEvent.INVARIANTS_FAILED: FlowState.AWAITING_REVIEW,
+        FlowEvent.E40_5_BLOCKED: FlowState.BLOCKED,  # S40-BE-005: Block on critical failure
+        FlowEvent.NOGO_BLOCKED: FlowState.BLOCKED,  # S40-BE-015: NO-GO signal blocks
         FlowEvent.TIMEOUT: FlowState.TIMED_OUT,
         FlowEvent.ERROR: FlowState.FAILED,
     },
     FlowState.AUTO_APPROVE: {
         FlowEvent.POLICY_PASSED: FlowState.COMPLETED,
+        FlowEvent.E40_5_BLOCKED: FlowState.BLOCKED,  # S40-BE-005: Block before completion
+        FlowEvent.NOGO_BLOCKED: FlowState.BLOCKED,  # S40-BE-015: NO-GO signal blocks
         FlowEvent.ERROR: FlowState.FAILED,
     },
     FlowState.AWAITING_REVIEW: {
         FlowEvent.REVIEW_APPROVED: FlowState.COMPLETED,
         FlowEvent.REVIEW_REJECTED: FlowState.COMPLETED,
         FlowEvent.ESCALATE: FlowState.ESCALATED,
+        FlowEvent.E40_5_BLOCKED: FlowState.BLOCKED,  # S40-BE-005
+        FlowEvent.NOGO_BLOCKED: FlowState.BLOCKED,  # S40-BE-015: NO-GO signal blocks
         FlowEvent.TIMEOUT: FlowState.TIMED_OUT,
         FlowEvent.ERROR: FlowState.FAILED,
     },
@@ -150,12 +237,29 @@ TRANSITIONS: Dict[FlowState, Dict[FlowEvent, FlowState]] = {
         FlowEvent.QUORUM_APPROVED: FlowState.COMPLETED,
         FlowEvent.QUORUM_REJECTED: FlowState.COMPLETED,
         FlowEvent.QUORUM_TIE: FlowState.ESCALATED,
+        FlowEvent.E40_5_BLOCKED: FlowState.BLOCKED,  # S40-BE-005
+        FlowEvent.NOGO_BLOCKED: FlowState.BLOCKED,  # S40-BE-015: NO-GO signal blocks
         FlowEvent.TIMEOUT: FlowState.TIMED_OUT,
         FlowEvent.ERROR: FlowState.FAILED,
     },
     FlowState.ESCALATED: {
         FlowEvent.REVIEW_APPROVED: FlowState.COMPLETED,
         FlowEvent.REVIEW_REJECTED: FlowState.COMPLETED,
+        FlowEvent.E40_5_BLOCKED: FlowState.BLOCKED,  # S40-BE-005
+        FlowEvent.NOGO_BLOCKED: FlowState.BLOCKED,  # S40-BE-015: NO-GO signal blocks
+        FlowEvent.TIMEOUT: FlowState.TIMED_OUT,
+        FlowEvent.ERROR: FlowState.FAILED,
+    },
+    # S40-BE-005: Blocked state - only manual unblock or error
+    FlowState.BLOCKED: {
+        FlowEvent.UNBLOCK: FlowState.AWAITING_REVIEW,  # Resume after unblock
+        FlowEvent.TIMEOUT: FlowState.TIMED_OUT,
+        FlowEvent.ERROR: FlowState.FAILED,
+    },
+    # S40-BE-029: Degraded mode - can continue with limitations
+    FlowState.DEGRADED: {
+        FlowEvent.START: FlowState.POLICY_CHECK,  # Continue in degraded mode
+        FlowEvent.EXIT_DEGRADED: FlowState.INIT,  # Return to normal
         FlowEvent.TIMEOUT: FlowState.TIMED_OUT,
         FlowEvent.ERROR: FlowState.FAILED,
     },
@@ -166,6 +270,13 @@ TERMINAL_STATES = {
     FlowState.COMPLETED,
     FlowState.TIMED_OUT,
     FlowState.FAILED,
+    FlowState.BLOCKED,  # S40-BE-005: Blocked is terminal until unblocked
+}
+
+# Critical invariants that cause BLOCKED state (S40-BE-005)
+CRITICAL_INVARIANTS = {
+    "evidence_exists",  # INV-E40.5-01: Must have evidence
+    "non_contradiction",  # Cannot have strong contradictions
 }
 
 
@@ -365,7 +476,12 @@ class GuardianFlow:
         ctx: FlowContext,
         claim_context: Dict[str, Any],
     ) -> None:
-        """Execute E40.5 invariant check step."""
+        """
+        Execute E40.5 invariant check step (S40-BE-005).
+
+        Critical invariants that fail will cause BLOCKED state.
+        Non-critical failures go to AWAITING_REVIEW.
+        """
         if self._check_timeout(ctx):
             self._transition(ctx, FlowEvent.TIMEOUT)
             return
@@ -375,23 +491,46 @@ class GuardianFlow:
         )
         ctx.invariants = invariants
 
+        # S40-BE-005: Create structured E40.5 result
+        ctx.e40_5_result = E40_5CheckResult.from_invariants(invariants)
+
         all_pass = all(invariants.values())
         failed = [k for k, v in invariants.items() if not v]
+
+        # S40-BE-005: Check for critical invariant failures
+        critical_failures = [f for f in failed if f in CRITICAL_INVARIANTS]
 
         if all_pass:
             self._transition(
                 ctx,
                 FlowEvent.INVARIANTS_PASSED,
-                {"invariants": invariants},
+                {"invariants": invariants, "e40_5_status": "PASS"},
+            )
+        elif critical_failures:
+            # S40-BE-005: Block on critical invariant failure
+            ctx.blocked_reason = f"Critical invariant(s) failed: {critical_failures}"
+            logger.error(
+                f"Decision {ctx.decision.id} BLOCKED - critical invariants: {critical_failures}"
+            )
+            self._transition(
+                ctx,
+                FlowEvent.E40_5_BLOCKED,
+                {
+                    "invariants": invariants,
+                    "failed": failed,
+                    "critical_failures": critical_failures,
+                    "e40_5_status": "BLOCKED",
+                },
             )
         else:
+            # Non-critical failures go to review
             logger.warning(
-                f"Decision {ctx.decision.id} failed invariants: {failed}"
+                f"Decision {ctx.decision.id} failed non-critical invariants: {failed}"
             )
             self._transition(
                 ctx,
                 FlowEvent.INVARIANTS_FAILED,
-                {"invariants": invariants, "failed": failed},
+                {"invariants": invariants, "failed": failed, "e40_5_status": "FAIL"},
             )
 
     async def _execute_auto_approve(self, ctx: FlowContext) -> None:
@@ -554,3 +693,202 @@ class GuardianFlow:
             evidence_refs=ctx.decision.context.get("evidence_refs", []),
             latency_ms=ctx.elapsed_ms(),
         )
+
+    async def unblock_decision(
+        self,
+        ctx: FlowContext,
+        resolver_id: str,
+        reason: str,
+    ) -> FlowContext:
+        """
+        Unblock a blocked decision (S40-BE-005).
+
+        Args:
+            ctx: Flow context
+            resolver_id: ID of the user/system resolving the block
+            reason: Reason for unblocking
+
+        Returns:
+            Updated FlowContext
+        """
+        if ctx.current_state != FlowState.BLOCKED:
+            logger.error(f"Cannot unblock decision in state {ctx.current_state}")
+            return ctx
+
+        logger.info(
+            f"Decision {ctx.decision.id} unblocked by {resolver_id}: {reason}"
+        )
+
+        ctx.blocked_reason = None
+        self._transition(
+            ctx,
+            FlowEvent.UNBLOCK,
+            {"resolver_id": resolver_id, "reason": reason},
+        )
+
+        return ctx
+
+    def enter_degraded_mode(
+        self,
+        ctx: FlowContext,
+        reason: str,
+    ) -> FlowContext:
+        """
+        Enter degraded mode (S40-BE-029).
+
+        In degraded mode, certain checks may be skipped or relaxed
+        to maintain availability during system issues.
+
+        Args:
+            ctx: Flow context
+            reason: Reason for entering degraded mode
+
+        Returns:
+            Updated FlowContext
+        """
+        if ctx.current_state not in (FlowState.INIT, FlowState.POLICY_CHECK):
+            logger.error(f"Cannot enter degraded mode in state {ctx.current_state}")
+            return ctx
+
+        logger.warning(f"Decision {ctx.decision.id} entering degraded mode: {reason}")
+
+        ctx.enter_degraded_mode(reason)
+        ctx.e40_5_required = False  # Relax E40.5 requirement in degraded mode
+
+        self._transition(
+            ctx,
+            FlowEvent.ENTER_DEGRADED,
+            {"reason": reason},
+        )
+
+        return ctx
+
+    def exit_degraded_mode(self, ctx: FlowContext) -> FlowContext:
+        """
+        Exit degraded mode (S40-BE-029).
+
+        Args:
+            ctx: Flow context
+
+        Returns:
+            Updated FlowContext
+        """
+        if ctx.current_state != FlowState.DEGRADED:
+            logger.error(f"Cannot exit degraded mode in state {ctx.current_state}")
+            return ctx
+
+        logger.info(f"Decision {ctx.decision.id} exiting degraded mode")
+
+        ctx.exit_degraded_mode()
+        ctx.e40_5_required = True  # Restore E40.5 requirement
+
+        self._transition(ctx, FlowEvent.EXIT_DEGRADED, {})
+
+        return ctx
+
+    def check_nogo_signals(
+        self,
+        ctx: FlowContext,
+        claim_id: str,
+        evidence_trail: Optional[List[Dict[str, Any]]] = None,
+        source_id: Optional[str] = None,
+        retracted_count: int = 0,
+    ) -> FlowContext:
+        """
+        Check for NO-GO signals and block if any are active (S40-BE-015).
+
+        Args:
+            ctx: Flow context
+            claim_id: ID of the claim to check
+            evidence_trail: Evidence items for the claim
+            source_id: Source ID (for abuse detection)
+            retracted_count: Number of retracted claims from source
+
+        Returns:
+            Updated FlowContext (may be BLOCKED if signals detected)
+        """
+        from app.claims.signals import check_nogo_signals, get_signal_repository
+
+        # Get active signals
+        signals = check_nogo_signals(
+            claim_id=claim_id,
+            evidence_trail=evidence_trail or [],
+            source_id=source_id,
+            retracted_count=retracted_count,
+        )
+
+        if not signals:
+            return ctx
+
+        # Add signals to repository and context
+        repo = get_signal_repository()
+        for signal in signals:
+            repo.add(signal)
+            ctx.add_nogo_signal(signal.signal_id)
+
+        # Block transition
+        ctx.nogo_blocked = True
+        signal_types = [s.type.value for s in signals]
+        ctx.blocked_reason = f"NO-GO signals detected: {', '.join(signal_types)}"
+
+        logger.warning(
+            f"Decision {ctx.decision.id} BLOCKED by NO-GO signals: {signal_types}"
+        )
+
+        self._transition(
+            ctx,
+            FlowEvent.NOGO_BLOCKED,
+            {
+                "signal_ids": ctx.signal_refs,
+                "signal_types": signal_types,
+                "nogo_status": "BLOCKED",
+            },
+        )
+
+        return ctx
+
+    def clear_nogo_block(
+        self,
+        ctx: FlowContext,
+        resolver_id: str,
+        reason: str,
+    ) -> FlowContext:
+        """
+        Clear NO-GO block after signals are resolved (S40-BE-015).
+
+        Args:
+            ctx: Flow context
+            resolver_id: ID of the resolver
+            reason: Reason for clearing
+
+        Returns:
+            Updated FlowContext
+        """
+        if not ctx.nogo_blocked and not ctx.signal_refs:
+            logger.warning(f"No NO-GO block to clear for decision {ctx.decision.id}")
+            return ctx
+
+        from app.claims.signals import get_signal_repository
+
+        # Resolve all signals
+        repo = get_signal_repository()
+        for signal_id in ctx.signal_refs:
+            repo.resolve(signal_id, resolver_id, reason)
+
+        # Clear context
+        ctx.clear_nogo_signals()
+        ctx.blocked_reason = None
+
+        logger.info(
+            f"Decision {ctx.decision.id} NO-GO block cleared by {resolver_id}: {reason}"
+        )
+
+        # If still in blocked state, unblock
+        if ctx.current_state == FlowState.BLOCKED:
+            self._transition(
+                ctx,
+                FlowEvent.UNBLOCK,
+                {"resolver_id": resolver_id, "reason": reason, "nogo_cleared": True},
+            )
+
+        return ctx

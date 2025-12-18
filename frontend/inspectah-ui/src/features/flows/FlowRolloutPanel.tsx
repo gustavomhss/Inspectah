@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { AdminContent, Badge, Button } from '@/ui/admin';
 import { runNewsdataIngest } from './api';
 import { useRollout, useRolloutActions } from './hooks';
-import type { Flow, NewsdataItem } from './types';
+import type { Flow, NewsdataItem, SloStatusEntry } from './types';
 
 interface Props {
   flow: Flow;

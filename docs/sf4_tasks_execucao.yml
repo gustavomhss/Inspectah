@@ -1,0 +1,269 @@
+sprint: SF4
+programa: Programa 1
+epico: Fix E36
+ace_resumo: |
+  Revalidacao S5-S19 sem placeholders: auth minima porem real (401/403/200 sem 200 sem token/role),
+  ingest/Explorer smoke API+UI sem mocks/snapshots, observabilidade viva (PromQL/alertas/painel export,
+  firing/resolution), rc estrito, scorecards rerun PASS REAL/NO-GO e bundle auditavel com manifest/hash
+  e README com paths absolutos + checksum/unzip -t.
+waves:
+  - id: W0
+    nome: Baseline & RC
+    ace_context:
+      spec_refs: [Cap1, Cap2, Cap4, Cap7]
+      resumo: Deps vivos (Prom/Alertmanager/Playwright/IdP/token), fixtures com hash/commit, scripts s5-s19/sf4 endurecidos com set -euo pipefail e sem "|| true"; /metrics vazio deve falhar.
+  - id: W1
+    nome: Auth real
+    ace_context:
+      spec_refs: [Cap2, Cap3, Cap5]
+      resumo: Rotas protegidas exigem token+role minima; 401/403/200 corretos; logs/audit actor/role/op_id/request_id; metricas auth_requests_total e latencia sem placeholder; 200 sem token/role = FAIL.
+  - id: W2
+    nome: Ingest + Explorer UI
+    ace_context:
+      spec_refs: [Cap2, Cap4, Cap5, Cap8, Cap9]
+      resumo: Smoke ingest API (happy/erro/RBAC/429/5xx) e Playwright Explorer cobrindo estados happy/erro/empty/RBAC/429/5xx sem mocks/snapshots; request_id em logs/screenshots.
+  - id: W3
+    nome: Schema/Fixtures
+    ace_context:
+      spec_refs: [Cap2, Cap3, Cap5]
+      resumo: Migracoes + fixtures aplicadas com hash/commit registrado; rerun datasets S12-S19; scripts idempotentes com rc estrito.
+  - id: W4
+    nome: Observabilidade
+    ace_context:
+      spec_refs: [Cap2, Cap6, Cap7]
+      resumo: /metrics nao vazio para auth/ingest/explorer; alertas sf4_* e painel sf4_obs_overview exportados; promtool + PromQL arquivados; firing/resolution capturados.
+  - id: W5
+    nome: ORR & Bundle
+    ace_context:
+      spec_refs: [Cap2, Cap7]
+      resumo: Scorecards S5-S19 rerun PASS REAL/NO-GO com commit/time/hash; bundle inspectah_sf4_evidence_bundle.zip com manifest/hash/README (paths absolutos + toolchain versoes + checksum e unzip -t) e ata GO/NO-GO.
+tasks:
+  - id: SF4-W0-01
+    wave: W0
+    area: infra
+    descricao: Checklist deps vivos (Prom/Alertmanager/Playwright/IdP/token) e fixtures com hash/commit; registrar versoes de toolchain
+    arquivos_alvo:
+      - bin
+      - observability
+      - docs/sf4_cap_4_4_tasks_e_waves.md
+    gates: [G0]
+    criterios_done: Checklist preenchido; versoes (node/npm/playwright/promtool/python) registradas; NO-GO se qualquer dependencia ausente
+    evidencias:
+      - out/evidence/SF4_G0/deps_check.log
+    ace_context:
+      spec_refs: [Cap1, Cap2]
+  - id: SF4-W0-02
+    wave: W0
+    area: ops
+    descricao: Endurecer scripts s5-s19 + sf4_* com set -euo pipefail, sem "|| true", falhando em /metrics vazio
+    arquivos_alvo:
+      - "bin/s5*_g*.sh"
+      - "bin/s6*_g*.sh"
+      - "bin/s7*_g*.sh"
+      - "bin/s8*_g*.sh"
+      - "bin/s9*_g*.sh"
+      - "bin/s1?_g*.sh"
+      - bin/sf4_g1_auth
+      - bin/sf4_g2_ui
+      - bin/sf4_g3_schema
+      - bin/sf4_g4_obs
+      - bin/sf4_g5_bundle
+    gates: [G0, G1, G2, G3, G4, G5]
+    criterios_done: Scripts propagam rc!=0; detectam /metrics vazio; criam diretorios out/evidence/SF4_G*; rc estrito
+    evidencias:
+      - out/evidence/SF4_G0/rc_guard.md
+    ace_context:
+      spec_refs: [Cap2, Cap4]
+  - id: SF4-W1-01
+    wave: W1
+    area: backend
+    descricao: Enforce auth 401/403/200; negar 200 sem token/role; audit actor/role/op_id/request_id
+    arquivos_alvo:
+      - backend/auth/**
+      - app/middlewares/**
+      - config
+    gates: [G1]
+    criterios_done: Casos 401/403/200 cobertos; 200 sem token/role falha; audit + logs HTTP salvos; metricas refletem chamadas
+    evidencias:
+      - out/evidence/SF4_G1/auth_http.log
+      - out/evidence/SF4_G1/auth_metrics.txt
+    ace_context:
+      spec_refs: [Cap2, Cap3, Cap5]
+  - id: SF4-W1-02
+    wave: W1
+    area: observabilidade
+    descricao: Metricas auth auth_requests_total{code,role} e latencia; /metrics nao vazio; PromQL arquivada
+    arquivos_alvo:
+      - backend/auth/**
+      - observability
+    gates: [G1]
+    criterios_done: /metrics contem series de auth; PromQL exportada; sem placeholder; rc estrito
+    evidencias:
+      - out/evidence/SF4_G1/metrics_dump.txt
+      - out/evidence/SF4_G1/promql_auth.txt
+    ace_context:
+      spec_refs: [Cap2, Cap6]
+  - id: SF4-W1-03
+    wave: W1
+    area: ops
+    descricao: Script bin/sf4_g1_auth cobrindo 401/403/200 e falhando se 200 sem token/role
+    arquivos_alvo:
+      - bin/sf4_g1_auth
+    gates: [G1]
+    criterios_done: Script rc=0 apenas se casos corretos; logs salvos; rc estrito
+    evidencias:
+      - out/evidence/SF4_G1/sf4_g1_auth.log
+    ace_context:
+      spec_refs: [Cap2, Cap4]
+  - id: SF4-W2-01
+    wave: W2
+    area: backend
+    descricao: Smoke ingest API (happy, payload invalido, RBAC negado, 429, 5xx simulado) com request_id em logs
+    arquivos_alvo:
+      - backend/ingest/**
+      - bin/sf4_g2_ui
+    gates: [G2]
+    criterios_done: Todos cenarios exercitados; codigos corretos; sem mocks; rc estrito; request_id logado
+    evidencias:
+      - out/evidence/SF4_G2/ingest_http.log
+    ace_context:
+      spec_refs: [Cap2, Cap5]
+  - id: SF4-W2-02
+    wave: W2
+    area: frontend
+    descricao: Playwright Explorer cobre happy/erro/empty/RBAC/429/5xx sem snapshots/mocks; screenshots com timestamp/request_id
+    arquivos_alvo:
+      - frontend/**
+      - tests/playwright/**
+    gates: [G2]
+    criterios_done: Playwright passa; screenshots por estado; logs com request_id/op_id; rc estrito
+    evidencias:
+      - out/evidence/SF4_G2/playwright/report.json
+      - out/evidence/SF4_G2/playwright/*.png
+    ace_context:
+      spec_refs: [Cap5, Cap8, Cap9]
+  - id: SF4-W2-03
+    wave: W2
+    area: ops
+    descricao: Script bin/sf4_g2_ui orquestra API+UI e falha se snapshot/mock detectado
+    arquivos_alvo:
+      - bin/sf4_g2_ui
+    gates: [G2]
+    criterios_done: rc=0 com evidencias geradas; detector de snapshot/mock ativo; logs salvos
+    evidencias:
+      - out/evidence/SF4_G2/sf4_g2_ui.log
+    ace_context:
+      spec_refs: [Cap2, Cap4]
+  - id: SF4-W3-01
+    wave: W3
+    area: dados
+    descricao: Aplicar migracoes e fixtures com hash/commit; rerun datasets S12-S19
+    arquivos_alvo:
+      - db/migrations
+      - db/fixtures
+      - bin/sf4_g3_schema
+    gates: [G3]
+    criterios_done: Migracoes aplicadas; fixtures carregadas; hash/commit registrado; rerun datasets completo; rc estrito
+    evidencias:
+      - out/evidence/SF4_G3/schema_apply.log
+      - out/evidence/SF4_G3/fixtures_manifest.md
+    ace_context:
+      spec_refs: [Cap2, Cap3]
+  - id: SF4-W3-02
+    wave: W3
+    area: ops
+    descricao: Script bin/sf4_g3_schema valida idempotencia e hash das fixtures
+    arquivos_alvo:
+      - bin/sf4_g3_schema
+    gates: [G3]
+    criterios_done: rc=0 se hash consistente; falha em divergencia; log salva hashes
+    evidencias:
+      - out/evidence/SF4_G3/sf4_g3_schema.log
+    ace_context:
+      spec_refs: [Cap2, Cap4]
+  - id: SF4-W4-01
+    wave: W4
+    area: observabilidade
+    descricao: /metrics nao vazio (auth/ingest/explorer counters e latencias)
+    arquivos_alvo:
+      - backend/**
+      - observability
+    gates: [G4]
+    criterios_done: curl /metrics retorna series reais; sem placeholder; rc estrito
+    evidencias:
+      - out/evidence/SF4_G4/metrics_snapshot.txt
+    ace_context:
+      spec_refs: [Cap2, Cap6]
+  - id: SF4-W4-02
+    wave: W4
+    area: observabilidade
+    descricao: Alertas/dash sf4_* com promtool + PromQL export; painel sf4_obs_overview export JSON/PNG
+    arquivos_alvo:
+      - observability/alerts
+      - observability/dashboards
+      - bin/sf4_g4_obs
+    gates: [G4]
+    criterios_done: promtool sem erros; PromQL arquivada; painel exportado; rc estrito
+    evidencias:
+      - out/evidence/SF4_G4/promtool_check.log
+      - out/evidence/SF4_G4/promql_export.txt
+      - out/evidence/SF4_G4/panel.json
+    ace_context:
+      spec_refs: [Cap2, Cap6]
+  - id: SF4-W4-03
+    wave: W4
+    area: observabilidade
+    descricao: Simular firing/resolution dos alertas e capturar painel/screenshot
+    arquivos_alvo:
+      - observability
+      - bin/sf4_g4_obs
+    gates: [G4]
+    criterios_done: firing+resolution registrados com timestamp; screenshot do painel; rc estrito
+    evidencias:
+      - out/evidence/SF4_G4/alert_firing.log
+      - out/evidence/SF4_G4/panel.png
+    ace_context:
+      spec_refs: [Cap2, Cap6]
+  - id: SF4-W5-01
+    wave: W5
+    area: quality
+    descricao: Rerun scorecards S5-S19 com testes reais API/UI/metrics e rotulo PASS REAL/NO-GO
+    arquivos_alvo:
+      - scripts/scorecards
+      - out/scorecards
+    gates: [G5]
+    criterios_done: Arquivos _rerun.json com commit/time/hash e rotulo PASS REAL/NO-GO; rc estrito; NO-GO se deps ausentes
+    evidencias:
+      - out/evidence/SF4_G5/scorecards_rerun.log
+      - out/scorecards/S*_rerun.json
+    ace_context:
+      spec_refs: [Cap2, Cap7]
+  - id: SF4-W5-02
+    wave: W5
+    area: ops
+    descricao: Bundle inspectah_sf4_evidence_bundle.zip com manifest/hash/README (paths absolutos, versoes toolchain, checksum + unzip -t)
+    arquivos_alvo:
+      - out/evidence/SF4_G*
+      - out/scorecards
+      - observability
+      - bin/sf4_g5_bundle
+    gates: [G5]
+    criterios_done: Zip gerado + checksum + unzip -t pass; README lista paths absolutos e PromQL/paineis; manifest com hash
+    evidencias:
+      - out/evidence/SF4_G5/bundle_manifest.md
+      - out/evidence/SF4_G5/bundle.sha256
+      - out/evidence/SF4_G5/bundle_unzip_test.log
+    ace_context:
+      spec_refs: [Cap3, Cap7]
+  - id: SF4-W5-03
+    wave: W5
+    area: governance
+    descricao: Ata GO/NO-GO por gate (ausencia de deps -> NO-GO explicito)
+    arquivos_alvo:
+      - out/logs/SF4_gov.md
+    gates: [G5]
+    criterios_done: Ata publicada com links absolutos e motivos; alinhada aos scorecards
+    evidencias:
+      - out/logs/SF4_gov.md
+    ace_context:
+      spec_refs: [Cap7]

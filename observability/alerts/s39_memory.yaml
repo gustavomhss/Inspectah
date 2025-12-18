@@ -1,0 +1,255 @@
+# S39 - Memory Controller Alerts Configuration
+# Alertmanager alerts for Memory subsystem observability
+# Reference: app/context/memory_metrics.py
+
+groups:
+  # ============================================================================
+  # MEMORY HEALTH
+  # ============================================================================
+  - name: s39_memory_health
+    rules:
+      - alert: MemoryHealthWarning
+        expr: memory_health_score < 80
+        for: 10m
+        labels:
+          severity: warning
+          component: memory
+          sprint: s39
+        annotations:
+          summary: "Memory health degraded"
+          description: "Memory health score is {{ $value }}. Status: {{ $labels.status }}"
+          runbook: "docs/runbooks/memory_health_warning.md"
+
+      - alert: MemoryHealthCritical
+        expr: memory_health_score < 50
+        for: 5m
+        labels:
+          severity: critical
+          component: memory
+          sprint: s39
+        annotations:
+          summary: "Memory health critical"
+          description: "Memory health score is {{ $value }}. Immediate attention required."
+          runbook: "docs/runbooks/memory_health_critical.md"
+
+      - alert: MemoryHealthStatusChange
+        expr: changes(memory_health_status[10m]) > 2
+        for: 5m
+        labels:
+          severity: warning
+          component: memory
+          sprint: s39
+        annotations:
+          summary: "Memory health status flapping"
+          description: "Memory health status changed {{ $value }} times in 10 minutes. System instability detected."
+
+  # ============================================================================
+  # MEMORY CAPACITY
+  # ============================================================================
+  - name: s39_memory_capacity
+    rules:
+      - alert: MemoryEntriesWarning
+        expr: memory_controller_entries_total > 50000
+        for: 15m
+        labels:
+          severity: warning
+          component: memory
+          sprint: s39
+        annotations:
+          summary: "High memory entry count"
+          description: "{{ $value }} entries in memory controller. Consider cleanup."
+          runbook: "docs/runbooks/memory_entries_high.md"
+
+      - alert: MemoryEntriesCritical
+        expr: memory_controller_entries_total > 100000
+        for: 5m
+        labels:
+          severity: critical
+          component: memory
+          sprint: s39
+        annotations:
+          summary: "Critical memory entry count"
+          description: "{{ $value }} entries in memory controller. System may degrade."
+          runbook: "docs/runbooks/memory_entries_critical.md"
+
+      - alert: MemoryGrowingFast
+        expr: memory_trend_direction{direction="growing_fast"} == 1
+        for: 30m
+        labels:
+          severity: warning
+          component: memory
+          sprint: s39
+        annotations:
+          summary: "Memory usage growing rapidly"
+          description: "Memory entries growing at {{ $labels.growth_rate }}%/hour. Investigate source."
+
+  # ============================================================================
+  # MEMORY EXPIRATION
+  # ============================================================================
+  - name: s39_memory_expiration
+    rules:
+      - alert: MemoryExpiredRatioWarning
+        expr: memory_controller_expired_entries / memory_controller_entries_total > 0.1
+        for: 30m
+        labels:
+          severity: warning
+          component: memory
+          sprint: s39
+        annotations:
+          summary: "High expired entry ratio"
+          description: "{{ $value | humanizePercentage }} of memory entries are expired. Schedule cleanup."
+          runbook: "docs/runbooks/memory_expired_entries.md"
+
+      - alert: MemoryExpiredRatioCritical
+        expr: memory_controller_expired_entries / memory_controller_entries_total > 0.3
+        for: 10m
+        labels:
+          severity: critical
+          component: memory
+          sprint: s39
+        annotations:
+          summary: "Critical expired entry ratio"
+          description: "{{ $value | humanizePercentage }} of memory entries are expired. Run cleanup immediately."
+          runbook: "docs/runbooks/memory_expired_critical.md"
+
+      - alert: MemoryCleanupNeeded
+        expr: memory_controller_expired_entries > 10000
+        for: 1h
+        labels:
+          severity: warning
+          component: memory
+          sprint: s39
+        annotations:
+          summary: "Memory cleanup needed"
+          description: "{{ $value }} expired entries awaiting cleanup."
+
+  # ============================================================================
+  # MEMORY SCOPE CONCENTRATION
+  # ============================================================================
+  - name: s39_memory_scope
+    rules:
+      - alert: MemoryScopeConcentrationHigh
+        expr: max(memory_entries_by_scope) / sum(memory_entries_by_scope) > 0.8
+        for: 15m
+        labels:
+          severity: warning
+          component: memory
+          sprint: s39
+        annotations:
+          summary: "High scope concentration"
+          description: "Single scope has {{ $value | humanizePercentage }} of all entries. Consider balancing."
+
+      - alert: MemoryScopeFlowOverloaded
+        expr: memory_entries_by_scope{scope="flow"} > 30000
+        for: 10m
+        labels:
+          severity: warning
+          component: memory
+          sprint: s39
+        annotations:
+          summary: "Flow scope overloaded"
+          description: "Flow scope has {{ $value }} entries. Check for stuck flows."
+
+      - alert: MemoryScopeAgentOverloaded
+        expr: memory_entries_by_scope{scope="agent"} > 20000
+        for: 10m
+        labels:
+          severity: warning
+          component: memory
+          sprint: s39
+        annotations:
+          summary: "Agent scope overloaded"
+          description: "Agent scope has {{ $value }} entries. Check agent lifecycle."
+
+  # ============================================================================
+  # MEMORY IMPORTANCE
+  # ============================================================================
+  - name: s39_memory_importance
+    rules:
+      - alert: MemoryAvgImportanceLow
+        expr: memory_avg_importance < 0.3
+        for: 30m
+        labels:
+          severity: warning
+          component: memory
+          sprint: s39
+        annotations:
+          summary: "Low average memory importance"
+          description: "Average memory importance is {{ $value }}. Consider reviewing retention policies."
+
+      - alert: MemoryLowImportanceAccumulating
+        expr: count(memory_entries_by_importance{importance_bucket="low"}) / sum(memory_entries_by_importance) > 0.5
+        for: 1h
+        labels:
+          severity: warning
+          component: memory
+          sprint: s39
+        annotations:
+          summary: "Low importance entries accumulating"
+          description: "Over 50% of entries have low importance. Review memory strategy."
+
+  # ============================================================================
+  # MEMORY PERFORMANCE
+  # ============================================================================
+  - name: s39_memory_performance
+    rules:
+      - alert: MemoryAccessLatencyHigh
+        expr: histogram_quantile(0.95, rate(memory_access_duration_seconds_bucket[5m])) > 0.1
+        for: 10m
+        labels:
+          severity: warning
+          component: memory
+          sprint: s39
+        annotations:
+          summary: "High memory access latency"
+          description: "Memory access P95 latency is {{ $value }}s. Check for contention."
+
+      - alert: MemoryWriteLatencyHigh
+        expr: histogram_quantile(0.95, rate(memory_write_duration_seconds_bucket[5m])) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+          component: memory
+          sprint: s39
+        annotations:
+          summary: "High memory write latency"
+          description: "Memory write P95 latency is {{ $value }}s."
+
+      - alert: MemoryOperationErrors
+        expr: rate(memory_operation_errors_total[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          component: memory
+          sprint: s39
+        annotations:
+          summary: "Memory operation errors"
+          description: "{{ $value }} errors/second in memory operations."
+
+  # ============================================================================
+  # MEMORY ALERTS (FROM METRICS COLLECTOR)
+  # ============================================================================
+  - name: s39_memory_collector
+    rules:
+      - alert: MemoryCollectorIssuesDetected
+        expr: memory_collector_issues_count > 3
+        for: 10m
+        labels:
+          severity: warning
+          component: memory
+          sprint: s39
+        annotations:
+          summary: "Multiple memory issues detected"
+          description: "Memory collector detected {{ $value }} issues. Check dashboard for details."
+
+      - alert: MemoryCollectorCriticalIssues
+        expr: memory_collector_critical_issues_count > 0
+        for: 5m
+        labels:
+          severity: critical
+          component: memory
+          sprint: s39
+        annotations:
+          summary: "Critical memory issues detected"
+          description: "Memory collector detected {{ $value }} critical issues."
+          runbook: "docs/runbooks/memory_critical_issues.md"

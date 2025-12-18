@@ -33,8 +33,8 @@ type SloState = {
 };
 
 type Overview = {
-  components: number;
-  incidents: number;
+  components: number | unknown[];
+  incidents: number | unknown[];
   slos?: SloState[];
 };
 
@@ -124,7 +124,10 @@ export default function OpsCockpitPage() {
 
   const componentsWithStatus = useMemo(() => {
     return components.map((c) => {
-      const slosForComponent = (c.slos || []).map((sloId) => sloIndex.get(sloId)).filter(Boolean) as SloState[];
+      const slosForComponent = (c.slos || []).map((raw) => {
+        const sloId = typeof raw === 'string' ? raw : raw?.id || raw?.slo_id || '';
+        return sloIndex.get(sloId);
+      }).filter(Boolean) as SloState[];
       const status: ComponentStatus = slosForComponent.some((s) => s.status !== 'OK')
         ? 'DEGRADED'
         : slosForComponent.length

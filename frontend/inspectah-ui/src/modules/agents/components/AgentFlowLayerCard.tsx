@@ -1,7 +1,8 @@
-import type { AgentProfile, AgentFlowLayer, AgentRole, FlowLayerType } from '../../../core/api/api-types';
+import type { AgentProfile, AgentRole, FlowLayerType } from '../../../core/api/api-types';
+import type { EditableLayer } from '../hooks/useAgentsFlow';
 
 interface Props {
-  layer: AgentFlowLayer;
+  layer: EditableLayer;
   agents: AgentProfile[];
   allowedRoles: AgentRole[];
   onChangeAgents: (agentIds: string[]) => void;

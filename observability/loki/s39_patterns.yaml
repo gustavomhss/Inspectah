@@ -1,0 +1,197 @@
+# S39-W4: Loki Log Patterns (T-OBS-LOKI-001)
+# Log pattern extraction and alerting rules for Loki
+
+# Pattern extraction rules
+patterns:
+  # API request logging
+  - name: api_request
+    pattern: |
+      <_>method=(?P<method>\w+) path=(?P<path>[^ ]+) status=(?P<status>\d+) duration=(?P<duration_ms>\d+)ms<_>
+    labels:
+      - method
+      - path
+      - status
+      - duration_ms
+
+  # Error logging patterns
+  - name: error_log
+    pattern: |
+      <_>level=(?P<level>error|ERROR) msg="(?P<message>[^"]+)"<_>
+    labels:
+      - level
+      - message
+
+  # Claim processing
+  - name: claim_processed
+    pattern: |
+      <_>claim_id=(?P<claim_id>[^ ]+) verdict=(?P<verdict>\w+) confidence=(?P<confidence>[0-9.]+)<_>
+    labels:
+      - claim_id
+      - verdict
+      - confidence
+
+  # Signal updates
+  - name: signal_update
+    pattern: |
+      <_>signal_id=(?P<signal_id>[^ ]+) type=(?P<signal_type>\w+) value=(?P<value>[0-9.]+)<_>
+    labels:
+      - signal_id
+      - signal_type
+      - value
+
+  # WebSocket events
+  - name: websocket_event
+    pattern: |
+      <_>ws_event=(?P<event>\w+) client_id=(?P<client_id>[^ ]+)<_>
+    labels:
+      - event
+      - client_id
+
+  # Database queries
+  - name: db_query
+    pattern: |
+      <_>query_type=(?P<query_type>\w+) shard=(?P<shard>\d+) duration=(?P<duration_ms>\d+)ms<_>
+    labels:
+      - query_type
+      - shard
+      - duration_ms
+
+  # Kafka events
+  - name: kafka_event
+    pattern: |
+      <_>kafka_topic=(?P<topic>[^ ]+) partition=(?P<partition>\d+) offset=(?P<offset>\d+)<_>
+    labels:
+      - topic
+      - partition
+      - offset
+
+  # LLM calls
+  - name: llm_call
+    pattern: |
+      <_>llm_model=(?P<model>[^ ]+) tokens=(?P<tokens>\d+) duration=(?P<duration_ms>\d+)ms<_>
+    labels:
+      - model
+      - tokens
+      - duration_ms
+
+  # Authentication events
+  - name: auth_event
+    pattern: |
+      <_>auth_event=(?P<event>\w+) user_id=(?P<user_id>[^ ]+) result=(?P<result>\w+)<_>
+    labels:
+      - event
+      - user_id
+      - result
+
+# Alert rules based on log patterns
+alerts:
+  - name: HighErrorRate
+    query: |
+      sum(rate({app="inspectah"} |= "level=error" [5m])) > 10
+    duration: 5m
+    severity: warning
+    summary: "High error rate in logs"
+    description: "More than 10 errors/second detected in application logs"
+
+  - name: CriticalErrors
+    query: |
+      sum(rate({app="inspectah"} |= "CRITICAL" [1m])) > 0
+    duration: 1m
+    severity: critical
+    summary: "Critical errors detected"
+    description: "Critical level errors found in application logs"
+
+  - name: SlowQueries
+    query: |
+      count_over_time({app="inspectah"} |~ "duration=\\d{4,}ms" [5m]) > 100
+    duration: 5m
+    severity: warning
+    summary: "High number of slow queries"
+    description: "More than 100 queries taking >1s in last 5 minutes"
+
+  - name: AuthenticationFailures
+    query: |
+      sum(rate({app="inspectah"} |= "auth_event=login" |= "result=failed" [5m])) > 5
+    duration: 5m
+    severity: warning
+    summary: "High authentication failure rate"
+    description: "More than 5 failed logins per second"
+
+  - name: WebSocketDisconnects
+    query: |
+      sum(rate({app="inspectah"} |= "ws_event=disconnect" [5m])) > 100
+    duration: 5m
+    severity: warning
+    summary: "High WebSocket disconnect rate"
+    description: "More than 100 WebSocket disconnects per second"
+
+  - name: KafkaConsumerLag
+    query: |
+      {app="inspectah"} |= "kafka_lag" | json | lag > 10000
+    duration: 5m
+    severity: warning
+    summary: "Kafka consumer lag detected"
+    description: "Kafka consumer lag exceeding 10000 messages"
+
+  - name: LLMQuotaWarning
+    query: |
+      {app="inspectah"} |= "llm_quota" |= "warning"
+    duration: 1m
+    severity: warning
+    summary: "LLM quota warning"
+    description: "LLM API quota usage is high"
+
+  - name: LLMQuotaExhausted
+    query: |
+      {app="inspectah"} |= "llm_quota" |= "exhausted"
+    duration: 1m
+    severity: critical
+    summary: "LLM quota exhausted"
+    description: "LLM API quota has been exhausted"
+
+  - name: ShardConnectionErrors
+    query: |
+      sum(rate({app="inspectah"} |= "shard" |= "connection error" [5m])) > 0
+    duration: 2m
+    severity: critical
+    summary: "Shard connection errors"
+    description: "Database shard connection errors detected"
+
+  - name: MemoryPressure
+    query: |
+      {app="inspectah"} |= "memory_pressure" |= "high"
+    duration: 5m
+    severity: warning
+    summary: "Memory pressure detected"
+    description: "Application reporting high memory pressure"
+
+# Dashboard queries
+dashboards:
+  # Request metrics
+  requests_by_path:
+    query: |
+      sum by (path) (count_over_time({app="inspectah"} | pattern `<_>path=<path> <_>` [5m]))
+
+  requests_by_status:
+    query: |
+      sum by (status) (count_over_time({app="inspectah"} | pattern `<_>status=<status><_>` [5m]))
+
+  # Error analysis
+  errors_by_type:
+    query: |
+      sum by (error_type) (count_over_time({app="inspectah"} |= "error" | json | line_format "{{.error_type}}" [5m]))
+
+  # Performance metrics
+  slow_endpoints:
+    query: |
+      topk(10, sum by (path) (count_over_time({app="inspectah"} |~ "duration=\\d{3,}ms" | pattern `<_>path=<path><_>` [1h])))
+
+  # Claim processing
+  claims_by_verdict:
+    query: |
+      sum by (verdict) (count_over_time({app="inspectah"} |= "claim_processed" | pattern `<_>verdict=<verdict><_>` [1h]))
+
+  # Signal activity
+  signals_by_type:
+    query: |
+      sum by (signal_type) (count_over_time({app="inspectah"} |= "signal_update" | pattern `<_>type=<signal_type><_>` [1h]))

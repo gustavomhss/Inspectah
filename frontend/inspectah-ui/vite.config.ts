@@ -16,7 +16,28 @@ export default defineConfig({
         target: 'http://127.0.0.1:8000',
         changeOrigin: true,
       },
-      '/admin': {
+      // Proxy specific backend admin API routes (not React routes)
+      '/admin/sources': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+      },
+      '/admin/ingestion': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+      },
+      '/admin/agents': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+      },
+      '/admin/agent-flows': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+      },
+      '/admin/health': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+      },
+      '/admin/copiloto-fontes': {
         target: 'http://127.0.0.1:8000',
         changeOrigin: true,
       },

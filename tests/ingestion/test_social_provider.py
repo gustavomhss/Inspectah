@@ -192,3 +192,530 @@ class TestSocialProviderClient:
 
         assert result[0].language == "pt"
         assert result[0].country == "BR"
+
+
+# =============================================================================
+# S40-BE-018: Enhanced Social Provider Tests
+# =============================================================================
+
+
+class TestRateLimitState:
+    """Tests for RateLimitState dataclass."""
+
+    def test_rate_limit_state_defaults(self):
+        """RateLimitState has correct defaults."""
+        from app.ingestion.providers.social_provider_client import RateLimitState
+
+        state = RateLimitState()
+        assert state.requests_made == 0
+        assert state.limit_per_minute == 60
+
+    def test_rate_limit_state_custom_limit(self):
+        """RateLimitState accepts custom limit."""
+        from app.ingestion.providers.social_provider_client import RateLimitState
+
+        state = RateLimitState(limit_per_minute=30)
+        assert state.limit_per_minute == 30
+
+
+class TestSocialProviderError:
+    """Tests for SocialProviderError exception."""
+
+    def test_error_creation(self):
+        """Create SocialProviderError with message."""
+        from app.ingestion.providers.social_provider_client import SocialProviderError
+
+        err = SocialProviderError("Test error")
+        assert str(err) == "Test error"
+        assert err.error_code is None
+        assert err.retryable is False
+
+    def test_error_with_code(self):
+        """Create SocialProviderError with error code."""
+        from app.ingestion.providers.social_provider_client import SocialProviderError
+
+        err = SocialProviderError("Test", error_code="E001", retryable=True)
+        assert err.error_code == "E001"
+        assert err.retryable is True
+
+
+class TestSocialProviderClientS40:
+    """S40-BE-018 Tests for rate limiting and retry."""
+
+    def test_init_with_rate_limit(self):
+        """Initialize with custom rate limit."""
+        client = SocialProviderClient(rate_limit_per_minute=30)
+        assert client._rate_limit.limit_per_minute == 30
+
+    def test_init_with_max_retries(self):
+        """Initialize with custom max retries."""
+        client = SocialProviderClient(max_retries=5)
+        assert client.max_retries == 5
+
+    def test_init_with_retry_delay(self):
+        """Initialize with custom retry delay."""
+        client = SocialProviderClient(retry_delay=2.0)
+        assert client.retry_delay == 2.0
+
+    def test_get_stats(self):
+        """get_stats returns client statistics."""
+        client = SocialProviderClient()
+        stats = client.get_stats()
+
+        assert "request_count" in stats
+        assert "error_count" in stats
+        assert "rate_limit_requests" in stats
+        assert "rate_limit_per_minute" in stats
+
+    def test_is_pilot_domain_saude(self):
+        """is_pilot_domain returns True for saude."""
+        client = SocialProviderClient()
+        assert client.is_pilot_domain("saude") is True
+
+    def test_is_pilot_domain_politica(self):
+        """is_pilot_domain returns True for politica."""
+        client = SocialProviderClient()
+        assert client.is_pilot_domain("politica") is True
+
+    def test_is_pilot_domain_other(self):
+        """is_pilot_domain returns False for non-pilot."""
+        client = SocialProviderClient()
+        assert client.is_pilot_domain("economia") is False
+
+    @pytest.mark.asyncio
+    async def test_fetch_for_domain_saude(self):
+        """fetch_for_domain works for saude."""
+        client = SocialProviderClient()
+        result = await client.fetch_for_domain(
+            domain="saude",
+            keywords=["vacina", "covid"],
+            limit=3,
+        )
+
+        assert len(result) == 3
+        for item in result:
+            assert item.domain == "saude"
+
+    @pytest.mark.asyncio
+    async def test_fetch_for_domain_politica(self):
+        """fetch_for_domain works for politica."""
+        client = SocialProviderClient()
+        result = await client.fetch_for_domain(
+            domain="politica",
+            keywords=["eleicao"],
+            limit=2,
+        )
+
+        assert len(result) == 2
+        for item in result:
+            assert item.domain == "politica"
+
+    @pytest.mark.asyncio
+    async def test_fetch_for_domain_invalid(self):
+        """fetch_for_domain raises for non-pilot domain."""
+        client = SocialProviderClient()
+
+        with pytest.raises(ValueError) as exc_info:
+            await client.fetch_for_domain("economia", ["pib"], 5)
+
+        assert "not in pilot domains" in str(exc_info.value)
+
+    @pytest.mark.asyncio
+    async def test_fetch_detects_domain_from_slug(self):
+        """Fetch detects domain from profile slug."""
+        client = SocialProviderClient()
+        profile = IngestionProfile.create(
+            id="prof_domain_slug",
+            provider_id="prov_1",
+            name="Saude Profile",
+            slug="saude-news",
+            kind=ProfileKind.SOCIAL,
+            country="BR",
+            language="pt",
+        )
+
+        result = await client.fetch(profile, limit=1)
+        assert result[0].domain == "saude"
+
+    @pytest.mark.asyncio
+    async def test_fetch_detects_domain_from_keywords(self):
+        """Fetch detects domain from profile keywords."""
+        client = SocialProviderClient()
+        profile = IngestionProfile.create(
+            id="prof_domain_kw",
+            provider_id="prov_1",
+            name="News Profile",
+            slug="generic-news",
+            kind=ProfileKind.SOCIAL,
+            country="BR",
+            language="pt",
+            keywords=["politica", "eleicoes"],
+        )
+
+        result = await client.fetch(profile, limit=1)
+        assert result[0].domain == "politica"
+
+    @pytest.mark.asyncio
+    async def test_request_count_increments(self):
+        """Request count increments after fetch."""
+        client = SocialProviderClient()
+        profile = IngestionProfile.create(
+            id="prof_count",
+            provider_id="prov_1",
+            name="Count Profile",
+            slug="count-test",
+            kind=ProfileKind.SOCIAL,
+            country="BR",
+            language="pt",
+        )
+
+        initial_count = client._request_count
+        await client.fetch(profile, limit=1)
+
+        assert client._request_count == initial_count + 1
+
+
+class TestSocialProviderRateLimiting:
+    """Tests for rate limiting behavior."""
+
+    def test_rate_limit_window_reset(self):
+        """Rate limit window resets after 60 seconds."""
+        import time
+
+        client = SocialProviderClient(rate_limit_per_minute=5)
+
+        # Simulate old window
+        client._rate_limit.window_start = time.time() - 61  # 61 seconds ago
+        client._rate_limit.requests_made = 5
+
+        # This should reset the window
+        client._check_rate_limit()
+
+        assert client._rate_limit.requests_made == 1  # 1 because we just made a request
+        assert client._rate_limit.window_start > time.time() - 1  # Window was reset
+
+    def test_rate_limit_increments_requests(self):
+        """Rate limit increments request count."""
+        client = SocialProviderClient(rate_limit_per_minute=100)
+
+        initial = client._rate_limit.requests_made
+        client._check_rate_limit()
+
+        assert client._rate_limit.requests_made == initial + 1
+
+    def test_get_stats_structure(self):
+        """get_stats returns expected structure."""
+        client = SocialProviderClient()
+        client._request_count = 10
+        client._error_count = 2
+
+        stats = client.get_stats()
+
+        assert stats["request_count"] == 10
+        assert stats["error_count"] == 2
+        assert "rate_limit_requests" in stats
+        assert "rate_limit_per_minute" in stats
+
+
+class TestSocialProviderDomainDetection:
+    """Tests for domain detection from profiles."""
+
+    def test_get_domain_from_slug_saude(self):
+        """Detects saude domain from slug."""
+        client = SocialProviderClient()
+        profile = IngestionProfile.create(
+            id="p1",
+            provider_id="prov",
+            slug="saude-noticias",
+            name="Saude News",
+            kind=ProfileKind.SOCIAL,
+            country="BR",
+            language="pt",
+        )
+
+        domain = client._get_domain(profile)
+        assert domain == "saude"
+
+    def test_get_domain_from_slug_politica(self):
+        """Detects politica domain from slug."""
+        client = SocialProviderClient()
+        profile = IngestionProfile.create(
+            id="p2",
+            provider_id="prov",
+            slug="politica-brasil",
+            name="Politica News",
+            kind=ProfileKind.SOCIAL,
+            country="BR",
+            language="pt",
+        )
+
+        domain = client._get_domain(profile)
+        assert domain == "politica"
+
+    def test_get_domain_from_keywords(self):
+        """Detects domain from keywords."""
+        client = SocialProviderClient()
+        profile = IngestionProfile.create(
+            id="p3",
+            provider_id="prov",
+            slug="general-news",
+            name="General",
+            kind=ProfileKind.SOCIAL,
+            country="BR",
+            language="pt",
+            keywords=["eleicoes", "politica"],
+        )
+
+        domain = client._get_domain(profile)
+        assert domain == "politica"
+
+    def test_get_domain_none_for_non_pilot(self):
+        """Returns None for non-pilot domain."""
+        client = SocialProviderClient()
+        profile = IngestionProfile.create(
+            id="p4",
+            provider_id="prov",
+            slug="esporte-noticias",
+            name="Esporte",
+            kind=ProfileKind.SOCIAL,
+            country="BR",
+            language="pt",
+            keywords=["futebol", "esporte"],
+        )
+
+        domain = client._get_domain(profile)
+        assert domain is None
+
+
+class TestRawSocialItemS40:
+    """S40 tests for RawSocialItem."""
+
+    def test_raw_item_with_domain(self):
+        """RawSocialItem includes domain field."""
+        item = RawSocialItem(
+            external_id="ext_1",
+            text="Test",
+            url="https://example.com",
+            published_at="2024-01-01",
+            author="user",
+            language="pt",
+            country="BR",
+            tags=[],
+            payload={},
+            domain="saude",
+        )
+
+        assert item.domain == "saude"
+
+    def test_raw_item_default_domain(self):
+        """RawSocialItem domain defaults to None."""
+        item = RawSocialItem(
+            external_id="ext_2",
+            text="Test",
+            url="https://example.com",
+            published_at="2024-01-01",
+            author="user",
+            language="pt",
+            country="BR",
+            tags=[],
+            payload={},
+        )
+
+        assert item.domain is None
+
+    def test_raw_item_collected_at(self):
+        """RawSocialItem has collected_at timestamp."""
+        from datetime import datetime, timezone
+
+        item = RawSocialItem(
+            external_id="ext_3",
+            text="Test",
+            url="https://example.com",
+            published_at="2024-01-01",
+            author="user",
+            language="pt",
+            country="BR",
+            tags=[],
+            payload={},
+        )
+
+        # collected_at should be set automatically
+        assert item.collected_at is not None
+        assert isinstance(item.collected_at, datetime)
+
+
+# =============================================================================
+# S40-BE-018: W3 Refinement Tests - Extended validation and edge cases
+# =============================================================================
+
+
+class TestSocialProviderValidation:
+    """Tests for input validation in social provider."""
+
+    @pytest.mark.asyncio
+    async def test_fetch_negative_limit_raises(self):
+        """fetch raises ValueError for negative limit."""
+        client = SocialProviderClient()
+        profile = IngestionProfile.create(
+            id="p_neg",
+            provider_id="prov",
+            slug="test-neg",
+            name="Test",
+            kind=ProfileKind.SOCIAL,
+            country="BR",
+            language="pt",
+        )
+
+        with pytest.raises(ValueError) as exc_info:
+            await client.fetch(profile, limit=-1)
+
+        assert "limit must be > 0" in str(exc_info.value)
+
+    @pytest.mark.asyncio
+    async def test_fetch_zero_limit_raises(self):
+        """fetch raises ValueError for zero limit."""
+        client = SocialProviderClient()
+        profile = IngestionProfile.create(
+            id="p_zero",
+            provider_id="prov",
+            slug="test-zero",
+            name="Test",
+            kind=ProfileKind.SOCIAL,
+            country="BR",
+            language="pt",
+        )
+
+        with pytest.raises(ValueError) as exc_info:
+            await client.fetch(profile, limit=0)
+
+        assert "limit must be > 0" in str(exc_info.value)
+
+    @pytest.mark.asyncio
+    async def test_fetch_for_domain_negative_limit_raises(self):
+        """fetch_for_domain raises ValueError for negative limit."""
+        client = SocialProviderClient()
+
+        with pytest.raises(ValueError) as exc_info:
+            await client.fetch_for_domain("saude", ["vacina"], limit=-5)
+
+        assert "limit must be > 0" in str(exc_info.value)
+
+    @pytest.mark.asyncio
+    async def test_fetch_for_domain_empty_keywords_raises(self):
+        """fetch_for_domain raises ValueError for empty keywords."""
+        client = SocialProviderClient()
+
+        with pytest.raises(ValueError) as exc_info:
+            await client.fetch_for_domain("saude", [], limit=5)
+
+        assert "keywords must not be empty" in str(exc_info.value)
+
+
+class TestSocialProviderJitter:
+    """Tests for jitter in retry delays."""
+
+    def test_add_jitter_varies_delay(self):
+        """_add_jitter adds variation to delay."""
+        client = SocialProviderClient()
+        base_delay = 1.0
+
+        # Generate multiple jittered values
+        jittered_values = [client._add_jitter(base_delay) for _ in range(100)]
+
+        # Should have variation (not all identical)
+        unique_values = set(round(v, 4) for v in jittered_values)
+        assert len(unique_values) > 1
+
+        # All values should be within reasonable range (10% jitter)
+        for v in jittered_values:
+            assert 0.89 <= v <= 1.11  # Allow slight overage due to rounding
+
+    def test_add_jitter_minimum_delay(self):
+        """_add_jitter ensures minimum delay of 0.01."""
+        client = SocialProviderClient()
+
+        # Very small delay should still return at least 0.01
+        result = client._add_jitter(0.001)
+        assert result >= 0.01
+
+
+class TestSocialProviderResetStats:
+    """Tests for reset_stats method."""
+
+    def test_reset_stats_clears_counters(self):
+        """reset_stats clears all counters."""
+        client = SocialProviderClient()
+        client._request_count = 50
+        client._error_count = 10
+        client._rate_limit.requests_made = 30
+
+        client.reset_stats()
+
+        assert client._request_count == 0
+        assert client._error_count == 0
+        assert client._rate_limit.requests_made == 0
+
+    def test_reset_stats_resets_window(self):
+        """reset_stats resets rate limit window."""
+        import time
+
+        client = SocialProviderClient()
+        old_window = client._rate_limit.window_start - 100  # Old window
+        client._rate_limit.window_start = old_window
+
+        client.reset_stats()
+
+        # Window should be reset to recent time
+        assert client._rate_limit.window_start > old_window
+        assert client._rate_limit.window_start >= time.time() - 1
+
+
+class TestSocialProviderCaseInsensitive:
+    """Tests for case-insensitive domain handling."""
+
+    def test_is_pilot_domain_uppercase(self):
+        """is_pilot_domain handles uppercase."""
+        client = SocialProviderClient()
+        assert client.is_pilot_domain("SAUDE") is True
+        assert client.is_pilot_domain("POLITICA") is True
+
+    def test_is_pilot_domain_mixed_case(self):
+        """is_pilot_domain handles mixed case."""
+        client = SocialProviderClient()
+        assert client.is_pilot_domain("Saude") is True
+        assert client.is_pilot_domain("PoLiTiCa") is True
+
+    def test_is_pilot_domain_non_pilot_case(self):
+        """is_pilot_domain returns False for non-pilot regardless of case."""
+        client = SocialProviderClient()
+        assert client.is_pilot_domain("ECONOMIA") is False
+        assert client.is_pilot_domain("Esporte") is False
+
+
+class TestAsyncRateLimiting:
+    """Tests for async rate limiting."""
+
+    @pytest.mark.asyncio
+    async def test_async_rate_limit_increments(self):
+        """_check_rate_limit_async increments request count."""
+        client = SocialProviderClient(rate_limit_per_minute=100)
+        initial = client._rate_limit.requests_made
+
+        await client._check_rate_limit_async()
+
+        assert client._rate_limit.requests_made == initial + 1
+
+    @pytest.mark.asyncio
+    async def test_async_rate_limit_window_reset(self):
+        """_check_rate_limit_async resets window after 60s."""
+        import time
+
+        client = SocialProviderClient(rate_limit_per_minute=100)
+        client._rate_limit.window_start = time.time() - 61  # 61 seconds ago
+        client._rate_limit.requests_made = 50
+
+        await client._check_rate_limit_async()
+
+        # Window should be reset, count should be 1
+        assert client._rate_limit.requests_made == 1
+        assert client._rate_limit.window_start > time.time() - 2

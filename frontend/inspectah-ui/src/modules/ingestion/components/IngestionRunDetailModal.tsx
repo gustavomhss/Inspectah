@@ -99,7 +99,7 @@ function IngestionRunDetailModal({ run, open, onClose }: Props) {
                     return (
                       <tr key={`${att.attempt ?? idx}`} className="odd:bg-white/5">
                         <td className="px-2 py-1">{String(att.attempt ?? idx + 1)}</td>
-                        <td className="px-2 py-1">{att.status_code ?? '—'}</td>
+                        <td className="px-2 py-1">{att.status_code != null ? String(att.status_code) : '—'}</td>
                         <td className="px-2 py-1">{att.error ? String(att.error) : '—'}</td>
                         <td className="px-2 py-1">{backoff}</td>
                         <td className="px-2 py-1">{duration}</td>

@@ -1,0 +1,278 @@
+# S39-W4: Health Checks Configuration (T-OBS-HEALTH-001)
+# Kubernetes and application health check definitions
+
+# API Health Checks
+api:
+  # Liveness probe - is the service alive?
+  liveness:
+    path: /health/live
+    port: 8000
+    initialDelaySeconds: 15
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+    successThreshold: 1
+
+  # Readiness probe - is the service ready to receive traffic?
+  readiness:
+    path: /health/ready
+    port: 8000
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 10
+    failureThreshold: 3
+    successThreshold: 1
+
+  # Startup probe - has the service started successfully?
+  startup:
+    path: /health/startup
+    port: 8000
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    timeoutSeconds: 5
+    failureThreshold: 30
+    successThreshold: 1
+
+# Health Check Endpoints Definition
+endpoints:
+  # Simple liveness check
+  /health/live:
+    description: "Basic liveness check"
+    checks:
+      - name: process_alive
+        type: process
+        critical: true
+
+  # Full readiness check
+  /health/ready:
+    description: "Full readiness check including dependencies"
+    checks:
+      - name: database
+        type: database
+        critical: true
+        timeout: 5s
+      - name: redis
+        type: redis
+        critical: true
+        timeout: 3s
+      - name: kafka
+        type: kafka
+        critical: false
+        timeout: 5s
+
+  # Startup check
+  /health/startup:
+    description: "Startup check for initial configuration"
+    checks:
+      - name: config_loaded
+        type: config
+        critical: true
+      - name: migrations_applied
+        type: database_migrations
+        critical: true
+
+  # Detailed status endpoint
+  /health/status:
+    description: "Detailed health status for monitoring"
+    checks:
+      - name: database_primary
+        type: database
+        connection: primary
+        critical: true
+        timeout: 5s
+      - name: database_shards
+        type: database_shards
+        critical: true
+        timeout: 10s
+      - name: redis_cache
+        type: redis
+        critical: true
+        timeout: 3s
+      - name: kafka_brokers
+        type: kafka
+        critical: false
+        timeout: 5s
+      - name: llm_service
+        type: http
+        url: "${LLM_HEALTH_URL}"
+        critical: false
+        timeout: 10s
+      - name: memory_usage
+        type: memory
+        critical: false
+        threshold: 90
+      - name: disk_usage
+        type: disk
+        critical: false
+        threshold: 85
+      - name: open_connections
+        type: connections
+        critical: false
+        max: 1000
+
+# Component-specific health checks
+components:
+  # Database shards
+  shards:
+    - name: shard_0
+      host: "${SHARD_0_HOST}"
+      port: 5432
+      database: inspectah_shard_0
+      timeout: 5s
+    - name: shard_1
+      host: "${SHARD_1_HOST}"
+      port: 5432
+      database: inspectah_shard_1
+      timeout: 5s
+    - name: shard_2
+      host: "${SHARD_2_HOST}"
+      port: 5432
+      database: inspectah_shard_2
+      timeout: 5s
+    - name: shard_3
+      host: "${SHARD_3_HOST}"
+      port: 5432
+      database: inspectah_shard_3
+      timeout: 5s
+
+  # Kafka brokers
+  kafka:
+    brokers:
+      - name: kafka_broker_0
+        host: "${KAFKA_BROKER_0_HOST}"
+        port: 9092
+        timeout: 5s
+      - name: kafka_broker_1
+        host: "${KAFKA_BROKER_1_HOST}"
+        port: 9092
+        timeout: 5s
+      - name: kafka_broker_2
+        host: "${KAFKA_BROKER_2_HOST}"
+        port: 9092
+        timeout: 5s
+    topics:
+      - signals
+      - claims
+      - notifications
+
+  # Redis
+  redis:
+    host: "${REDIS_HOST}"
+    port: 6379
+    timeout: 3s
+    check_replication: true
+
+  # LLM Services
+  llm:
+    - name: openai
+      url: "${OPENAI_HEALTH_URL}"
+      timeout: 10s
+    - name: anthropic
+      url: "${ANTHROPIC_HEALTH_URL}"
+      timeout: 10s
+
+# Health check response format
+response_format:
+  success:
+    status: healthy
+    code: 200
+    body:
+      status: "healthy"
+      checks: []  # Array of check results
+      timestamp: "ISO8601"
+      version: "${SERVICE_VERSION}"
+
+  degraded:
+    status: degraded
+    code: 200
+    body:
+      status: "degraded"
+      checks: []
+      timestamp: "ISO8601"
+      version: "${SERVICE_VERSION}"
+      warnings: []
+
+  unhealthy:
+    status: unhealthy
+    code: 503
+    body:
+      status: "unhealthy"
+      checks: []
+      timestamp: "ISO8601"
+      version: "${SERVICE_VERSION}"
+      errors: []
+
+# Health check thresholds
+thresholds:
+  # Memory
+  memory:
+    warning: 80  # percent
+    critical: 90
+
+  # CPU
+  cpu:
+    warning: 70
+    critical: 85
+
+  # Disk
+  disk:
+    warning: 70
+    critical: 85
+
+  # Connections
+  connections:
+    warning: 800
+    critical: 950
+    max: 1000
+
+  # Response time
+  response_time:
+    warning: 100  # ms
+    critical: 300
+
+  # Database pool
+  db_pool:
+    warning: 80  # percent of pool used
+    critical: 95
+
+  # Kafka consumer lag
+  kafka_lag:
+    warning: 5000  # messages
+    critical: 10000
+
+# Alerting integration
+alerting:
+  # Alert on health check failures
+  on_failure:
+    notify:
+      - slack: "#alerts-platform"
+      - pagerduty: "platform-oncall"
+    cooldown: 5m  # Don't re-alert for 5 minutes
+
+  # Alert on degraded status
+  on_degraded:
+    notify:
+      - slack: "#alerts-platform"
+    cooldown: 15m
+
+# Metrics exposed
+metrics:
+  # Counter for health check results
+  - name: health_check_total
+    type: counter
+    labels:
+      - check_name
+      - status
+
+  # Gauge for current health status
+  - name: health_check_status
+    type: gauge
+    labels:
+      - check_name
+
+  # Histogram for check duration
+  - name: health_check_duration_seconds
+    type: histogram
+    labels:
+      - check_name
+    buckets: [0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 5]

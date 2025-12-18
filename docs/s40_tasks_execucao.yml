@@ -1,0 +1,683 @@
+# Sprint 40 — YAML de Execução para ACE Exec
+# Truth-DB Estável (Fase 2: Truth-DB Core)
+# Derivado de: docs/s40_cap_4_4_tasks_e_waves.md
+
+sprint: S40
+programa: P2
+epico: Truth-DB Core (Fase 2)
+
+ace_resumo:
+  objetivo: |
+    Tornar o Truth-DB estável em piloto: DecisionBlocks válidos com provenance,
+    E40.5 obrigatório, export P2→P3 sem cola manual, e Truth Twin expondo tudo.
+  leitura_minima:
+    - docs/s40_cap_4_4_tasks_e_waves.md
+    - docs/Agents/Planejamento/Programa 2/Sprint 40/S40_spec.md
+    - docs/Agents/Planejamento/Programa 2/Sprint 40/Capitulo 2/Bloco 2.md
+  instrucoes:
+    - Seguir waves em ordem (W0 → W5)
+    - Cada task tem DONE explícito; não marcar completa sem evidência
+    - Reportar gaps imediatamente se task impossível
+    - Cobertura de testes ≥97% obrigatória
+
+waves:
+  - id: W0
+    nome: Groundwork
+    descricao: Schemas, migrations, contratos base, validadores
+    gates: [G20]
+    ace_context:
+      spec_refs:
+        - Capitulo 2/Bloco 2.md (G20)
+        - Capitulo 3/Bloco 2.md (contratos)
+      resumo: |
+        Criar fundação técnica: 3 schemas JSON (decision_block, claimgraph_export, truth_twin),
+        migration para tabela decision_blocks, validadores fail-closed.
+    tasks:
+      - id: S40-INF-001
+        wave: W0
+        area: infra
+        descricao: Criar schema decision_block_v1.json
+        arquivos: [schemas/decision_block_v1.json]
+        gates: [G20]
+        done: Schema passa validação JSON Schema Draft-07
+        evidencias: [out/evidence/S40_G20_schema_validation.json]
+
+      - id: S40-INF-002
+        wave: W0
+        area: infra
+        descricao: Criar schema claimgraph_export_v1.json
+        arquivos: [schemas/claimgraph_export_v1.json]
+        gates: [G20, G22]
+        done: Schema válido; prior e evidence_trail[] obrigatórios
+        evidencias: [out/evidence/S40_G20_export_schema.json]
+
+      - id: S40-INF-003
+        wave: W0
+        area: infra
+        descricao: Criar schema truth_twin_v1.json
+        arquivos: [schemas/truth_twin_v1.json]
+        gates: [G20, G24]
+        done: Schema válido; provenance obrigatória
+        evidencias: [out/evidence/S40_G20_twin_schema.json]
+
+      - id: S40-DB-001
+        wave: W0
+        area: dados
+        descricao: Criar migration 033_sprint40_decision_blocks.sql
+        arquivos: [db/migrations/033_sprint40_decision_blocks.sql]
+        gates: [G20, G23]
+        done: Migration aplica sem erro; rollback funciona
+        evidencias: [out/evidence/S40_G20_migration.log]
+
+      - id: S40-DB-002
+        wave: W0
+        area: dados
+        descricao: Criar índices para decision_blocks
+        arquivos: [db/migrations/033_sprint40_decision_blocks.sql]
+        gates: [G20]
+        done: Query de timeline por claim_id < 50ms
+        evidencias: [out/scorecards/S40_G20_contracts.json]
+
+      - id: S40-DB-003
+        wave: W0
+        area: dados
+        descricao: Criar tabela experiences na migration
+        arquivos: [db/migrations/033_sprint40_decision_blocks.sql]
+        gates: [G23]
+        done: Tabela criada com índice para embedding similarity
+        evidencias: [out/evidence/S40_G20_migration.log]
+
+      - id: S40-BE-001
+        wave: W0
+        area: backend
+        descricao: Implementar validador fail-closed para DecisionBlock
+        arquivos: [app/truth/validators.py]
+        gates: [G20]
+        done: DecisionBlock sem references retorna ValidationError
+        evidencias: [tests/truth/test_validators.py]
+
+      - id: S40-BE-002
+        wave: W0
+        area: backend
+        descricao: Implementar validador fail-closed para Claim
+        arquivos: [app/claims/validators.py]
+        gates: [G20, G22]
+        done: Claim sem prior ou evidence_trail[] retorna ValidationError
+        evidencias: [tests/claims/test_validators.py]
+
+      - id: S40-CI-001
+        wave: W0
+        area: ci
+        descricao: Criar script bin/s40_g20_contracts.sh
+        arquivos: [bin/s40_g20_contracts.sh]
+        gates: [G20]
+        done: Exit 0 com schemas válidos
+        evidencias: [out/scorecards/S40_G20_contracts.json]
+
+  - id: W1
+    nome: P3 Core
+    descricao: DecisionBlock válido, E40.5 enforcement, Experiências mínimo
+    gates: [G23]
+    dependencias: [W0]
+    ace_context:
+      spec_refs:
+        - Capitulo 2/Bloco 1.md (SA-01, SA-04)
+        - Capitulo 2/Bloco 4.md (invariantes)
+        - Capitulo 4/Bloco 2.md (cenários)
+      resumo: |
+        Tornar DecisionBlock a unidade de verdade. E40.5 deve bloquear se FAIL.
+        Experiências em modo append-only com retrieval simples (top-5).
+    tasks:
+      - id: S40-BE-003
+        wave: W1
+        area: backend
+        descricao: Estender modelo DecisionBlock com references e experience_ref
+        arquivos: [app/guardian/models.py]
+        gates: [G23]
+        done: Modelo tem todos os campos novos
+        evidencias: [tests/guardian/test_models.py]
+
+      - id: S40-BE-004
+        wave: W1
+        area: backend
+        descricao: Implementar build_references() para montar objeto references
+        arquivos: [app/truth/references.py]
+        gates: [G23]
+        done: Função retorna dict com guias[], pilares[], policy{}, e40_5{}
+        evidencias: [tests/truth/test_references.py]
+
+      - id: S40-BE-005
+        wave: W1
+        area: backend
+        descricao: Integrar E40.5 check obrigatório em FlowContext
+        arquivos: [app/guardian/flow.py]
+        gates: [G23]
+        done: Transição sem E40.5 PASS fica BLOCKED
+        evidencias: [tests/guardian/test_flow_e40_5.py]
+
+      - id: S40-BE-006
+        wave: W1
+        area: backend
+        descricao: Implementar record_decision_block() append-only
+        arquivos: [app/truth/repository.py]
+        gates: [G23]
+        done: DecisionBlock gravado sem UPDATE in-place
+        evidencias: [tests/truth/test_repository.py]
+
+      - id: S40-BE-007
+        wave: W1
+        area: backend
+        descricao: Implementar modelo Experience
+        arquivos: [app/truth/experiences.py]
+        gates: [G23]
+        done: Modelo criado; append-only
+        evidencias: [tests/truth/test_experiences.py]
+
+      - id: S40-BE-008
+        wave: W1
+        area: backend
+        descricao: Implementar ExperienceRepository com find_similar()
+        arquivos: [app/truth/experiences.py]
+        gates: [G23]
+        done: Retrieval top-N funciona
+        evidencias: [tests/truth/test_experiences.py]
+
+      - id: S40-BE-009
+        wave: W1
+        area: backend
+        descricao: Integrar experience_ref em DecisionBlock
+        arquivos: [app/guardian/service.py]
+        gates: [G23]
+        done: experience_ref[] populado quando experiências existem
+        evidencias: [tests/guardian/test_service_experiences.py]
+
+      - id: S40-BE-010
+        wave: W1
+        area: backend
+        descricao: Criar endpoint POST /api/truth/experiences
+        arquivos: [app/api/truth_routes.py]
+        gates: [G23]
+        done: Endpoint funciona; experiência persistida
+        evidencias: [tests/api/test_truth_experiences.py]
+
+      - id: S40-BE-029
+        wave: W1
+        area: backend
+        descricao: Implementar modo degradado em FlowContext
+        arquivos: [app/guardian/flow.py]
+        gates: [G23]
+        done: E40.5 timeout → estado DEGRADED; transições bloqueadas
+        evidencias: [tests/guardian/test_flow_degraded.py]
+
+      - id: S40-BE-030
+        wave: W1
+        area: backend
+        descricao: Criar script seed_experiences.py para piloto
+        arquivos: [scripts/seed_experiences.py]
+        gates: [G23]
+        done: Script popula 10-20 experiências de referência
+        evidencias: [out/evidence/S40_seed_experiences.log]
+
+      - id: S40-CI-002
+        wave: W1
+        area: ci
+        descricao: Criar script bin/s40_g23_truthdb.sh
+        arquivos: [bin/s40_g23_truthdb.sh]
+        gates: [G23]
+        done: Exit 0 com casos A/B/C passando
+        evidencias: [out/scorecards/S40_G23_truthdb.json]
+
+  - id: W2
+    nome: P2 Export & Signals
+    descricao: ClaimGraph export v1, NO-GO signals operáveis
+    gates: [G22]
+    dependencias: [W0]
+    ace_context:
+      spec_refs:
+        - Capitulo 2/Bloco 2.md (G22)
+        - Capitulo 3/Bloco 2.md (Claim schema)
+        - Capitulo 5/Bloco 2.md (jornada NO-GO)
+      resumo: |
+        Export do ClaimGraph ingerível por P3 sem adaptador manual.
+        NO-GO signals (INCONSISTENCY, SUSPICION, ABUSE) bloqueiam de verdade.
+    tasks:
+      - id: S40-BE-011
+        wave: W2
+        area: backend
+        descricao: Implementar export_claimgraph_v1()
+        arquivos: [app/claims/export.py]
+        gates: [G22]
+        done: Export gera JSON válido; 100% claims têm prior e evidence_trail[]
+        evidencias: [tests/claims/test_export.py]
+
+      - id: S40-BE-012
+        wave: W2
+        area: backend
+        descricao: Criar endpoint GET /api/claims/export
+        arquivos: [app/api/claims_routes.py]
+        gates: [G22]
+        done: Endpoint retorna export paginado
+        evidencias: [tests/api/test_claims_export.py]
+
+      - id: S40-BE-013
+        wave: W2
+        area: backend
+        descricao: Implementar ingest_claimgraph_export()
+        arquivos: [app/truth/ingest.py]
+        gates: [G22]
+        done: Ingest funciona sem adaptador manual
+        evidencias: [tests/truth/test_ingest.py]
+
+      - id: S40-BE-014
+        wave: W2
+        area: backend
+        descricao: Implementar sinais NO-GO com critérios
+        arquivos: [app/claims/signals.py]
+        gates: [G22]
+        done: Sinais têm threshold e critério documentado
+        evidencias: [tests/claims/test_signals.py]
+
+      - id: S40-BE-015
+        wave: W2
+        area: backend
+        descricao: Integrar NO-GO signals em FlowContext
+        arquivos: [app/guardian/flow.py]
+        gates: [G22]
+        done: Sinal NO-GO ativo bloqueia transição
+        evidencias: [tests/guardian/test_flow_nogo.py]
+
+      - id: S40-BE-016
+        wave: W2
+        area: backend
+        descricao: Criar endpoint GET /api/claims/{claim_id}/signals
+        arquivos: [app/api/claims_routes.py]
+        gates: [G22]
+        done: Endpoint funciona; sinais retornados
+        evidencias: [tests/api/test_claims_signals.py]
+
+      - id: S40-BE-017
+        wave: W2
+        area: backend
+        descricao: Implementar detecção automática de INCONSISTENCY
+        arquivos: [app/claims/graph_service.py]
+        gates: [G22]
+        done: Contradições detectadas geram sinal automaticamente
+        evidencias: [tests/claims/test_inconsistency_detection.py]
+
+      - id: S40-CI-003
+        wave: W2
+        area: ci
+        descricao: Criar script bin/s40_g22_claimgraph.sh
+        arquivos: [bin/s40_g22_claimgraph.sh]
+        gates: [G22]
+        done: Exit 0 com export/ingest sem cola manual
+        evidencias: [out/scorecards/S40_G22_claimgraph.json]
+
+  - id: W3
+    nome: P1 Hardening
+    descricao: Social e oficiais estáveis, SLA P1 evidenciado
+    gates: [G21]
+    dependencias: [W0]
+    ace_context:
+      spec_refs:
+        - Capitulo 2/Bloco 2.md (G21)
+        - Capitulo 2/Bloco 3.md (SLAs)
+      resumo: |
+        Fontes sociais e oficiais do piloto (saude, politica) estáveis.
+        Latência P1 p95 ≤1min com evidência em scorecard.
+    tasks:
+      - id: S40-BE-018
+        wave: W3
+        area: backend
+        descricao: Expandir social_provider_client para domínios piloto
+        arquivos: [app/ingestion/social_provider_client.py]
+        gates: [G21]
+        done: Provider funciona para domínios piloto
+        evidencias: [tests/ingestion/test_social_provider.py]
+
+      - id: S40-BE-019
+        wave: W3
+        area: backend
+        descricao: Expandir fontes oficiais gov_br e dados_gov
+        arquivos: [app/ingestion/providers/gov_br.py, app/ingestion/providers/dados_gov.py]
+        gates: [G21]
+        done: Fontes retornam dados; health check operacional
+        evidencias: [tests/ingestion/test_official_sources.py]
+
+      - id: S40-BE-020
+        wave: W3
+        area: backend
+        descricao: Implementar métricas de latência P1
+        arquivos: [app/ingestion/observability.py]
+        gates: [G21]
+        done: Métrica p1_latency_collected_to_ready exposta
+        evidencias: [out/scorecards/S40_G21_p1_latency.json]
+
+      - id: S40-BE-021
+        wave: W3
+        area: backend
+        descricao: Implementar alerta para SLA P1 violado
+        arquivos: [observability/alerts/s40_p1_sla.yaml]
+        gates: [G21]
+        done: Alerta dispara quando p95 > 60s
+        evidencias: [tests/observability/test_alerts.py]
+
+      - id: S40-BE-022
+        wave: W3
+        area: backend
+        descricao: Criar job de benchmark P1
+        arquivos: [scripts/benchmarks/p1_latency_benchmark.py]
+        gates: [G21]
+        done: Script gera scorecard com p50, p95, p99
+        evidencias: [out/scorecards/S40_G21_p1_latency.json]
+
+      - id: S40-CI-004
+        wave: W3
+        area: ci
+        descricao: Criar script bin/s40_g21_p1_hardening.sh
+        arquivos: [bin/s40_g21_p1_hardening.sh]
+        gates: [G21]
+        done: Exit 0 com fontes healthy e SLA dentro
+        evidencias: [out/scorecards/S40_G21_p1.json]
+
+  - id: W4
+    nome: P4 Exposure
+    descricao: Truth Twin, Decision Inspector, provenance obrigatória
+    gates: [G24]
+    dependencias: [W1, W2]
+    ace_context:
+      spec_refs:
+        - Capitulo 2/Bloco 2.md (G24)
+        - Capitulo 5/Bloco 1.md (jornada)
+        - Capitulo 8/Bloco 1.md (superfícies FE)
+      resumo: |
+        Expor Truth Twin e Decision Inspector com provenance completa.
+        Latência P4 p95 ≤100ms. Frontend com timeline e inspector.
+    tasks:
+      - id: S40-BE-023
+        wave: W4
+        area: backend
+        descricao: Criar endpoint GET /api/truth/{claim_id}/twin
+        arquivos: [app/api/truth_routes.py]
+        gates: [G24]
+        done: Endpoint retorna TruthTwinResponse válido
+        evidencias: [tests/api/test_truth_twin.py]
+
+      - id: S40-BE-024
+        wave: W4
+        area: backend
+        descricao: Criar endpoint GET /api/truth/decision/{decision_id}/inspect
+        arquivos: [app/api/truth_routes.py]
+        gates: [G24]
+        done: Endpoint retorna InspectResponse com provenance completa
+        evidencias: [tests/api/test_decision_inspect.py]
+
+      - id: S40-BE-025
+        wave: W4
+        area: backend
+        descricao: Implementar middleware de provenance
+        arquivos: [app/api/middleware/provenance.py]
+        gates: [G24]
+        done: Responses sem provenance marcadas como invalid
+        evidencias: [tests/api/test_provenance_middleware.py]
+
+      - id: S40-BE-026
+        wave: W4
+        area: backend
+        descricao: Implementar DTOs TruthTwinResponse e DecisionInspectResponse
+        arquivos: [app/api/truth_schemas.py]
+        gates: [G24]
+        done: DTOs validam contra schemas JSON
+        evidencias: [tests/api/test_truth_schemas.py]
+
+      - id: S40-BE-027
+        wave: W4
+        area: backend
+        descricao: Implementar métricas de latência P4
+        arquivos: [app/api/metrics.py]
+        gates: [G24]
+        done: Métrica p4_endpoint_latency_ms exposta
+        evidencias: [out/scorecards/S40_G24_p4_latency.json]
+
+      - id: S40-BE-028
+        wave: W4
+        area: backend
+        descricao: Criar job de benchmark P4
+        arquivos: [scripts/benchmarks/p4_latency_benchmark.py]
+        gates: [G24]
+        done: Script gera scorecard com p50, p95, p99
+        evidencias: [out/scorecards/S40_G24_p4_latency.json]
+
+      - id: S40-FE-001
+        wave: W4
+        area: frontend
+        descricao: Criar página Truth Twin
+        arquivos: [frontend/inspectah-ui/src/modules/spovest/pages/admin/SpTruthTwinPage.tsx]
+        gates: [G24]
+        done: Página carrega; busca claim; exibe timeline
+        evidencias: [frontend/inspectah-ui/playwright/truth-twin.pw.ts]
+
+      - id: S40-FE-002
+        wave: W4
+        area: frontend
+        descricao: Criar componente DecisionTimeline
+        arquivos: [frontend/inspectah-ui/src/modules/truth/components/DecisionTimeline.tsx]
+        gates: [G24]
+        done: Timeline renderiza; click expande
+        evidencias: [frontend/inspectah-ui/src/__tests__/components/DecisionTimeline.test.tsx]
+
+      - id: S40-FE-003
+        wave: W4
+        area: frontend
+        descricao: Criar componente ProvenancePanel
+        arquivos: [frontend/inspectah-ui/src/modules/truth/components/ProvenancePanel.tsx]
+        gates: [G24]
+        done: Provenance renderiza; links clicáveis
+        evidencias: [frontend/inspectah-ui/src/__tests__/components/ProvenancePanel.test.tsx]
+
+      - id: S40-FE-004
+        wave: W4
+        area: frontend
+        descricao: Criar componente DecisionInspector
+        arquivos: [frontend/inspectah-ui/src/modules/truth/components/DecisionInspector.tsx]
+        gates: [G24]
+        done: Inspector mostra todos os campos; ≤3 cliques
+        evidencias: [frontend/inspectah-ui/playwright/truth-twin.pw.ts]
+
+      - id: S40-FE-005
+        wave: W4
+        area: frontend
+        descricao: Criar badges de status
+        arquivos: [frontend/inspectah-ui/src/modules/truth/components/StatusBadges.tsx]
+        gates: [G24]
+        done: Badges renderizam com cores distintas
+        evidencias: [frontend/inspectah-ui/src/__tests__/components/StatusBadges.test.tsx]
+
+      - id: S40-FE-006
+        wave: W4
+        area: frontend
+        descricao: Integrar rota /admin/truth-twin
+        arquivos: [frontend/inspectah-ui/src/routes.tsx]
+        gates: [G24]
+        done: Rota acessível; menu linkado
+        evidencias: [frontend/inspectah-ui/playwright/smoke.pw.ts]
+
+      - id: S40-FE-007
+        wave: W4
+        area: frontend
+        descricao: Criar types TypeScript para Truth Twin
+        arquivos: [frontend/inspectah-ui/src/modules/truth/types.ts]
+        gates: [G24]
+        done: Types correspondem aos schemas JSON
+        evidencias: [frontend/inspectah-ui/tsconfig.json]
+
+      - id: S40-FE-008
+        wave: W4
+        area: frontend
+        descricao: Criar hook useTruthTwin(claimId)
+        arquivos: [frontend/inspectah-ui/src/modules/truth/hooks/useTruthTwin.ts]
+        gates: [G24]
+        done: Hook retorna data/loading/error; cache funciona
+        evidencias: [frontend/inspectah-ui/src/__tests__/hooks/useTruthTwin.test.ts]
+
+      - id: S40-CI-005
+        wave: W4
+        area: ci
+        descricao: Criar script bin/s40_g24_p4_exposure.sh
+        arquivos: [bin/s40_g24_p4_exposure.sh]
+        gates: [G24]
+        done: Exit 0 com endpoints OK e latência ≤100ms
+        evidencias: [out/scorecards/S40_G24_p4.json]
+
+  - id: W5
+    nome: Quality & ORR
+    descricao: Testes, observabilidade, bundle final
+    gates: [G20, G21, G22, G23, G24]
+    dependencias: [W0, W1, W2, W3, W4]
+    ace_context:
+      spec_refs:
+        - S40_ORR_Checklist.md
+        - Capitulo 2/Bloco 4.md (DoD)
+      resumo: |
+        Garantir cobertura ≥97%, todos os gates PASS, bundle completo.
+        GO/NO-GO 7/7 executável com evidências.
+    tasks:
+      - id: S40-TST-001
+        wave: W5
+        area: testes
+        descricao: Criar testes unitários para validadores
+        arquivos: [tests/truth/test_validators.py]
+        gates: [G20]
+        done: Testes passam; cobrem válido/inválido
+        evidencias: [out/evidence/S40_coverage.html]
+
+      - id: S40-TST-002
+        wave: W5
+        area: testes
+        descricao: Criar testes E2E para E40.5 enforcement
+        arquivos: [tests/truth/test_e40_5_enforcement.py]
+        gates: [G23]
+        done: PASS cria DecisionBlock; FAIL bloqueia
+        evidencias: [out/evidence/S40_e40_5_tests.log]
+
+      - id: S40-TST-003
+        wave: W5
+        area: testes
+        descricao: Criar testes E2E para NO-GO signals
+        arquivos: [tests/claims/test_nogo_signals.py]
+        gates: [G22]
+        done: NO-GO bloqueia transição
+        evidencias: [out/evidence/S40_nogo_tests.log]
+
+      - id: S40-TST-004
+        wave: W5
+        area: testes
+        descricao: Criar testes de contrato ClaimGraph export
+        arquivos: [tests/claims/test_claimgraph_export_contract.py]
+        gates: [G22]
+        done: Export válido; ingest sem erro
+        evidencias: [out/evidence/S40_export_contract.json]
+
+      - id: S40-TST-005
+        wave: W5
+        area: testes
+        descricao: Criar testes API Truth Twin e Inspector
+        arquivos: [tests/api/test_truth_twin_routes.py]
+        gates: [G24]
+        done: Endpoints retornam válido; provenance presente
+        evidencias: [out/evidence/S40_api_tests.log]
+
+      - id: S40-TST-006
+        wave: W5
+        area: testes
+        descricao: Criar testes de latência P4
+        arquivos: [tests/api/test_p4_latency.py]
+        gates: [G24]
+        done: Latência p95 ≤100ms
+        evidencias: [out/evidence/S40_latency_benchmark.json]
+
+      - id: S40-TST-007
+        wave: W5
+        area: testes
+        descricao: Criar testes Playwright Truth Twin
+        arquivos: [frontend/inspectah-ui/playwright/truth-twin.pw.ts]
+        gates: [G24]
+        done: Page carrega; timeline funciona
+        evidencias: [out/evidence/S40_playwright.html]
+
+      - id: S40-TST-008
+        wave: W5
+        area: testes
+        descricao: Criar golden tests casos A/B/C
+        arquivos: [tests/truth/test_canonical_cases.py]
+        gates: [G23, G24]
+        done: Casos executam e geram evidência
+        evidencias: [out/evidence/S40_canonical_A.json, out/evidence/S40_canonical_B.json, out/evidence/S40_canonical_C.json]
+
+      - id: S40-OBS-001
+        wave: W5
+        area: observabilidade
+        descricao: Criar dashboard Grafana S40
+        arquivos: [observability/dashboards/s40_truthdb.json]
+        gates: [G21, G24]
+        done: Dashboard importável; painéis funcionam
+        evidencias: [out/evidence/S40_dashboard_screenshot.png]
+
+      - id: S40-OBS-002
+        wave: W5
+        area: observabilidade
+        descricao: Criar alertas para invariantes S40
+        arquivos: [observability/alerts/s40_invariants.yaml]
+        gates: [G20, G23]
+        done: Alertas configurados
+        evidencias: [out/evidence/S40_alerts_config.yaml]
+
+      - id: S40-CI-006
+        wave: W5
+        area: ci
+        descricao: Criar script bin/s40_all_gates.sh
+        arquivos: [bin/s40_all_gates.sh]
+        gates: [G20, G21, G22, G23, G24]
+        done: Exit 0 se todos passam
+        evidencias: [out/evidence/S40_all_gates.log]
+
+      - id: S40-CI-007
+        wave: W5
+        area: ci
+        descricao: Criar script bin/s40_orr.sh para bundle final
+        arquivos: [bin/s40_orr.sh]
+        gates: [G20, G21, G22, G23, G24]
+        done: Bundle S40_bundle.zip gerado
+        evidencias: [out/bundles/S40_bundle.zip]
+
+      - id: S40-DOC-001
+        wave: W5
+        area: docs
+        descricao: Atualizar S40_ORR_Checklist.md com paths
+        arquivos: [docs/Agents/Planejamento/Programa 2/Sprint 40/S40_ORR_Checklist.md]
+        gates: [G24]
+        done: Checklist preenchível com paths concretos
+        evidencias: [docs/Agents/Planejamento/Programa 2/Sprint 40/S40_ORR_Checklist.md]
+
+      - id: S40-DOC-002
+        wave: W5
+        area: docs
+        descricao: Preencher S40_Handoff.md
+        arquivos: [docs/Agents/Planejamento/Programa 2/Sprint 40/S40_Handoff.md]
+        gates: [G24]
+        done: Handoff completo para S41
+        evidencias: [docs/Agents/Planejamento/Programa 2/Sprint 40/S40_Handoff.md]
+
+# Totais (v1.4 - REFINE-4)
+totais:
+  waves: 6
+  tasks: 63
+  por_area:
+    infra: 3
+    dados: 3
+    backend: 30
+    frontend: 8
+    testes: 8
+    observabilidade: 2
+    ci: 7
+    docs: 2

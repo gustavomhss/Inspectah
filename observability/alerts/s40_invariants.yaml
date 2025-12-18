@@ -1,0 +1,220 @@
+# S40-OBS-002: S40 Invariant Alerts
+# Alerts for Truth-DB invariants and E40.5 enforcement
+
+groups:
+  - name: s40_truthdb_alerts
+    rules:
+      # P4 Latency SLA
+      - alert: P4LatencyP95High
+        expr: histogram_quantile(0.95, sum(rate(p4_endpoint_latency_ms_bucket[5m])) by (endpoint, le)) > 100
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+          sprint: s40
+        annotations:
+          summary: "P4 endpoint {{ $labels.endpoint }} P95 latency exceeds 100ms"
+          description: "P95 latency is {{ $value }}ms, target is 100ms"
+          runbook: "docs/runbooks/S39_router_slow.md"
+
+      - alert: P4LatencyP99Critical
+        expr: histogram_quantile(0.99, sum(rate(p4_endpoint_latency_ms_bucket[5m])) by (endpoint, le)) > 200
+        for: 5m
+        labels:
+          severity: critical
+          team: backend
+          sprint: s40
+        annotations:
+          summary: "P4 endpoint {{ $labels.endpoint }} P99 latency exceeds 200ms"
+          description: "P99 latency is {{ $value }}ms, target is 200ms"
+          runbook: "docs/runbooks/S39_router_slow.md"
+
+      # Provenance Validation
+      - alert: ProvenanceValidRateLow
+        expr: |
+          sum(rate(p4_provenance_valid_total[5m])) /
+          (sum(rate(p4_provenance_valid_total[5m])) + sum(rate(p4_provenance_invalid_total[5m]))) < 0.95
+        for: 10m
+        labels:
+          severity: warning
+          team: backend
+          sprint: s40
+        annotations:
+          summary: "Provenance validation rate below 95%"
+          description: "Current rate is {{ $value | humanizePercentage }}"
+          runbook: "docs/runbooks/S40_provenance_issues.md"
+
+      - alert: ProvenanceInvalidSpike
+        expr: increase(p4_provenance_invalid_total[5m]) > 10
+        for: 2m
+        labels:
+          severity: warning
+          team: backend
+          sprint: s40
+        annotations:
+          summary: "Spike in invalid provenance responses"
+          description: "{{ $value }} invalid provenance responses in last 5 minutes"
+          runbook: "docs/runbooks/S40_provenance_issues.md"
+
+      # E40.5 Enforcement
+      - alert: E40_5ViolationRateHigh
+        expr: |
+          sum(rate(e40_5_checks_total{status="VIOLATED"}[15m])) /
+          sum(rate(e40_5_checks_total[15m])) > 0.1
+        for: 15m
+        labels:
+          severity: warning
+          team: backend
+          sprint: s40
+        annotations:
+          summary: "E40.5 violation rate exceeds 10%"
+          description: "{{ $value | humanizePercentage }} of checks are VIOLATED"
+          runbook: "docs/runbooks/S40_e40_5_issues.md"
+
+      - alert: E40_5BlockedClaims
+        expr: increase(decision_blocks_total{final_state="BLOCKED", reason="e40_5_violated"}[1h]) > 5
+        for: 5m
+        labels:
+          severity: info
+          team: backend
+          sprint: s40
+        annotations:
+          summary: "Multiple claims blocked due to E40.5 violations"
+          description: "{{ $value }} claims blocked in last hour"
+
+      # NO-GO Signals
+      - alert: NoGoSignalSpike
+        expr: increase(nogo_signals_total[15m]) > 10
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+          sprint: s40
+        annotations:
+          summary: "Spike in NO-GO signals detected"
+          description: "{{ $value }} NO-GO signals in last 15 minutes"
+          runbook: "docs/runbooks/S40_nogo_signals.md"
+
+      - alert: NoGoAbusePatternsDetected
+        expr: increase(nogo_signals_total{signal_type="ABUSE"}[1h]) > 3
+        for: 5m
+        labels:
+          severity: critical
+          team: security
+          sprint: s40
+        annotations:
+          summary: "Abuse patterns detected in claims"
+          description: "{{ $value }} ABUSE signals in last hour"
+          runbook: "docs/runbooks/S40_abuse_detected.md"
+
+      # Decision Block Processing
+      - alert: DecisionBlockProcessingErrors
+        expr: increase(decision_block_errors_total[5m]) > 5
+        for: 2m
+        labels:
+          severity: warning
+          team: backend
+          sprint: s40
+        annotations:
+          summary: "Errors in decision block processing"
+          description: "{{ $value }} errors in last 5 minutes"
+
+      - alert: DecisionBlockLatencyHigh
+        expr: histogram_quantile(0.95, sum(rate(decision_block_latency_ms_bucket[5m])) by (le)) > 500
+        for: 10m
+        labels:
+          severity: warning
+          team: backend
+          sprint: s40
+        annotations:
+          summary: "Decision block creation latency high"
+          description: "P95 latency is {{ $value }}ms"
+
+      # Truth Twin API
+      - alert: TruthTwinAPIErrors
+        expr: |
+          sum(rate(p4_requests_total{endpoint="twin", status="error"}[5m])) /
+          sum(rate(p4_requests_total{endpoint="twin"}[5m])) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+          sprint: s40
+        annotations:
+          summary: "Truth Twin API error rate exceeds 5%"
+          description: "Error rate is {{ $value | humanizePercentage }}"
+
+      - alert: TruthTwinAPIDown
+        expr: absent(up{job="inspectah-api"}) or up{job="inspectah-api"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: backend
+          sprint: s40
+        annotations:
+          summary: "Truth Twin API is down"
+          description: "API is not responding"
+          runbook: "docs/runbooks/S39_api_down.md"
+
+      # Reference Validation
+      - alert: MissingReferencesRate
+        expr: |
+          sum(rate(decision_blocks_total{has_guias="false"}[1h])) /
+          sum(rate(decision_blocks_total[1h])) > 0.2
+        for: 30m
+        labels:
+          severity: info
+          team: backend
+          sprint: s40
+        annotations:
+          summary: "High rate of decisions without guias references"
+          description: "{{ $value | humanizePercentage }} of decisions missing guias"
+
+      - alert: MissingPilaresRate
+        expr: |
+          sum(rate(decision_blocks_total{has_pilares="false"}[1h])) /
+          sum(rate(decision_blocks_total[1h])) > 0.2
+        for: 30m
+        labels:
+          severity: info
+          team: backend
+          sprint: s40
+        annotations:
+          summary: "High rate of decisions without pilares references"
+          description: "{{ $value | humanizePercentage }} of decisions missing pilares"
+
+  - name: s40_sla_alerts
+    rules:
+      # SLA Compliance
+      - alert: P4SLAViolation
+        expr: |
+          (
+            histogram_quantile(0.95, sum(rate(p4_endpoint_latency_ms_bucket[5m])) by (le)) > 100
+          ) or (
+            histogram_quantile(0.99, sum(rate(p4_endpoint_latency_ms_bucket[5m])) by (le)) > 200
+          )
+        for: 15m
+        labels:
+          severity: critical
+          team: backend
+          sprint: s40
+          sla: p4_latency
+        annotations:
+          summary: "P4 SLA violation - latency targets exceeded"
+          description: "P95 > 100ms or P99 > 200ms for 15+ minutes"
+          runbook: "docs/runbooks/S40_sla_violation.md"
+
+      - alert: ProvenanceSLAViolation
+        expr: |
+          sum(rate(p4_provenance_valid_total[5m])) /
+          (sum(rate(p4_provenance_valid_total[5m])) + sum(rate(p4_provenance_invalid_total[5m]))) < 0.99
+        for: 30m
+        labels:
+          severity: critical
+          team: backend
+          sprint: s40
+          sla: provenance_rate
+        annotations:
+          summary: "Provenance SLA violation - valid rate below 99%"
+          description: "Current rate is {{ $value | humanizePercentage }}"
+          runbook: "docs/runbooks/S40_provenance_sla.md"

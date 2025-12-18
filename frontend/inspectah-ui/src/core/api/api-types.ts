@@ -415,3 +415,15 @@ export interface AdminCaseXRay {
   anchors: AdminAnchorsSection;
   evidences: AdminEvidenceSection;
 }
+
+// Agent Tracing types
+export interface AgentTrace {
+  id: string;
+  claim_id?: string | null;
+  risk_level?: string | null;
+  steps_count?: number | null;
+  steps_json?: string | null;
+  created_at?: string;
+  duration_ms?: number;
+  status?: string;
+}

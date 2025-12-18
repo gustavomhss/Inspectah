@@ -1,0 +1,326 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://inspectah.io/schemas/truth_twin_v1.json",
+  "title": "TruthTwinResponse",
+  "description": "Resposta do Truth Twin: estado atual + timeline de DecisionBlocks + provenance completa.",
+  "type": "object",
+  "required": ["claim_id", "current_state", "timeline", "provenance", "generated_at"],
+  "properties": {
+    "claim_id": {
+      "type": "string",
+      "description": "Identificador do claim"
+    },
+    "claim_text": {
+      "type": "string",
+      "description": "Texto original do claim"
+    },
+    "domain": {
+      "type": "string",
+      "description": "Domínio do claim"
+    },
+    "current_state": {
+      "type": "object",
+      "description": "Estado atual do claim no Truth-DB",
+      "required": ["state", "since", "decision_id"],
+      "properties": {
+        "state": {
+          "type": "string",
+          "enum": ["UNKNOWN", "CLAIMED", "UNDER_REVIEW", "PROVISIONAL", "ESTABLISHED_FACT", "UNDER_DISPUTE", "RETRACTED", "BLOCKED", "DEGRADED"],
+          "description": "Estado atual"
+        },
+        "since": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Desde quando está neste estado"
+        },
+        "decision_id": {
+          "type": "string",
+          "description": "ID do DecisionBlock que definiu este estado"
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Confiança no estado atual"
+        }
+      },
+      "additionalProperties": false
+    },
+    "timeline": {
+      "type": "array",
+      "description": "Histórico de DecisionBlocks ordenado por data (mais recente primeiro)",
+      "items": {
+        "type": "object",
+        "required": ["decision_id", "state_transition", "created_at"],
+        "properties": {
+          "decision_id": {
+            "type": "string",
+            "description": "ID do DecisionBlock"
+          },
+          "gate": {
+            "type": "string",
+            "description": "Gate que originou a decisão"
+          },
+          "state_transition": {
+            "type": "object",
+            "required": ["from_state", "to_state"],
+            "properties": {
+              "from_state": {
+                "type": "string"
+              },
+              "to_state": {
+                "type": "string"
+              },
+              "reason": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          "e40_5_status": {
+            "type": "string",
+            "enum": ["PASS", "FAIL", "SKIP", "TIMEOUT", "DEGRADED"],
+            "description": "Status E40.5 desta decisão"
+          },
+          "policy_version": {
+            "type": "string"
+          },
+          "latency_ms": {
+            "type": "integer"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "description": "Provenance agregada do claim",
+      "required": ["valid", "sources"],
+      "properties": {
+        "valid": {
+          "type": "boolean",
+          "description": "Se a provenance é válida e completa"
+        },
+        "validation_errors": {
+          "type": "array",
+          "description": "Erros de validação de provenance, se houver",
+          "items": {
+            "type": "string"
+          }
+        },
+        "sources": {
+          "type": "array",
+          "description": "Fontes consultadas para o claim",
+          "items": {
+            "type": "object",
+            "properties": {
+              "source_id": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string",
+                "enum": ["social", "news", "official", "fact_check", "expert"]
+              },
+              "url": {
+                "type": "string",
+                "format": "uri"
+              },
+              "credibility_score": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "collected_at": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "guias_applied": {
+          "type": "array",
+          "description": "Guias aplicados ao longo do histórico",
+          "items": {
+            "type": "object",
+            "properties": {
+              "guia": {
+                "type": "string"
+              },
+              "documento": {
+                "type": "string"
+              },
+              "applied_in": {
+                "type": "string",
+                "description": "Decision ID onde foi aplicado"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "pilares_applied": {
+          "type": "array",
+          "description": "Pilares éticos aplicados",
+          "items": {
+            "type": "object",
+            "properties": {
+              "pilar": {
+                "type": "string"
+              },
+              "documento": {
+                "type": "string"
+              },
+              "applied_in": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "e40_5_history": {
+          "type": "array",
+          "description": "Histórico de verificações E40.5",
+          "items": {
+            "type": "object",
+            "properties": {
+              "decision_id": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string",
+                "enum": ["PASS", "FAIL", "SKIP", "TIMEOUT", "DEGRADED"]
+              },
+              "invariants_checked": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "checked_at": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "policy_versions_used": {
+          "type": "array",
+          "description": "Versões de policy utilizadas",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "signals": {
+      "type": "array",
+      "description": "Sinais ativos NO-GO",
+      "items": {
+        "type": "object",
+        "required": ["type", "severity", "active"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["INCONSISTENCY", "SUSPICION", "ABUSE"]
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["low", "medium", "high", "critical"]
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "detected_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "experiences": {
+      "type": "array",
+      "description": "Experiências similares referenciadas",
+      "items": {
+        "type": "object",
+        "properties": {
+          "experience_id": {
+            "type": "string"
+          },
+          "claim_text": {
+            "type": "string"
+          },
+          "similarity_score": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "outcome": {
+            "type": "string",
+            "enum": ["ESTABLISHED_FACT", "RETRACTED", "UNDER_DISPUTE"]
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "audit_trail": {
+      "type": "object",
+      "description": "Informações para auditoria",
+      "properties": {
+        "total_decisions": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "first_decision_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "last_decision_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "reversals_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Número de reversões de estado"
+        },
+        "avg_latency_ms": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp de geração desta resposta"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Metadados da resposta",
+      "properties": {
+        "sprint": {
+          "type": "string"
+        },
+        "api_version": {
+          "type": "string"
+        },
+        "cache_hit": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

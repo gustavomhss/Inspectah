@@ -44,7 +44,9 @@ class TestFlowState:
         expected = [
             "init", "policy_check", "invariant_check", "auto_approve",
             "awaiting_review", "awaiting_quorum", "escalated",
-            "completed", "timed_out", "failed"
+            "completed", "timed_out", "failed",
+            # S40: New states
+            "blocked", "degraded"
         ]
         actual = [s.value for s in FlowState]
         assert set(actual) == set(expected)
@@ -60,7 +62,9 @@ class TestFlowEvent:
             "policy_requires_quorum", "invariants_passed", "invariants_failed",
             "review_approved", "review_rejected", "quorum_reached",
             "quorum_approved", "quorum_rejected", "quorum_tie",
-            "timeout", "escalate", "error"
+            "timeout", "escalate", "error",
+            # S40: New events
+            "e40_5_blocked", "nogo_blocked", "enter_degraded", "exit_degraded", "unblock"
         ]
         actual = [e.value for e in FlowEvent]
         assert set(actual) == set(expected)

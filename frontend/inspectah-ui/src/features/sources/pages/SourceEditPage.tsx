@@ -114,7 +114,7 @@ export function SourceEditPage() {
       .then((result) => {
         setFeedback(
           action === 'run'
-            ? `Ingestão manual disparada. Status: ${'status' in result ? result.status : 'desconhecido'}.`
+            ? `Ingestão manual disparada. Status: ${result && typeof result === 'object' && 'status' in result ? result.status : 'desconhecido'}.`
             : action === 'pause'
               ? 'Ingestão pausada.'
               : 'Ingestão retomada.',

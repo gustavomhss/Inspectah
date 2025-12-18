@@ -1,0 +1,2279 @@
+# S41 — Tasks de Execucao v3.0 (Refinado)
+# Sprint: S41 — Governanca v1 (CVI reputacao + Explicabilidade v2 + Anti-captura)
+# Planner: Sprint Planner Tecnico v7
+# Data: 2025-12-15
+# Total: 247 tasks em 14 waves [+35 tasks: gap analysis coverage]
+# Changelog v3.0: Extensa revisao de gaps, schemas, contratos, observabilidade
+
+sprint: S41
+version: "3.0"
+date: "2025-12-15"
+planner: "Sprint Planner Tecnico v7"
+
+summary:
+  total_tasks: 247
+  by_wave:
+    W0_baseline: 14
+    W0.5_specifications: 18         # NEW - Gap coverage (schemas, contracts, test matrices)
+    W1_models_repository: 18
+    W2_cvi_pipeline: 25             # +5 (triggers, A_pot_hi, freshness, drift, edge cases)
+    W3_cvi_services_apis: 22
+    W4_governance_anti_captura: 30  # +6 (TTL, conflicts, calibration, retention, tests)
+    W5_integracao_explicabilidade: 16
+    W6_frontend_cvi: 20
+    W7_frontend_governance: 12
+    W8_ux_microcopy: 10
+    W9_e2e_contract_tests: 15
+    W10_observabilidade: 14         # +6 (registry, blueprints, verification, perf plan)
+    W11_gates_qa: 17
+    W12_orr_go_no_go: 16
+  by_type:
+    CODE: 118                       # +10
+    TEST: 54                        # +3
+    CHECK: 15
+    GATE: 12
+    CONFIG: 14                      # +6
+    SLA: 6
+    UX: 10
+    EVIDENCE: 4
+    DESIGN: 22                      # +20 (W0.5 specifications)
+    PERF: 2
+  gates:
+    - G25
+    - G26
+    - G27
+    - G28
+    - G29
+
+waves:
+  # ============================================================
+  # W0 — Baseline & Preparacao (14 tasks)
+  # ============================================================
+  - id: W0
+    name: "Baseline & Preparacao"
+    task_count: 14
+    tasks:
+      - id: W0.01
+        description: "Validar S40 DONE (testes passando, Truth-DB estavel)"
+        type: CHECK
+        gate: G29
+        priority: P0
+        spec_ref: "Cap1/B2 - Dependencias"
+        status: pending
+
+      - id: W0.02
+        description: "Verificar IDs estaveis (case_id, theme_id, actor_id) no schema"
+        type: CHECK
+        gate: G26
+        priority: P0
+        spec_ref: "Cap1/B2 - Dependencias"
+        status: pending
+
+      - id: W0.03
+        description: "Definir conjunto piloto (2+ temas, 2+ casos) para metricas CVI"
+        type: DESIGN
+        gate: G26
+        priority: P0
+        spec_ref: "Cap4/B2 - Runbook"
+        status: pending
+
+      - id: W0.04
+        description: "Criar scaffold app/cvi/__init__.py com exports"
+        type: CODE
+        gate: G26
+        priority: P1
+        spec_ref: "Cap3/B2 - Filemap"
+        status: pending
+
+      - id: W0.05
+        description: "Criar scaffold app/cvi/models.py (estrutura base)"
+        type: CODE
+        gate: G26
+        priority: P1
+        spec_ref: "Cap3/B2 - Filemap"
+        status: pending
+
+      - id: W0.06
+        description: "Criar scaffold app/cvi/schemas.py (Pydantic models)"
+        type: CODE
+        gate: G26
+        priority: P1
+        spec_ref: "Cap3/B2 - Filemap"
+        status: pending
+
+      - id: W0.07
+        description: "Criar scaffold app/governance/__init__.py com exports"
+        type: CODE
+        gate: G28
+        priority: P1
+        spec_ref: "Cap3/B2 - Filemap"
+        status: pending
+
+      - id: W0.08
+        description: "Criar scaffold app/governance/models.py (estrutura base)"
+        type: CODE
+        gate: G28
+        priority: P1
+        spec_ref: "Cap3/B2 - Filemap"
+        status: pending
+
+      - id: W0.09
+        description: "Criar estrutura out/evidence/S41_G25_contracts/"
+        type: CONFIG
+        gate: G25
+        priority: P1
+        spec_ref: "Cap4/B4 - Evidencias"
+        status: pending
+
+      - id: W0.10
+        description: "Criar estrutura out/evidence/S41_G26_cvi/"
+        type: CONFIG
+        gate: G26
+        priority: P1
+        spec_ref: "Cap4/B4 - Evidencias"
+        status: pending
+
+      - id: W0.11
+        description: "Criar estrutura out/evidence/S41_G27_explainability/"
+        type: CONFIG
+        gate: G27
+        priority: P1
+        spec_ref: "Cap4/B4 - Evidencias"
+        status: pending
+
+      - id: W0.12
+        description: "Criar estrutura out/evidence/S41_G28_governance_audit/"
+        type: CONFIG
+        gate: G28
+        priority: P1
+        spec_ref: "Cap4/B4 - Evidencias"
+        status: pending
+
+      - id: W0.13
+        description: "Criar estrutura out/evidence/S41_G29_orr/"
+        type: CONFIG
+        gate: G29
+        priority: P1
+        spec_ref: "Cap4/B4 - Evidencias"
+        status: pending
+
+      - id: W0.14
+        description: "Criar migracao db/migrations/027_s41_cvi_tables.sql"
+        type: CODE
+        gate: G26
+        priority: P0
+        spec_ref: "Cap3/B3 - Contratos"
+        status: pending
+
+  # ============================================================
+  # W0.5 — Specifications & Contracts (18 tasks) [NEW - Gap Coverage]
+  # Preenche gaps P0 de especificacoes identificados na revisao
+  # ============================================================
+  - id: W0.5
+    name: "Specifications & Contracts"
+    task_count: 18
+    tasks:
+      - id: W0.5.01
+        description: "Definir JSON Schema completo CVISnapshot (incluindo confidence em fields)"
+        type: DESIGN
+        gate: G26
+        priority: P0
+        spec_ref: "Gap Analysis - Schema Completeness"
+        status: pending
+
+      - id: W0.5.02
+        description: "Definir JSON Schema ParamChangeProposal (TTL, estados, conflitos)"
+        type: DESIGN
+        gate: G28
+        priority: P0
+        spec_ref: "Gap Analysis - Schema Completeness"
+        status: pending
+
+      - id: W0.5.03
+        description: "Definir taxonomia completa AuditEvent (event_types: access_denied, threshold_exceeded, etc)"
+        type: DESIGN
+        gate: G28
+        priority: P0
+        spec_ref: "Gap Analysis - Schema Completeness"
+        status: pending
+
+      - id: W0.5.04
+        description: "Definir JSON Schema Bundle auditavel (formato, versionamento, reproducibilidade)"
+        type: DESIGN
+        gate: G28
+        priority: P0
+        spec_ref: "Gap Analysis - Schema Completeness"
+        status: pending
+
+      - id: W0.5.05
+        description: "Definir JSON Schema /api/cvi/metrics response (time-series, filtros)"
+        type: DESIGN
+        gate: G25
+        priority: P0
+        spec_ref: "Gap Analysis - API Contracts"
+        status: pending
+
+      - id: W0.5.06
+        description: "Definir modelo RBAC completo (roles, hierarchy, resources mapping)"
+        type: DESIGN
+        gate: G28
+        priority: P0
+        spec_ref: "Gap Analysis - API Contracts"
+        status: pending
+
+      - id: W0.5.07
+        description: "Definir contrato P1 (Data Hub) -> CVI (source_id -> actor_id mapping)"
+        type: DESIGN
+        gate: G26
+        priority: P0
+        spec_ref: "Gap Analysis - Integration Points"
+        status: pending
+
+      - id: W0.5.08
+        description: "Definir contrato P2 (Claims) <-> CVI (decision traceability bidirectional)"
+        type: DESIGN
+        gate: G27
+        priority: P0
+        spec_ref: "Gap Analysis - Integration Points"
+        status: pending
+
+      - id: W0.5.09
+        description: "Definir contrato E40.5 <-> CVI (advisory vs blocking, conflict resolution)"
+        type: DESIGN
+        gate: G29
+        priority: P0
+        spec_ref: "Gap Analysis - E40.5 Integration"
+        status: pending
+
+      - id: W0.5.10
+        description: "Definir criterios de selecao piloto (temas, casos, complexidade, dados)"
+        type: DESIGN
+        gate: G26
+        priority: P0
+        spec_ref: "Gap Analysis - Pilot Definition"
+        status: pending
+
+      - id: W0.5.11
+        description: "Criar contract test matrix (endpoint x method x status codes)"
+        type: DESIGN
+        gate: G25
+        priority: P0
+        spec_ref: "Gap Analysis - Test Coverage"
+        status: pending
+
+      - id: W0.5.12
+        description: "Criar RBAC test matrix (endpoint x role x expected status)"
+        type: DESIGN
+        gate: G28
+        priority: P0
+        spec_ref: "Gap Analysis - Test Coverage"
+        status: pending
+
+      - id: W0.5.13
+        description: "Definir CVI pipeline test data specs (actors, signals, edge cases)"
+        type: DESIGN
+        gate: G26
+        priority: P0
+        spec_ref: "Gap Analysis - Test Coverage"
+        status: pending
+
+      - id: W0.5.14
+        description: "Criar JSON Schema MANIFEST.json para diretorios de evidencia"
+        type: DESIGN
+        gate: G29
+        priority: P0
+        spec_ref: "Gap Analysis - Artifact Specs"
+        status: pending
+
+      - id: W0.5.15
+        description: "Criar JSON Schema coherence_review.json (metodologia, campos, exemplos)"
+        type: DESIGN
+        gate: G26
+        priority: P0
+        spec_ref: "Gap Analysis - Artifact Specs"
+        status: pending
+
+      - id: W0.5.16
+        description: "Criar JSON Schema sla_report.json (estrutura, ambiente, medicao)"
+        type: DESIGN
+        gate: G29
+        priority: P0
+        spec_ref: "Gap Analysis - Artifact Specs"
+        status: pending
+
+      - id: W0.5.17
+        description: "Criar JSON Schema go_no_go_7of7.json (checklist unificado)"
+        type: DESIGN
+        gate: G29
+        priority: P0
+        spec_ref: "Gap Analysis - Artifact Specs"
+        status: pending
+
+      - id: W0.5.18
+        description: "Documentar wave dependency DAG (critical path, parallelismo)"
+        type: DESIGN
+        gate: G29
+        priority: P1
+        spec_ref: "Gap Analysis - Execution Flow"
+        status: pending
+
+  # ============================================================
+  # W1 — Models & Repository (18 tasks)
+  # ============================================================
+  - id: W1
+    name: "Models & Repository"
+    task_count: 18
+    tasks:
+      - id: W1.01
+        description: "Implementar CVISnapshot SQLAlchemy model (cvi_snapshot_id, cvi_version_id, model_version, case_id, theme_id, window, computed_at, inputs_manifest_sha256)"
+        type: CODE
+        gate: G26
+        priority: P0
+        spec_ref: "Cap3/B3 - Contratos"
+        status: pending
+
+      - id: W1.02
+        description: "Implementar CVISnapshotSchema Pydantic com validacoes"
+        type: CODE
+        gate: G26
+        priority: P0
+        spec_ref: "Cap3/B3 - Contratos"
+        status: pending
+
+      - id: W1.03
+        description: "Implementar Coverage embedded model (cov_atores, cov_alta_infl, pct_atualizado, notes)"
+        type: CODE
+        gate: G26
+        priority: P0
+        spec_ref: "Cap3/B3 - Contratos"
+        status: pending
+
+      - id: W1.04
+        description: "Implementar Field embedded model (econ, pol, rep, inst, leg) com magnitude e confidence"
+        type: CODE
+        gate: G26
+        priority: P0
+        spec_ref: "Cap3/B3 - Contratos"
+        status: pending
+
+      - id: W1.05
+        description: "Implementar ActorProfile SQLAlchemy model (actor_id, actor_type, vector, intensity, evidence_refs, warnings)"
+        type: CODE
+        gate: G26
+        priority: P0
+        spec_ref: "Cap3/B3 - Contratos"
+        status: pending
+
+      - id: W1.06
+        description: "Implementar ActorProfileSchema Pydantic com validacoes"
+        type: CODE
+        gate: G26
+        priority: P0
+        spec_ref: "Cap3/B3 - Contratos"
+        status: pending
+
+      - id: W1.07
+        description: "Implementar IncentiveSignal SQLAlchemy model (signal_id, source, actor_refs, classes)"
+        type: CODE
+        gate: G26
+        priority: P0
+        spec_ref: "Cap3/B3 - Contratos"
+        status: pending
+
+      - id: W1.08
+        description: "Implementar Hypothesis embedded model (hypothesis_id, description, confidence, basis)"
+        type: CODE
+        gate: G26
+        priority: P0
+        spec_ref: "Cap3/B3 - Contratos"
+        status: pending
+
+      - id: W1.09
+        description: "Implementar AuditEvent SQLAlchemy model (audit_event_id, event_type, actor_id, timestamp, reason, diff, references)"
+        type: CODE
+        gate: G28
+        priority: P0
+        spec_ref: "Cap3/B3 - Contratos"
+        status: pending
+
+      - id: W1.10
+        description: "Implementar AuditEventSchema Pydantic com validacoes"
+        type: CODE
+        gate: G28
+        priority: P0
+        spec_ref: "Cap3/B3 - Contratos"
+        status: pending
+
+      - id: W1.11
+        description: "Implementar ParamChangeProposal model (proposal_id, proposer_id, param, old_value, new_value, reason, status)"
+        type: CODE
+        gate: G28
+        priority: P0
+        spec_ref: "Cap5/B3 - J2 Parametrizacao"
+        status: pending
+
+      - id: W1.12
+        description: "Implementar CVIRepository com CRUD (create_snapshot, get_snapshot, get_history, get_by_case)"
+        type: CODE
+        gate: G26
+        priority: P0
+        spec_ref: "Cap3/B1 - Arquitetura"
+        status: pending
+
+      - id: W1.13
+        description: "Implementar AuditRepository append-only (append_event, get_trail, get_by_entity)"
+        type: CODE
+        gate: G28
+        priority: P0
+        spec_ref: "Cap3/B1 - Arquitetura"
+        status: pending
+
+      - id: W1.14
+        description: "Criar tests/cvi/test_models.py (unit tests para CVISnapshot, ActorProfile)"
+        type: TEST
+        gate: G26
+        priority: P0
+        spec_ref: "Cap8/B3 - FE Testes"
+        status: pending
+
+      - id: W1.15
+        description: "Criar tests/cvi/test_schemas.py (validation tests)"
+        type: TEST
+        gate: G26
+        priority: P0
+        spec_ref: "Cap8/B3 - FE Testes"
+        status: pending
+
+      - id: W1.16
+        description: "Criar tests/cvi/test_repository.py (CRUD tests)"
+        type: TEST
+        gate: G26
+        priority: P0
+        spec_ref: "Cap8/B3 - FE Testes"
+        status: pending
+
+      - id: W1.17
+        description: "Criar tests/governance/test_models.py (unit tests para AuditEvent)"
+        type: TEST
+        gate: G28
+        priority: P0
+        spec_ref: "Cap8/B3 - FE Testes"
+        status: pending
+
+      - id: W1.18
+        description: "Criar tests/governance/test_audit_repository.py (append-only tests)"
+        type: TEST
+        gate: G28
+        priority: P0
+        spec_ref: "Cap8/B3 - FE Testes"
+        status: pending
+
+  # ============================================================
+  # W2 — CVI Pipeline (25 tasks) [+5 gap coverage]
+  # ============================================================
+  - id: W2
+    name: "CVI Pipeline"
+    task_count: 25
+    tasks:
+      - id: W2.01
+        description: "Criar app/cvi/pipeline/__init__.py com exports"
+        type: CODE
+        gate: G26
+        priority: P1
+        spec_ref: "Cap3/B2 - Filemap"
+        status: pending
+
+      - id: W2.02
+        description: "Implementar IncentiveExtractor (extract_from_internal_signals)"
+        type: CODE
+        gate: G26
+        priority: P0
+        spec_ref: "Cap3/B1 - Arquitetura"
+        status: pending
+
+      - id: W2.03
+        description: "Implementar IncentiveExtractor (extract_from_manual_inputs)"
+        type: CODE
+        gate: G26
+        priority: P0
+        spec_ref: "Cap3/B1 - Arquitetura"
+        status: pending
+
+      - id: W2.04
+        description: "Implementar IncentiveExtractor (extract_from_external_sources)"
+        type: CODE
+        gate: G26
+        priority: P1
+        spec_ref: "Cap3/B1 - Arquitetura"
+        status: pending
+
+      - id: W2.05
+        description: "Implementar ActorProfiler (profile_actor com mapeamento source->actor)"
+        type: CODE
+        gate: G26
+        priority: P0
+        spec_ref: "Cap3/B1 - Arquitetura"
+        status: pending
+
+      - id: W2.06
+        description: "Implementar ActorProfiler (aggregate_by_class: econ/pol/rep/inst/leg)"
+        type: CODE
+        gate: G26
+        priority: P0
+        spec_ref: "Cap3/B1 - Arquitetura"
+        status: pending
+
+      - id: W2.07
+        description: "Implementar CVIAssembler (assemble_field: perfis -> campo vetorial)"
+        type: CODE
+        gate: G26
+        priority: P0
+        spec_ref: "Cap3/B1 - Arquitetura"
+        status: pending
+
+      - id: W2.08
+        description: "Implementar CVIAssembler (compute_magnitudes por classe)"
+        type: CODE
+        gate: G26
+        priority: P0
+        spec_ref: "Cap3/B1 - Arquitetura"
+        status: pending
+
+      - id: W2.09
+        description: "Implementar CVIAnalyzer (analyze_coverage: cov_atores, cov_alta_infl)"
+        type: CODE
+        gate: G26
+        priority: P0
+        spec_ref: "Cap3/B1 - Arquitetura"
+        status: pending
+
+      - id: W2.10
+        description: "Implementar CVIAnalyzer (detect_gaps: gera warnings)"
+        type: CODE
+        gate: G26
+        priority: P0
+        spec_ref: "Cap3/B1 - Arquitetura"
+        status: pending
+
+      - id: W2.11
+        description: "Implementar CVIAnalyzer (generate_hypotheses: proxy -> hypotheses[])"
+        type: CODE
+        gate: G26
+        priority: P0
+        spec_ref: "Cap1/B4 - Invariantes (INV_ANTI_BOTECO)"
+        status: pending
+
+      - id: W2.12
+        description: "Implementar ProvenanceCollector (collect_manifest: sha256 dos inputs)"
+        type: CODE
+        gate: G26
+        priority: P0
+        spec_ref: "Cap1/B4 - Invariantes (INV_PROVENANCE)"
+        status: pending
+
+      - id: W2.13
+        description: "Implementar ProvenanceCollector (generate_version_id)"
+        type: CODE
+        gate: G26
+        priority: P0
+        spec_ref: "Cap1/B4 - Invariantes (INV_PROVENANCE)"
+        status: pending
+
+      - id: W2.14
+        description: "Validar que rep sempre presente em Field (mesmo magnitude 0)"
+        type: CODE
+        gate: G26
+        priority: P0
+        spec_ref: "Cap1/B4 - Invariantes (INV_REP)"
+        status: pending
+
+      - id: W2.15
+        description: "Validar que hypotheses[] nunca vazio quando basis=proxy"
+        type: CODE
+        gate: G26
+        priority: P0
+        spec_ref: "Cap1/B4 - Invariantes (INV_HYPOTHESES)"
+        status: pending
+
+      - id: W2.16
+        description: "Criar tests/cvi/test_extractor.py (unit)"
+        type: TEST
+        gate: G26
+        priority: P0
+        spec_ref: "Cap8/B3 - FE Testes"
+        status: pending
+
+      - id: W2.17
+        description: "Criar tests/cvi/test_profiler.py (unit)"
+        type: TEST
+        gate: G26
+        priority: P0
+        spec_ref: "Cap8/B3 - FE Testes"
+        status: pending
+
+      - id: W2.18
+        description: "Criar tests/cvi/test_assembler.py (unit)"
+        type: TEST
+        gate: G26
+        priority: P0
+        spec_ref: "Cap8/B3 - FE Testes"
+        status: pending
+
+      - id: W2.19
+        description: "Criar tests/cvi/test_analyzer.py (unit, include hypotheses)"
+        type: TEST
+        gate: G26
+        priority: P0
+        spec_ref: "Cap8/B3 - FE Testes"
+        status: pending
+
+      - id: W2.20
+        description: "Criar tests/cvi/test_pipeline_integration.py (fluxo completo)"
+        type: TEST
+        gate: G26
+        priority: P0
+        spec_ref: "Cap8/B3 - FE Testes"
+        status: pending
+
+      - id: W2.21
+        description: "Implementar CVITriggerManager (batch vs on-demand, queue management)"
+        type: CODE
+        gate: G26
+        priority: P0
+        spec_ref: "Gap Analysis - CVI Triggers"
+        status: pending
+
+      - id: W2.22
+        description: "Definir e implementar criteria A_pot_hi (high influence actors classification)"
+        type: CODE
+        gate: G26
+        priority: P0
+        spec_ref: "Gap Analysis - Metric Definitions"
+        status: pending
+
+      - id: W2.23
+        description: "Implementar freshness detection (stale threshold = 24h)"
+        type: CODE
+        gate: G27
+        priority: P0
+        spec_ref: "Gap Analysis - State Machine"
+        status: pending
+
+      - id: W2.24
+        description: "Implementar proxy signal drift detection"
+        type: CODE
+        gate: G26
+        priority: P1
+        spec_ref: "Gap Analysis - Signal Quality"
+        status: pending
+
+      - id: W2.25
+        description: "Criar test data fixtures (0% coverage, 100% coverage, NaN scenarios)"
+        type: TEST
+        gate: G26
+        priority: P0
+        spec_ref: "Gap Analysis - Edge Cases"
+        status: pending
+
+  # ============================================================
+  # W3 — CVI Services & APIs (22 tasks)
+  # ============================================================
+  - id: W3
+    name: "CVI Services & APIs"
+    task_count: 22
+    tasks:
+      - id: W3.01
+        description: "Criar app/cvi/services/__init__.py com exports"
+        type: CODE
+        gate: G26
+        priority: P1
+        spec_ref: "Cap3/B2 - Filemap"
+        status: pending
+
+      - id: W3.02
+        description: "Implementar CVIQueryService (get_snapshot: read-only)"
+        type: CODE
+        gate: G26
+        priority: P0
+        spec_ref: "Cap3/B1 - Arquitetura"
+        status: pending
+
+      - id: W3.03
+        description: "Implementar CVIQueryService (get_snapshot_history)"
+        type: CODE
+        gate: G26
+        priority: P0
+        spec_ref: "Cap3/B1 - Arquitetura"
+        status: pending
+
+      - id: W3.04
+        description: "Implementar CVIQueryService (get_top_actors)"
+        type: CODE
+        gate: G26
+        priority: P0
+        spec_ref: "Cap3/B1 - Arquitetura"
+        status: pending
+
+      - id: W3.05
+        description: "Implementar CVIQueryService (get_actor_profile)"
+        type: CODE
+        gate: G26
+        priority: P0
+        spec_ref: "Cap3/B1 - Arquitetura"
+        status: pending
+
+      - id: W3.06
+        description: "Implementar CVIQueryService (get_provenance)"
+        type: CODE
+        gate: G26
+        priority: P0
+        spec_ref: "Cap1/B4 - Invariantes (INV_PROVENANCE)"
+        status: pending
+
+      - id: W3.07
+        description: "Implementar CVIAdminService (propose_param_change)"
+        type: CODE
+        gate: G26
+        priority: P0
+        spec_ref: "Cap5/B3 - J2 Parametrizacao"
+        status: pending
+
+      - id: W3.08
+        description: "Implementar CVIAdminService (approve_param_change com 2-person rule)"
+        type: CODE
+        gate: G26
+        priority: P0
+        spec_ref: "Cap5/B3 - J2 Parametrizacao (proponente != aprovador)"
+        status: pending
+
+      - id: W3.09
+        description: "Implementar CVIAdminService (reject_param_change)"
+        type: CODE
+        gate: G26
+        priority: P0
+        spec_ref: "Cap5/B3 - J2 Parametrizacao"
+        status: pending
+
+      - id: W3.10
+        description: "Implementar CVIAdminService (add_manual_signal)"
+        type: CODE
+        gate: G26
+        priority: P0
+        spec_ref: "Cap3/B1 - Arquitetura"
+        status: pending
+
+      - id: W3.11
+        description: "Implementar CVIAdminService (trigger_recompute)"
+        type: CODE
+        gate: G26
+        priority: P1
+        spec_ref: "Cap3/B1 - Arquitetura"
+        status: pending
+
+      - id: W3.12
+        description: "Implementar CVIMetricsEmitter (emit_cov_atores)"
+        type: CODE
+        gate: G26
+        priority: P0
+        spec_ref: "Cap2/B3 - Metricas Anexo D"
+        status: pending
+
+      - id: W3.13
+        description: "Implementar CVIMetricsEmitter (emit_cov_alta_infl)"
+        type: CODE
+        gate: G26
+        priority: P0
+        spec_ref: "Cap2/B3 - Metricas Anexo D"
+        status: pending
+
+      - id: W3.14
+        description: "Implementar CVIMetricsEmitter (emit_pct_atualizado)"
+        type: CODE
+        gate: G26
+        priority: P0
+        spec_ref: "Cap2/B3 - Metricas Anexo D"
+        status: pending
+
+      - id: W3.15
+        description: "Implementar CVIMetricsEmitter (emit_cvi_inexplicable_rate)"
+        type: CODE
+        gate: G26
+        priority: P0
+        spec_ref: "Cap2/B3 - Metricas Anexo D"
+        status: pending
+
+      - id: W3.16
+        description: "Criar app/api/cvi_routes.py com rotas CVIQuery"
+        type: CODE
+        gate: G25
+        priority: P0
+        spec_ref: "Cap3/B3 - Contratos/APIs"
+        status: pending
+
+      - id: W3.17
+        description: "Criar rotas CVIAdmin (/api/cvi/admin/*)"
+        type: CODE
+        gate: G25
+        priority: P0
+        spec_ref: "Cap3/B3 - Contratos/APIs"
+        status: pending
+
+      - id: W3.18
+        description: "Aplicar RBAC nas rotas CVI (allowlist: operator, auditor, admin)"
+        type: CODE
+        gate: G28
+        priority: P0
+        spec_ref: "Cap1/B4 - Invariantes (INV_RBAC)"
+        status: pending
+
+      - id: W3.19
+        description: "Criar tests/cvi/test_query_service.py"
+        type: TEST
+        gate: G26
+        priority: P0
+        spec_ref: "Cap8/B3 - FE Testes"
+        status: pending
+
+      - id: W3.20
+        description: "Criar tests/cvi/test_admin_service.py (include 2-person rule)"
+        type: TEST
+        gate: G26
+        priority: P0
+        spec_ref: "Cap8/B3 - FE Testes"
+        status: pending
+
+      - id: W3.21
+        description: "Criar tests/api/test_cvi_routes.py (contract tests happy path)"
+        type: TEST
+        gate: G25
+        priority: P0
+        spec_ref: "Cap2/B2 - Gates (G25)"
+        status: pending
+
+      - id: W3.22
+        description: "Criar tests/api/test_cvi_routes_errors.py (400, 403, 404)"
+        type: TEST
+        gate: G25
+        priority: P0
+        spec_ref: "Cap2/B2 - Gates (G25)"
+        status: pending
+
+  # ============================================================
+  # W4 — Governance & Anti-captura (30 tasks) [+6 gap coverage]
+  # ============================================================
+  - id: W4
+    name: "Governance & Anti-captura"
+    task_count: 30
+    tasks:
+      - id: W4.01
+        description: "Criar app/governance/services/__init__.py"
+        type: CODE
+        gate: G28
+        priority: P1
+        spec_ref: "Cap3/B2 - Filemap"
+        status: pending
+
+      - id: W4.02
+        description: "Implementar AuditService (append_event: append-only)"
+        type: CODE
+        gate: G28
+        priority: P0
+        spec_ref: "Cap1/B4 - Invariantes (INV_AUDIT)"
+        status: pending
+
+      - id: W4.03
+        description: "Implementar AuditService (get_trail, get_by_entity)"
+        type: CODE
+        gate: G28
+        priority: P0
+        spec_ref: "Cap3/B1 - Arquitetura"
+        status: pending
+
+      - id: W4.04
+        description: "Implementar RBACService (check_permission: fail-closed)"
+        type: CODE
+        gate: G28
+        priority: P0
+        spec_ref: "Cap1/B4 - Invariantes (INV_RBAC)"
+        status: pending
+
+      - id: W4.05
+        description: "Implementar RBACService (allowlist por rota)"
+        type: CODE
+        gate: G28
+        priority: P0
+        spec_ref: "Cap1/B4 - Invariantes (INV_RBAC)"
+        status: pending
+
+      - id: W4.06
+        description: "Implementar RoleValidator (validate_compatibility P5-5)"
+        type: CODE
+        gate: G28
+        priority: P0
+        spec_ref: "Cap1/B4 - Invariantes (INV_ANTI_CAPTURA)"
+        status: pending
+
+      - id: W4.07
+        description: "Implementar RoleValidator (block_incompatible_roles)"
+        type: CODE
+        gate: G28
+        priority: P0
+        spec_ref: "Cap1/B4 - Invariantes (INV_ANTI_CAPTURA)"
+        status: pending
+
+      - id: W4.08
+        description: "Definir matriz de incompatibilidades P5-5 (proposer != approver, auditor != admin)"
+        type: CODE
+        gate: G28
+        priority: P0
+        spec_ref: "Cap6/B1 - Referencias (P5-5)"
+        status: pending
+
+      - id: W4.09
+        description: "Implementar P5MetricsCalculator (calculate_hhi_norm)"
+        type: CODE
+        gate: G28
+        priority: P0
+        spec_ref: "Cap6/B1 - Referencias (P5-7)"
+        status: pending
+
+      - id: W4.10
+        description: "Implementar P5MetricsCalculator (calculate_capture_suspect_index)"
+        type: CODE
+        gate: G28
+        priority: P0
+        spec_ref: "Cap6/B1 - Referencias (P5-7)"
+        status: pending
+
+      - id: W4.11
+        description: "Implementar threshold alert >= 0.70 para capture_suspect"
+        type: CODE
+        gate: G28
+        priority: P0
+        spec_ref: "Cap6/B1 - Referencias (P5-7)"
+        status: pending
+
+      - id: W4.12
+        description: "Implementar BundleService (generate_bundle: decisao -> auditavel)"
+        type: CODE
+        gate: G28
+        priority: P0
+        spec_ref: "Cap5/B4 - J3 Auditoria"
+        status: pending
+
+      - id: W4.13
+        description: "Implementar BundleService (export_bundle: JSON + PDF)"
+        type: CODE
+        gate: G28
+        priority: P0
+        spec_ref: "Cap5/B4 - J3 Auditoria"
+        status: pending
+
+      - id: W4.14
+        description: "Criar app/api/governance_routes.py"
+        type: CODE
+        gate: G25
+        priority: P0
+        spec_ref: "Cap3/B3 - Contratos/APIs"
+        status: pending
+
+      - id: W4.15
+        description: "Criar rota GET /api/governance/audit-trail"
+        type: CODE
+        gate: G25
+        priority: P0
+        spec_ref: "Cap3/B3 - Contratos/APIs"
+        status: pending
+
+      - id: W4.16
+        description: "Criar rota GET /api/governance/bundles/{decision_id}"
+        type: CODE
+        gate: G25
+        priority: P0
+        spec_ref: "Cap3/B3 - Contratos/APIs"
+        status: pending
+
+      - id: W4.17
+        description: "Criar rota GET /api/governance/metrics/p5"
+        type: CODE
+        gate: G25
+        priority: P0
+        spec_ref: "Cap3/B3 - Contratos/APIs"
+        status: pending
+
+      - id: W4.18
+        description: "Criar rota POST /api/governance/roles (com audit_event)"
+        type: CODE
+        gate: G25
+        priority: P0
+        spec_ref: "Cap3/B3 - Contratos/APIs"
+        status: pending
+
+      - id: W4.19
+        description: "Aplicar RBAC nas rotas governance (allowlist)"
+        type: CODE
+        gate: G28
+        priority: P0
+        spec_ref: "Cap1/B4 - Invariantes (INV_RBAC)"
+        status: pending
+
+      - id: W4.20
+        description: "Criar tests/governance/test_audit_service.py"
+        type: TEST
+        gate: G28
+        priority: P0
+        spec_ref: "Cap8/B3 - FE Testes"
+        status: pending
+
+      - id: W4.21
+        description: "Criar tests/governance/test_rbac_service.py (include 403 negativo)"
+        type: TEST
+        gate: G28
+        priority: P0
+        spec_ref: "Cap2/B2 - Gates (G28)"
+        status: pending
+
+      - id: W4.22
+        description: "Criar tests/governance/test_role_validator.py (incompatibilidades)"
+        type: TEST
+        gate: G28
+        priority: P0
+        spec_ref: "Cap8/B3 - FE Testes"
+        status: pending
+
+      - id: W4.23
+        description: "Criar tests/governance/test_p5_metrics.py"
+        type: TEST
+        gate: G28
+        priority: P0
+        spec_ref: "Cap8/B3 - FE Testes"
+        status: pending
+
+      - id: W4.24
+        description: "Criar tests/api/test_governance_routes.py (contract tests)"
+        type: TEST
+        gate: G25
+        priority: P0
+        spec_ref: "Cap2/B2 - Gates (G25)"
+        status: pending
+
+      - id: W4.25
+        description: "Implementar ParamProposal TTL (auto-reject apos N dias sem aprovacao)"
+        type: CODE
+        gate: G28
+        priority: P0
+        spec_ref: "Gap Analysis - 2-Person Rule"
+        status: pending
+
+      - id: W4.26
+        description: "Implementar conflicting proposals detection (rejeitar proposta duplicada)"
+        type: CODE
+        gate: G28
+        priority: P0
+        spec_ref: "Gap Analysis - 2-Person Rule"
+        status: pending
+
+      - id: W4.27
+        description: "Implementar threshold calibration service (adjust P5 thresholds)"
+        type: CODE
+        gate: G28
+        priority: P1
+        spec_ref: "Gap Analysis - Threshold Config"
+        status: pending
+
+      - id: W4.28
+        description: "Implementar audit log retention policy (cleanup + immutability guarantees)"
+        type: CODE
+        gate: G28
+        priority: P1
+        spec_ref: "Gap Analysis - Audit Trail"
+        status: pending
+
+      - id: W4.29
+        description: "Criar test 2-person rule timeout (proposal expires correctly)"
+        type: TEST
+        gate: G28
+        priority: P0
+        spec_ref: "Gap Analysis - 2-Person Rule"
+        status: pending
+
+      - id: W4.30
+        description: "Criar test single-admin fallback (quando so existe 1 admin)"
+        type: TEST
+        gate: G28
+        priority: P0
+        spec_ref: "Gap Analysis - 2-Person Rule"
+        status: pending
+
+  # ============================================================
+  # W5 — Integracao Explicabilidade (16 tasks)
+  # ============================================================
+  - id: W5
+    name: "Integracao Explicabilidade"
+    task_count: 16
+    tasks:
+      - id: W5.01
+        description: "Modificar ExplainService para incluir cvi_snapshot_id na resposta"
+        type: CODE
+        gate: G27
+        priority: P0
+        spec_ref: "Cap3/B1 - Arquitetura"
+        status: pending
+
+      - id: W5.02
+        description: "Implementar link decisao -> CVI em ExplainService"
+        type: CODE
+        gate: G27
+        priority: P0
+        spec_ref: "Cap5/B2 - J1 Decisao->CVI"
+        status: pending
+
+      - id: W5.03
+        description: "Criar estado explicito 'no_data' quando CVI indisponivel"
+        type: CODE
+        gate: G27
+        priority: P0
+        spec_ref: "Cap9/B3 - Microcopy"
+        status: pending
+
+      - id: W5.04
+        description: "Criar estado explicito 'stale' quando computed_at > 24h"
+        type: CODE
+        gate: G27
+        priority: P0
+        spec_ref: "Cap9/B3 - Microcopy"
+        status: pending
+
+      - id: W5.05
+        description: "Criar estado explicito 'hypothesis' quando basis=proxy"
+        type: CODE
+        gate: G27
+        priority: P0
+        spec_ref: "Cap1/B4 - Invariantes (INV_ANTI_BOTECO)"
+        status: pending
+
+      - id: W5.06
+        description: "Implementar drill-down levels >= 3 (decisao->step->evidencia->CVI->actor)"
+        type: CODE
+        gate: G27
+        priority: P0
+        spec_ref: "Cap2/B2 - Gates (G27)"
+        status: pending
+
+      - id: W5.07
+        description: "Garantir provenance chain completo em explain response"
+        type: CODE
+        gate: G27
+        priority: P0
+        spec_ref: "Cap1/B4 - Invariantes (INV_PROVENANCE)"
+        status: pending
+
+      - id: W5.08
+        description: "Implementar caching para explain com CVI (invalidacao por computed_at)"
+        type: CODE
+        gate: G27
+        priority: P1
+        spec_ref: "Cap8/B1 - FE Performance"
+        status: pending
+
+      - id: W5.09
+        description: "Garantir explain_p95_ms < 900ms"
+        type: PERF
+        gate: G27
+        priority: P0
+        spec_ref: "Cap2/B2 - Gates (G27)"
+        status: pending
+
+      - id: W5.10
+        description: "Criar tests/explain/test_explain_cvi_integration.py"
+        type: TEST
+        gate: G27
+        priority: P0
+        spec_ref: "Cap8/B3 - FE Testes"
+        status: pending
+
+      - id: W5.11
+        description: "Testar estado no_data retornado corretamente"
+        type: TEST
+        gate: G27
+        priority: P0
+        spec_ref: "Cap8/B3 - FE Testes"
+        status: pending
+
+      - id: W5.12
+        description: "Testar estado stale retornado corretamente"
+        type: TEST
+        gate: G27
+        priority: P0
+        spec_ref: "Cap8/B3 - FE Testes"
+        status: pending
+
+      - id: W5.13
+        description: "Testar estado hypothesis retornado corretamente"
+        type: TEST
+        gate: G27
+        priority: P0
+        spec_ref: "Cap8/B3 - FE Testes"
+        status: pending
+
+      - id: W5.14
+        description: "Testar drill_levels >= 3"
+        type: TEST
+        gate: G27
+        priority: P0
+        spec_ref: "Cap8/B3 - FE Testes"
+        status: pending
+
+      - id: W5.15
+        description: "Testar p95 latency < 900ms"
+        type: TEST
+        gate: G27
+        priority: P0
+        spec_ref: "Cap8/B3 - FE Testes"
+        status: pending
+
+      - id: W5.16
+        description: "Atualizar OpenAPI spec com novos campos explain"
+        type: CODE
+        gate: G25
+        priority: P0
+        spec_ref: "Cap2/B2 - Gates (G25)"
+        status: pending
+
+  # ============================================================
+  # W6 — Frontend CVI (20 tasks)
+  # ============================================================
+  - id: W6
+    name: "Frontend CVI"
+    task_count: 20
+    tasks:
+      - id: W6.01
+        description: "Criar frontend/inspectah-ui/src/features/cvi/types.ts"
+        type: CODE
+        gate: G27
+        priority: P0
+        spec_ref: "Cap8/B2 - FE Componentes"
+        status: pending
+
+      - id: W6.02
+        description: "Criar frontend/inspectah-ui/src/features/cvi/api.ts (fetch functions)"
+        type: CODE
+        gate: G27
+        priority: P0
+        spec_ref: "Cap8/B2 - FE Componentes"
+        status: pending
+
+      - id: W6.03
+        description: "Implementar hook useCVISnapshot (fetch + cache + invalidation)"
+        type: CODE
+        gate: G27
+        priority: P0
+        spec_ref: "Cap8/B1 - FE Performance"
+        status: pending
+
+      - id: W6.04
+        description: "Implementar hook useCVIActors (top actors)"
+        type: CODE
+        gate: G27
+        priority: P0
+        spec_ref: "Cap8/B2 - FE Componentes"
+        status: pending
+
+      - id: W6.05
+        description: "Implementar CVIOverlayPanel.tsx (container principal)"
+        type: CODE
+        gate: G27
+        priority: P0
+        spec_ref: "Cap8/B2 - FE Componentes"
+        status: pending
+
+      - id: W6.06
+        description: "Implementar CVISnapshotHeader.tsx (versao, computed_at, coverage badge)"
+        type: CODE
+        gate: G27
+        priority: P0
+        spec_ref: "Cap8/B2 - FE Componentes"
+        status: pending
+
+      - id: W6.07
+        description: "Implementar CVIActorList.tsx (ordenado por intensidade)"
+        type: CODE
+        gate: G27
+        priority: P0
+        spec_ref: "Cap8/B2 - FE Componentes"
+        status: pending
+
+      - id: W6.08
+        description: "Implementar CVIActorCard.tsx (vetor, evidencias, warnings)"
+        type: CODE
+        gate: G27
+        priority: P0
+        spec_ref: "Cap8/B2 - FE Componentes"
+        status: pending
+
+      - id: W6.09
+        description: "Implementar CVIProvenanceDrawer.tsx (drill-down completo)"
+        type: CODE
+        gate: G27
+        priority: P0
+        spec_ref: "Cap8/B2 - FE Componentes"
+        status: pending
+
+      - id: W6.10
+        description: "Implementar CVIFilterBar.tsx (por classe, por threshold)"
+        type: CODE
+        gate: G27
+        priority: P0
+        spec_ref: "Cap8/B2 - FE Componentes"
+        status: pending
+
+      - id: W6.11
+        description: "Implementar CVICoverageBadge.tsx (cov_alta_infl visual)"
+        type: CODE
+        gate: G27
+        priority: P0
+        spec_ref: "Cap8/B2 - FE Componentes"
+        status: pending
+
+      - id: W6.12
+        description: "Implementar CVIHypothesesDisclaimer.tsx (banner para proxy)"
+        type: CODE
+        gate: G27
+        priority: P0
+        spec_ref: "Cap1/B4 - Invariantes (INV_ANTI_BOTECO)"
+        status: pending
+
+      - id: W6.13
+        description: "Implementar state machine CVIOverlay (idle, loading, ready, no_data, unauthorized, error, stale)"
+        type: CODE
+        gate: G27
+        priority: P0
+        spec_ref: "Cap8/B2 - FE Estados"
+        status: pending
+
+      - id: W6.14
+        description: "Implementar skeleton/loading states"
+        type: CODE
+        gate: G27
+        priority: P1
+        spec_ref: "Cap9/B3 - Microcopy"
+        status: pending
+
+      - id: W6.15
+        description: "Implementar error boundaries para CVI components"
+        type: CODE
+        gate: G27
+        priority: P1
+        spec_ref: "Cap8/B4 - FE Falhas"
+        status: pending
+
+      - id: W6.16
+        description: "Integrar CVIOverlayPanel no ExplainPanel existente"
+        type: CODE
+        gate: G27
+        priority: P0
+        spec_ref: "Cap5/B2 - J1 Decisao->CVI"
+        status: pending
+
+      - id: W6.17
+        description: "Criar tests FE para CVIOverlayPanel (unit)"
+        type: TEST
+        gate: G27
+        priority: P0
+        spec_ref: "Cap8/B3 - FE Testes"
+        status: pending
+
+      - id: W6.18
+        description: "Criar tests FE para CVIActorCard (unit)"
+        type: TEST
+        gate: G27
+        priority: P0
+        spec_ref: "Cap8/B3 - FE Testes"
+        status: pending
+
+      - id: W6.19
+        description: "Criar tests FE para state machine (transitions)"
+        type: TEST
+        gate: G27
+        priority: P0
+        spec_ref: "Cap8/B3 - FE Testes"
+        status: pending
+
+      - id: W6.20
+        description: "Criar tests FE para hooks (useCVISnapshot, useCVIActors)"
+        type: TEST
+        gate: G27
+        priority: P0
+        spec_ref: "Cap8/B3 - FE Testes"
+        status: pending
+
+  # ============================================================
+  # W7 — Frontend Governance (12 tasks)
+  # ============================================================
+  - id: W7
+    name: "Frontend Governance"
+    task_count: 12
+    tasks:
+      - id: W7.01
+        description: "Criar frontend/inspectah-ui/src/features/governance/types.ts"
+        type: CODE
+        gate: G28
+        priority: P0
+        spec_ref: "Cap8/B2 - FE Componentes"
+        status: pending
+
+      - id: W7.02
+        description: "Criar frontend/inspectah-ui/src/features/governance/api.ts"
+        type: CODE
+        gate: G28
+        priority: P0
+        spec_ref: "Cap8/B2 - FE Componentes"
+        status: pending
+
+      - id: W7.03
+        description: "Implementar AuditTrailList.tsx"
+        type: CODE
+        gate: G28
+        priority: P0
+        spec_ref: "Cap8/B2 - FE Componentes"
+        status: pending
+
+      - id: W7.04
+        description: "Implementar AuditEventCard.tsx (diff viewer)"
+        type: CODE
+        gate: G28
+        priority: P0
+        spec_ref: "Cap8/B2 - FE Componentes"
+        status: pending
+
+      - id: W7.05
+        description: "Implementar ParamChangeProposal.tsx (form com justificativa)"
+        type: CODE
+        gate: G28
+        priority: P0
+        spec_ref: "Cap5/B3 - J2 Parametrizacao"
+        status: pending
+
+      - id: W7.06
+        description: "Implementar ParamApprovalView.tsx (review + approve/reject)"
+        type: CODE
+        gate: G28
+        priority: P0
+        spec_ref: "Cap5/B3 - J2 Parametrizacao"
+        status: pending
+
+      - id: W7.07
+        description: "Implementar P5MetricsDashboard.tsx (HHI, capture_suspect)"
+        type: CODE
+        gate: G28
+        priority: P0
+        spec_ref: "Cap6/B1 - Referencias (P5-7)"
+        status: pending
+
+      - id: W7.08
+        description: "Implementar CaptureAlertBanner.tsx (alerta >= 0.70)"
+        type: CODE
+        gate: G28
+        priority: P0
+        spec_ref: "Cap6/B1 - Referencias (P5-7)"
+        status: pending
+
+      - id: W7.09
+        description: "Implementar BundleExportButton.tsx (download JSON/PDF)"
+        type: CODE
+        gate: G28
+        priority: P0
+        spec_ref: "Cap5/B4 - J3 Auditoria"
+        status: pending
+
+      - id: W7.10
+        description: "Criar tests FE para AuditTrailList (unit)"
+        type: TEST
+        gate: G28
+        priority: P0
+        spec_ref: "Cap8/B3 - FE Testes"
+        status: pending
+
+      - id: W7.11
+        description: "Criar tests FE para ParamChangeProposal (unit)"
+        type: TEST
+        gate: G28
+        priority: P0
+        spec_ref: "Cap8/B3 - FE Testes"
+        status: pending
+
+      - id: W7.12
+        description: "Criar tests FE para P5MetricsDashboard (unit)"
+        type: TEST
+        gate: G28
+        priority: P0
+        spec_ref: "Cap8/B3 - FE Testes"
+        status: pending
+
+  # ============================================================
+  # W8 — UX & Microcopy (10 tasks)
+  # ============================================================
+  - id: W8
+    name: "UX & Microcopy"
+    task_count: 10
+    tasks:
+      - id: W8.01
+        description: "Definir microcopy estado 'loading' CVI: 'Carregando campo de incentivos...'"
+        type: UX
+        gate: G27
+        priority: P0
+        spec_ref: "Cap9/B3 - Microcopy"
+        status: pending
+
+      - id: W8.02
+        description: "Definir microcopy estado 'ready' CVI: 'Campo de incentivos atualizado em {computed_at}'"
+        type: UX
+        gate: G27
+        priority: P0
+        spec_ref: "Cap9/B3 - Microcopy"
+        status: pending
+
+      - id: W8.03
+        description: "Definir microcopy estado 'stale' CVI: 'Dados desatualizados. Ultima atualizacao: {computed_at}'"
+        type: UX
+        gate: G27
+        priority: P0
+        spec_ref: "Cap9/B3 - Microcopy"
+        status: pending
+
+      - id: W8.04
+        description: "Definir microcopy estado 'error' CVI: 'Erro ao carregar incentivos. Tente novamente.'"
+        type: UX
+        gate: G27
+        priority: P0
+        spec_ref: "Cap9/B3 - Microcopy"
+        status: pending
+
+      - id: W8.05
+        description: "Definir microcopy estado 'no_data' CVI: 'Dados insuficientes para calcular incentivos.'"
+        type: UX
+        gate: G27
+        priority: P0
+        spec_ref: "Cap9/B3 - Microcopy"
+        status: pending
+
+      - id: W8.06
+        description: "Implementar tooltips explicativos para metricas CVI"
+        type: UX
+        gate: G27
+        priority: P0
+        spec_ref: "Cap9/B3 - Microcopy"
+        status: pending
+
+      - id: W8.07
+        description: "Implementar disclaimers para hypotheses: 'Esta informacao e uma hipotese baseada em dados indiretos.'"
+        type: UX
+        gate: G27
+        priority: P0
+        spec_ref: "Cap1/B4 - Invariantes (INV_ANTI_BOTECO)"
+        status: pending
+
+      - id: W8.08
+        description: "Implementar CTAs acionaveis (Ver detalhes, Exportar bundle, Propor mudanca)"
+        type: UX
+        gate: G27
+        priority: P0
+        spec_ref: "Cap9/B3 - Microcopy"
+        status: pending
+
+      - id: W8.09
+        description: "Implementar feedback visual para mutacoes (toast success/error)"
+        type: UX
+        gate: G28
+        priority: P0
+        spec_ref: "Cap9/B3 - Microcopy"
+        status: pending
+
+      - id: W8.10
+        description: "Validar acessibilidade basica WCAG 2.1 AA (teclado, contraste, labels)"
+        type: UX
+        gate: G27
+        priority: P1
+        spec_ref: "Cap9/B4 - Heuristicas UX"
+        status: pending
+
+  # ============================================================
+  # W9 — E2E & Contract Tests (15 tasks) [+3 cenarios falha]
+  # ============================================================
+  - id: W9
+    name: "E2E & Contract Tests"
+    task_count: 15
+    tasks:
+      - id: W9.01
+        description: "Criar playwright/s41_j1_decision_cvi.pw.ts (J1 fluxo completo)"
+        type: TEST
+        gate: G27
+        priority: P0
+        spec_ref: "Cap5/B2 - J1 Decisao->CVI"
+        status: pending
+
+      - id: W9.02
+        description: "Criar playwright/s41_j2_param_change.pw.ts (J2 fluxo completo)"
+        type: TEST
+        gate: G28
+        priority: P0
+        spec_ref: "Cap5/B3 - J2 Parametrizacao"
+        status: pending
+
+      - id: W9.03
+        description: "Criar playwright/s41_j3_audit_bundle.pw.ts (J3 fluxo completo)"
+        type: TEST
+        gate: G28
+        priority: P0
+        spec_ref: "Cap5/B4 - J3 Auditoria"
+        status: pending
+
+      - id: W9.04
+        description: "Criar playwright/s41_j4_insufficient_data.pw.ts (J4 fluxo completo)"
+        type: TEST
+        gate: G27
+        priority: P0
+        spec_ref: "Cap9/B3 - Microcopy (J4)"
+        status: pending
+
+      - id: W9.05
+        description: "Criar contract tests G25 (OpenAPI validation)"
+        type: TEST
+        gate: G25
+        priority: P0
+        spec_ref: "Cap2/B2 - Gates (G25)"
+        status: pending
+
+      - id: W9.06
+        description: "Criar contract tests breaking changes detection"
+        type: TEST
+        gate: G25
+        priority: P0
+        spec_ref: "Cap2/B2 - Gates (G25)"
+        status: pending
+
+      - id: W9.07
+        description: "Criar tests regressao S40 (Truth-DB nao quebra)"
+        type: TEST
+        gate: G29
+        priority: P0
+        spec_ref: "Cap1/B2 - Dependencias"
+        status: pending
+
+      - id: W9.08
+        description: "Criar tests 403 negativo (rota sem permissao)"
+        type: TEST
+        gate: G28
+        priority: P0
+        spec_ref: "Cap2/B2 - Gates (G28)"
+        status: pending
+
+      - id: W9.09
+        description: "Criar tests 2-person rule (proponente != aprovador)"
+        type: TEST
+        gate: G28
+        priority: P0
+        spec_ref: "Cap5/B3 - J2 Parametrizacao"
+        status: pending
+
+      - id: W9.10
+        description: "Criar tests invariante INV_PROVENANCE (resposta sem provenance falha)"
+        type: TEST
+        gate: G26
+        priority: P0
+        spec_ref: "Cap1/B4 - Invariantes"
+        status: pending
+
+      - id: W9.11
+        description: "Criar tests invariante INV_ANTI_BOTECO (hypothesis sem badge falha)"
+        type: TEST
+        gate: G26
+        priority: P0
+        spec_ref: "Cap1/B4 - Invariantes"
+        status: pending
+
+      - id: W9.12
+        description: "Criar tests invariante INV_AUDIT (mutacao sem audit_event falha)"
+        type: TEST
+        gate: G28
+        priority: P0
+        spec_ref: "Cap1/B4 - Invariantes"
+        status: pending
+
+      - id: W9.13
+        description: "Criar test Falha 4: CVI version divergence (stale data handling)"
+        type: TEST
+        gate: G27
+        priority: P0
+        spec_ref: "Cap4/B3 - Cenarios Falha"
+        status: pending
+
+      - id: W9.14
+        description: "Criar test Falha 5: Capture suspect (p5_capture_suspect_index >= 0.70 triggers audit flow)"
+        type: TEST
+        gate: G28
+        priority: P0
+        spec_ref: "Cap4/B3 - Cenarios Falha"
+        status: pending
+
+      - id: W9.15
+        description: "Validar metrica audit_events_total incrementa corretamente"
+        type: TEST
+        gate: G28
+        priority: P0
+        spec_ref: "Cap2/B3 - Metricas processo"
+        status: pending
+
+  # ============================================================
+  # W10 — Observabilidade (14 tasks) [+6 gap coverage]
+  # ============================================================
+  - id: W10
+    name: "Observabilidade"
+    task_count: 14
+    tasks:
+      - id: W10.01
+        description: "Criar observability/dashboards/s41_cvi.json (Grafana)"
+        type: CONFIG
+        gate: G26
+        priority: P0
+        spec_ref: "Cap2/B3 - Metricas"
+        status: pending
+
+      - id: W10.02
+        description: "Criar observability/dashboards/s41_governance.json (Grafana)"
+        type: CONFIG
+        gate: G28
+        priority: P0
+        spec_ref: "Cap2/B3 - Metricas"
+        status: pending
+
+      - id: W10.03
+        description: "Criar observability/alerts/s41_alerts.yaml (cov_alta_infl, pct_atualizado)"
+        type: CONFIG
+        gate: G26
+        priority: P0
+        spec_ref: "Cap2/B3 - Metricas"
+        status: pending
+
+      - id: W10.04
+        description: "Criar alertas P5-7 (capture_suspect >= 0.70)"
+        type: CONFIG
+        gate: G28
+        priority: P0
+        spec_ref: "Cap6/B1 - Referencias (P5-7)"
+        status: pending
+
+      - id: W10.05
+        description: "Implementar logs estruturados para CVI pipeline"
+        type: CODE
+        gate: G26
+        priority: P1
+        spec_ref: "Cap8/B4 - FE Instrumentacao"
+        status: pending
+
+      - id: W10.06
+        description: "Implementar logs estruturados para governance mutations"
+        type: CODE
+        gate: G28
+        priority: P1
+        spec_ref: "Cap8/B4 - FE Instrumentacao"
+        status: pending
+
+      - id: W10.07
+        description: "Implementar tracing spans para CVI pipeline (extractor, profiler, assembler)"
+        type: CODE
+        gate: G26
+        priority: P1
+        spec_ref: "Cap8/B4 - FE Instrumentacao"
+        status: pending
+
+      - id: W10.08
+        description: "Implementar metricas explain_p95_ms no dashboard"
+        type: CODE
+        gate: G27
+        priority: P0
+        spec_ref: "Cap2/B2 - Gates (G27)"
+        status: pending
+
+      - id: W10.09
+        description: "Criar metric registry document (definicoes, environments, thresholds)"
+        type: CONFIG
+        gate: G26
+        priority: P0
+        spec_ref: "Gap Analysis - Observability"
+        status: pending
+
+      - id: W10.10
+        description: "Criar dashboard blueprint CVI (metric mappings, drill-down links)"
+        type: CONFIG
+        gate: G26
+        priority: P0
+        spec_ref: "Gap Analysis - Observability"
+        status: pending
+
+      - id: W10.11
+        description: "Criar dashboard blueprint Governance (alert logic, audit trail links)"
+        type: CONFIG
+        gate: G28
+        priority: P0
+        spec_ref: "Gap Analysis - Observability"
+        status: pending
+
+      - id: W10.12
+        description: "Implementar audit trail verification query (100% coverage detection)"
+        type: CODE
+        gate: G28
+        priority: P0
+        spec_ref: "Gap Analysis - Audit Trail"
+        status: pending
+
+      - id: W10.13
+        description: "Implementar explain metrics collection (user sessions, cache hit/miss)"
+        type: CODE
+        gate: G27
+        priority: P0
+        spec_ref: "Gap Analysis - Observability"
+        status: pending
+
+      - id: W10.14
+        description: "Criar performance test plan (load scenarios, environment specs)"
+        type: DESIGN
+        gate: G27
+        priority: P0
+        spec_ref: "Gap Analysis - Performance"
+        status: pending
+
+  # ============================================================
+  # W11 — Gates & QA (17 tasks) [+2 evidence samples]
+  # ============================================================
+  - id: W11
+    name: "Gates & QA"
+    task_count: 17
+    tasks:
+      - id: W11.01
+        description: "Criar bin/s41_g25_contracts.sh (OpenAPI + contract tests)"
+        type: CODE
+        gate: G25
+        priority: P0
+        spec_ref: "Cap4/B2 - Runbook"
+        status: pending
+
+      - id: W11.02
+        description: "Criar bin/s41_g26_cvi.sh (metricas + snapshots + coerencia)"
+        type: CODE
+        gate: G26
+        priority: P0
+        spec_ref: "Cap4/B2 - Runbook"
+        status: pending
+
+      - id: W11.03
+        description: "Criar bin/s41_g27_explainability.sh (p95 + drill + e2e)"
+        type: CODE
+        gate: G27
+        priority: P0
+        spec_ref: "Cap4/B2 - Runbook"
+        status: pending
+
+      - id: W11.04
+        description: "Criar bin/s41_g28_governance_audit.sh (RBAC + audit + P5)"
+        type: CODE
+        gate: G28
+        priority: P0
+        spec_ref: "Cap4/B2 - Runbook"
+        status: pending
+
+      - id: W11.05
+        description: "Criar bin/s41_g29_orr.sh (consolidacao ORR)"
+        type: CODE
+        gate: G29
+        priority: P0
+        spec_ref: "Cap4/B2 - Runbook"
+        status: pending
+
+      - id: W11.06
+        description: "Executar G25 e gerar out/scorecards/S41_G25_contracts.json"
+        type: GATE
+        gate: G25
+        priority: P0
+        spec_ref: "Cap4/B4 - Evidencias"
+        status: pending
+
+      - id: W11.07
+        description: "Executar G26 e gerar out/scorecards/S41_G26_cvi.json"
+        type: GATE
+        gate: G26
+        priority: P0
+        spec_ref: "Cap4/B4 - Evidencias"
+        status: pending
+
+      - id: W11.08
+        description: "Executar G27 e gerar out/scorecards/S41_G27_explainability.json"
+        type: GATE
+        gate: G27
+        priority: P0
+        spec_ref: "Cap4/B4 - Evidencias"
+        status: pending
+
+      - id: W11.09
+        description: "Executar G28 e gerar out/scorecards/S41_G28_governance_audit.json"
+        type: GATE
+        gate: G28
+        priority: P0
+        spec_ref: "Cap4/B4 - Evidencias"
+        status: pending
+
+      - id: W11.10
+        description: "Validar cov_alta_infl >= 0.60"
+        type: CHECK
+        gate: G26
+        priority: P0
+        spec_ref: "Cap2/B2 - Gates (G26)"
+        status: pending
+
+      - id: W11.11
+        description: "Validar pct_atualizado >= 0.70"
+        type: CHECK
+        gate: G26
+        priority: P0
+        spec_ref: "Cap2/B2 - Gates (G26)"
+        status: pending
+
+      - id: W11.12
+        description: "Validar cvi_inexplicable_rate <= 0.35"
+        type: CHECK
+        gate: G26
+        priority: P0
+        spec_ref: "Cap2/B2 - Gates (G26)"
+        status: pending
+
+      - id: W11.13
+        description: "Validar explain_p95_ms < 900ms"
+        type: CHECK
+        gate: G27
+        priority: P0
+        spec_ref: "Cap2/B2 - Gates (G27)"
+        status: pending
+
+      - id: W11.14
+        description: "Validar drill_levels >= 3"
+        type: CHECK
+        gate: G27
+        priority: P0
+        spec_ref: "Cap2/B2 - Gates (G27)"
+        status: pending
+
+      - id: W11.15
+        description: "Gerar coherence_review.json com 6+ decisoes revisadas"
+        type: EVIDENCE
+        gate: G26
+        priority: P0
+        spec_ref: "Cap2/B2 - Gates (G26)"
+        status: pending
+
+      - id: W11.16
+        description: "Gerar out/evidence/S41_G26_cvi/snapshots_sample.json (amostra CVISnapshots)"
+        type: EVIDENCE
+        gate: G26
+        priority: P0
+        spec_ref: "Cap4/B4 - Evidencias"
+        status: pending
+
+      - id: W11.17
+        description: "Gerar out/evidence/S41_G28_governance_audit/audit_trail_sample.json (amostra audit events)"
+        type: EVIDENCE
+        gate: G28
+        priority: P0
+        spec_ref: "Cap4/B4 - Evidencias"
+        status: pending
+
+  # ============================================================
+  # W12 — ORR & GO/NO-GO (16 tasks)
+  # ============================================================
+  - id: W12
+    name: "ORR & GO/NO-GO"
+    task_count: 16
+    tasks:
+      - id: W12.01
+        description: "Medir SLA P1 Latencia (<= 1min) e registrar evidencia"
+        type: SLA
+        gate: G29
+        priority: P0
+        spec_ref: "Cap2/B1 - SLAs S40-S43"
+        status: pending
+
+      - id: W12.02
+        description: "Medir SLA P2 Precisao (>= 92%) e registrar evidencia"
+        type: SLA
+        gate: G29
+        priority: P0
+        spec_ref: "Cap2/B1 - SLAs S40-S43"
+        status: pending
+
+      - id: W12.03
+        description: "Medir SLA P3 Decisao (<= 10s) e registrar evidencia"
+        type: SLA
+        gate: G29
+        priority: P0
+        spec_ref: "Cap2/B1 - SLAs S40-S43"
+        status: pending
+
+      - id: W12.04
+        description: "Medir SLA P4 API (<= 100ms) e registrar evidencia"
+        type: SLA
+        gate: G29
+        priority: P0
+        spec_ref: "Cap2/B1 - SLAs S40-S43"
+        status: pending
+
+      - id: W12.05
+        description: "Medir taxa Reversao (<= 4%) e registrar evidencia"
+        type: SLA
+        gate: G29
+        priority: P0
+        spec_ref: "Cap2/B1 - SLAs S40-S43"
+        status: pending
+
+      - id: W12.06
+        description: "Medir taxa Abuso (<= 1%) e registrar evidencia"
+        type: SLA
+        gate: G29
+        priority: P0
+        spec_ref: "Cap2/B1 - SLAs S40-S43"
+        status: pending
+
+      - id: W12.07
+        description: "Gerar out/evidence/S41_G29_orr/sla_report.json"
+        type: EVIDENCE
+        gate: G29
+        priority: P0
+        spec_ref: "Cap4/B4 - Evidencias"
+        status: pending
+
+      - id: W12.08
+        description: "Validar criterio GO/NO-GO 1: Checklist 100% completo"
+        type: CHECK
+        gate: G29
+        priority: P0
+        spec_ref: "Cap2/B4 - DoD"
+        status: pending
+
+      - id: W12.09
+        description: "Validar criterio GO/NO-GO 2: Quadros de Guias referenciados"
+        type: CHECK
+        gate: G29
+        priority: P0
+        spec_ref: "Cap2/B4 - DoD"
+        status: pending
+
+      - id: W12.10
+        description: "Validar criterio GO/NO-GO 3: Testes passando"
+        type: CHECK
+        gate: G29
+        priority: P0
+        spec_ref: "Cap2/B4 - DoD"
+        status: pending
+
+      - id: W12.11
+        description: "Validar criterio GO/NO-GO 4: SLAs dentro dos limites"
+        type: CHECK
+        gate: G29
+        priority: P0
+        spec_ref: "Cap2/B4 - DoD"
+        status: pending
+
+      - id: W12.12
+        description: "Validar criterio GO/NO-GO 5: Documentacao atualizada"
+        type: CHECK
+        gate: G29
+        priority: P0
+        spec_ref: "Cap2/B4 - DoD"
+        status: pending
+
+      - id: W12.13
+        description: "Validar criterio GO/NO-GO 6: E40.5 operando"
+        type: CHECK
+        gate: G29
+        priority: P0
+        spec_ref: "Cap2/B4 - DoD"
+        status: pending
+
+      - id: W12.14
+        description: "Validar criterio GO/NO-GO 7: Pre-condicoes eticas verificadas"
+        type: CHECK
+        gate: G29
+        priority: P0
+        spec_ref: "Cap2/B4 - DoD"
+        status: pending
+
+      - id: W12.15
+        description: "Gerar out/evidence/S41_G29_orr/go_no_go_7of7.json"
+        type: GATE
+        gate: G29
+        priority: P0
+        spec_ref: "Cap4/B4 - Evidencias"
+        status: pending
+
+      - id: W12.16
+        description: "Executar G29 e consolidar out/scorecards/S41_ORR.json + S41_ORR_summary.txt"
+        type: GATE
+        gate: G29
+        priority: P0
+        spec_ref: "Cap4/B4 - Evidencias"
+        status: pending
+
+# ============================================================
+# GATES DEFINITION
+# ============================================================
+gates:
+  - id: G25
+    name: "Contratos & Integracoes"
+    criteria:
+      - "OpenAPI/contratos completos e versionados"
+      - "Contract tests cobrindo happy + erro (400, 403, 404)"
+      - "Mudancas breaking bloqueadas"
+    evidence:
+      - "out/scorecards/S41_G25_contracts.json"
+      - "out/evidence/S41_G25_contracts/checks.json"
+      - "out/evidence/S41_G25_contracts/openapi_spec.yaml"
+
+  - id: G26
+    name: "CVI v1 (reputacao/incentivos)"
+    criteria:
+      - "Snapshots CVI com rep presente e provenance completo"
+      - "cov_alta_infl >= 0.60"
+      - "pct_atualizado >= 0.70"
+      - "cvi_inexplicable_rate <= 0.35"
+      - "6+ decisoes revisadas com coherence_label"
+    evidence:
+      - "out/scorecards/S41_G26_cvi.json"
+      - "out/evidence/S41_G26_cvi/checks.json"
+      - "out/evidence/S41_G26_cvi/snapshots_sample.json"
+      - "out/evidence/S41_G26_cvi/coherence_review.json"
+
+  - id: G27
+    name: "Explicabilidade v2 (CVI-aware)"
+    criteria:
+      - "UI navega decisao -> steps -> evidencia -> CVI -> atores"
+      - "Estados explicitos: no_data, hypothesis, stale, error"
+      - "explain_p95_ms < 900ms"
+      - "drill_levels >= 3"
+    evidence:
+      - "out/scorecards/S41_G27_explainability.json"
+      - "out/evidence/S41_G27_explainability/checks.json"
+      - "out/evidence/S41_G27_explainability/playwright_results/"
+
+  - id: G28
+    name: "Anti-captura & Auditoria"
+    criteria:
+      - "RBAC fail-closed testado (403 em rota protegida)"
+      - "Audit log registra mudancas de parametro"
+      - "2-person rule validado (proponente != aprovador)"
+      - "p5_decision_concentration_hhi_norm calculavel"
+      - "p5_capture_suspect_index >= 0.70 aciona alerta"
+      - "Bundle de auditoria por decisao extraivel"
+    evidence:
+      - "out/scorecards/S41_G28_governance_audit.json"
+      - "out/evidence/S41_G28_governance_audit/checks.json"
+      - "out/evidence/S41_G28_governance_audit/audit_trail_sample.json"
+      - "out/evidence/S41_G28_governance_audit/rbac_403_test.log"
+
+  - id: G29
+    name: "ORR / GO-NO-GO"
+    criteria:
+      - "G25-G28 PASS"
+      - "SLAs S40-S43 MEDIDOS e dentro dos limites"
+      - "GO/NO-GO 7/7 PASS"
+    evidence:
+      - "out/scorecards/S41_G29_orr.json"
+      - "out/scorecards/S41_ORR.json"
+      - "out/evidence/S41_G29_orr/sla_report.json"
+      - "out/evidence/S41_G29_orr/go_no_go_7of7.json"
+      - "out/evidence/S41_ORR_summary.txt"
+
+# ============================================================
+# SLAs S40-S43
+# ============================================================
+slas:
+  - metric: "P1 Latencia"
+    limit: "<= 1 min"
+    measurement: "ingest -> disponivel"
+  - metric: "P2 Precisao"
+    limit: ">= 92%"
+    measurement: "claims corretamente classificados"
+  - metric: "P3 Decisao"
+    limit: "<= 10 s"
+    measurement: "tempo ate decisao"
+  - metric: "P4 API"
+    limit: "<= 100 ms"
+    measurement: "latencia de endpoint"
+  - metric: "Reversao"
+    limit: "<= 4%"
+    measurement: "taxa de reversoes"
+  - metric: "Abuso"
+    limit: "<= 1%"
+    measurement: "taxa de abuso detectado"
+
+# ============================================================
+# GO/NO-GO 7/7
+# ============================================================
+go_no_go:
+  required: 7
+  criteria:
+    - id: 1
+      description: "Checklist 100% completo"
+    - id: 2
+      description: "Quadros de Guias referenciados em DecisionBlocks"
+    - id: 3
+      description: "Testes passando (regressao + novos)"
+    - id: 4
+      description: "SLAs dentro dos limites"
+    - id: 5
+      description: "Documentacao atualizada"
+    - id: 6
+      description: "E40.5 operando para transicoes criticas"
+    - id: 7
+      description: "Pre-condicoes eticas verificadas"
+
+# ============================================================
+# INVARIANTES
+# ============================================================
+invariants:
+  - id: INV_PROVENANCE_01
+    description: "Toda resposta CVI inclui cvi_version_id, model_version, computed_at, inputs_manifest_sha256"
+    consequence: "API sem provenance = P0"
+    tasks: ["W2.12", "W2.13", "W3.06", "W9.10"]
+
+  - id: INV_ANTI_BOTECO_01
+    description: "Incentivo sem lastro = hipotese, nunca fato"
+    consequence: "UI sem badge = P0"
+    tasks: ["W2.11", "W5.05", "W6.12", "W8.07", "W9.11"]
+
+  - id: INV_AUDIT_01
+    description: "Toda alteracao de parametro gera audit_event"
+    consequence: "Mutacao sem trilha = P0"
+    tasks: ["W4.02", "W4.03", "W9.12"]
+
+  - id: INV_ANTI_CAPTURA_01
+    description: "Papeis incompativeis bloqueados (P5-5)"
+    consequence: "Bypass = P0"
+    tasks: ["W4.06", "W4.07", "W4.08"]
+
+  - id: INV_RBAC_01
+    description: "Rota nova sem allowlist = bug P0"
+    consequence: "Deploy sem allowlist = BLOCK"
+    tasks: ["W3.18", "W4.04", "W4.05", "W4.19"]
+
+  - id: INV_2PERSON_01
+    description: "Proponente != Aprovador em mutacoes CVI"
+    consequence: "Mesmo usuario = P0"
+    tasks: ["W3.08", "W9.09"]
+
+  - id: INV_REP_01
+    description: "Campo rep sempre presente em CVISnapshot"
+    consequence: "Ausencia = P0"
+    tasks: ["W2.14"]
+
+  - id: INV_HYPOTHESES_01
+    description: "hypotheses[] nunca vazio quando basis=proxy"
+    consequence: "Array vazio com proxy = P0"
+    tasks: ["W2.15"]

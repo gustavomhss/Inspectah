@@ -4,7 +4,7 @@ import Button from '../../../shared/components/Button';
 import type { CopilotoFileInfo } from '../api/copilotoClient';
 
 interface Props {
-  onAttach: (file: globalThis.File) => Promise<void>;
+  onAttach: (file: globalThis.File) => Promise<CopilotoFileInfo | void>;
   attachedFiles: CopilotoFileInfo[];
   disabled?: boolean;
 }

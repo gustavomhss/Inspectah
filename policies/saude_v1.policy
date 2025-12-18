@@ -1,0 +1,23 @@
+# Policy: Saude v1
+# Domain: saude (health)
+# Description: Policy for health-related claims - stricter requirements
+
+POLICY saude_v1
+DOMAIN saude
+GATE G7
+
+# Health claims require stricter verification
+REQUIRE sources >= 3 independent
+REQUIRE evidence_strength >= 0.8
+REQUIRE no_contradiction strong
+REQUIRE temporal_consistency
+REQUIRE source_diversity >= 0.5
+
+# Health domain defaults to human review
+ON high_confidence THEN human_review
+ON low_confidence THEN escalate
+ON disputed THEN escalate
+ON risk_level = "high" THEN committee_quorum(5)
+ON no_evidence THEN auto_reject
+
+VERSION "1.0.0"

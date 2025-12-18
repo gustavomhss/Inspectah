@@ -1,0 +1,47 @@
+groups:
+  - name: sf4_obs
+    rules:
+      - alert: SF4Auth401Spike
+        expr: rate(auth_requests_total{code="401"}[5m]) > 5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Auth 401 spike"
+          description: "Excesso de 401 nas rotas protegidas."
+
+      - alert: SF4IngestErrorsRateHigh
+        expr: rate(ingest_requests_total{code=~"5.."}[5m]) / rate(ingest_requests_total[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Ingest 5xx >5%"
+          description: "Erro em ingest acima de 5% nos últimos 5m."
+
+      - alert: SF4IngestRequestsZero
+        expr: rate(ingest_requests_total[10m]) == 0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Ingest zerado"
+          description: "Nenhum request de ingest nos últimos 10 minutos."
+
+      - alert: SF4Explorer5xxRate
+        expr: rate(explorer_requests_total{code=~"5.."}[5m]) / rate(explorer_requests_total[5m]) > 0.02
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Explorer 5xx >2%"
+          description: "Erro no Explorer acima de 2% nos últimos 5m."
+
+      - alert: SF4DashboardFreshnessStale
+        expr: dashboard_freshness_seconds > 300
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Dashboard stale >300s"
+          description: "Painel sf4_obs_overview atrasado."

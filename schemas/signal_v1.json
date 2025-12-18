@@ -1,0 +1,153 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://inspectah.dev/schemas/signal_v1.json",
+  "title": "Signal v1",
+  "description": "Signal calculation and aggregation schema",
+  "type": "object",
+  "required": ["id", "signal_type", "value", "scope"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^sig_[a-zA-Z0-9_]+$",
+      "description": "Unique signal identifier"
+    },
+    "signal_type": {
+      "type": "string",
+      "enum": [
+        "lies_in_circulation",
+        "silence_radar",
+        "battleground_index",
+        "narrative_fragility",
+        "source_conflict",
+        "temporal_drift"
+      ],
+      "description": "Type of signal"
+    },
+    "value": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Normalized signal value (0-1)"
+    },
+    "scope": {
+      "type": "string",
+      "enum": ["global", "national", "regional", "topical", "entity"],
+      "description": "Scope of the signal calculation"
+    },
+    "scope_filter": {
+      "type": "string",
+      "description": "Filter value for the scope (e.g., country code, topic ID)"
+    },
+    "components": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/SignalComponent"
+      },
+      "description": "Components that make up this signal"
+    },
+    "trend": {
+      "$ref": "#/$defs/SignalTrend"
+    },
+    "thresholds": {
+      "$ref": "#/$defs/SignalThresholds"
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "calculated_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "window_start": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "window_end": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "sample_size": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    }
+  },
+  "$defs": {
+    "SignalComponent": {
+      "type": "object",
+      "required": ["name", "value", "weight"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Component name"
+        },
+        "value": {
+          "type": "number",
+          "description": "Component value"
+        },
+        "weight": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Weight in signal calculation"
+        },
+        "source_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of sources contributing"
+        }
+      }
+    },
+    "SignalTrend": {
+      "type": "object",
+      "properties": {
+        "direction": {
+          "type": "string",
+          "enum": ["up", "down", "stable"],
+          "description": "Trend direction"
+        },
+        "change_rate": {
+          "type": "number",
+          "description": "Rate of change per hour"
+        },
+        "acceleration": {
+          "type": "number",
+          "description": "Rate of change acceleration"
+        },
+        "period_hours": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Period over which trend is calculated"
+        }
+      }
+    },
+    "SignalThresholds": {
+      "type": "object",
+      "properties": {
+        "warning": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Warning threshold"
+        },
+        "critical": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Critical threshold"
+        },
+        "current_level": {
+          "type": "string",
+          "enum": ["normal", "warning", "critical"],
+          "description": "Current alert level"
+        }
+      }
+    }
+  }
+}

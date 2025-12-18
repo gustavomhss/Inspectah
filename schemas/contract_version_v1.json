@@ -1,0 +1,183 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://inspectah.dev/schemas/contract_version_v1.json",
+  "title": "Contract Version v1",
+  "description": "Schema for API contract versioning and compatibility tracking",
+  "type": "object",
+  "required": ["contract_name", "version", "status"],
+  "properties": {
+    "contract_name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "description": "Name of the contract"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(-[a-zA-Z0-9.]+)?(\\+[a-zA-Z0-9.]+)?$",
+      "description": "Semantic version string"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["draft", "active", "deprecated", "retired"],
+      "description": "Contract lifecycle status"
+    },
+    "schema_ref": {
+      "type": "string",
+      "format": "uri",
+      "description": "URI reference to the JSON schema"
+    },
+    "compatibility": {
+      "$ref": "#/$defs/CompatibilityInfo"
+    },
+    "changelog": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/ChangelogEntry"
+      },
+      "description": "History of changes to this contract"
+    },
+    "dependencies": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/ContractDependency"
+      },
+      "description": "Other contracts this depends on"
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "author": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "CompatibilityInfo": {
+      "type": "object",
+      "properties": {
+        "backward_compatible_with": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^\\d+\\.\\d+\\.\\d+$"
+          },
+          "description": "Versions this is backward compatible with"
+        },
+        "breaking_changes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/BreakingChange"
+          },
+          "description": "List of breaking changes from previous version"
+        },
+        "deprecation_date": {
+          "type": "string",
+          "format": "date",
+          "description": "Date when this version will be deprecated"
+        },
+        "sunset_date": {
+          "type": "string",
+          "format": "date",
+          "description": "Date when this version will be retired"
+        }
+      }
+    },
+    "BreakingChange": {
+      "type": "object",
+      "required": ["change_type", "description"],
+      "properties": {
+        "change_type": {
+          "type": "string",
+          "enum": [
+            "field_removed",
+            "field_type_changed",
+            "field_required",
+            "enum_value_removed",
+            "endpoint_removed",
+            "behavior_changed"
+          ],
+          "description": "Type of breaking change"
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the change"
+        },
+        "affected_field": {
+          "type": "string",
+          "description": "Field or endpoint affected"
+        },
+        "migration_guide": {
+          "type": "string",
+          "description": "How to migrate from previous version"
+        }
+      }
+    },
+    "ChangelogEntry": {
+      "type": "object",
+      "required": ["version", "date", "changes"],
+      "properties": {
+        "version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$"
+        },
+        "date": {
+          "type": "string",
+          "format": "date"
+        },
+        "changes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["added", "changed", "deprecated", "removed", "fixed", "security"]
+              },
+              "description": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "ContractDependency": {
+      "type": "object",
+      "required": ["contract_name", "version_range"],
+      "properties": {
+        "contract_name": {
+          "type": "string",
+          "description": "Name of dependent contract"
+        },
+        "version_range": {
+          "type": "string",
+          "description": "Semver range expression (e.g., ^1.0.0, >=2.0.0)"
+        },
+        "optional": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether the dependency is optional"
+        }
+      }
+    }
+  }
+}

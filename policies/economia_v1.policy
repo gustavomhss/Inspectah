@@ -1,0 +1,23 @@
+# Policy: Economia v1
+# Domain: economia (economy/finance)
+# Description: Policy for economic and financial claims
+
+POLICY economia_v1
+DOMAIN economia
+GATE G7
+
+# Economic claims require moderate verification
+REQUIRE sources >= 2 independent
+REQUIRE evidence_strength >= 0.7
+REQUIRE no_contradiction weak
+REQUIRE temporal_consistency
+
+# Economic decisions
+ON high_confidence THEN auto_approve
+ON medium_confidence THEN human_review
+ON low_confidence THEN human_review
+ON disputed THEN committee_quorum(3)
+ON risk_level = "high" THEN committee_quorum(3)
+ON no_evidence THEN defer
+
+VERSION "1.0.0"
