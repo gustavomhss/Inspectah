@@ -6,11 +6,19 @@ Tests for ops cockpit routes.
 
 import pytest
 from unittest.mock import MagicMock, patch
+from dataclasses import dataclass
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from app.api.ops_cockpit_routes import router
+
+
+@dataclass
+class MockComponent:
+    """Simple mock component for testing."""
+    id: str
+    name: str
 
 
 def _client() -> TestClient:
@@ -24,10 +32,7 @@ class TestListComponents:
 
     def test_list_components_success(self):
         """List components successfully."""
-        mock_comp = MagicMock()
-        mock_comp.id = "comp_1"
-        mock_comp.name = "Test Component"
-        mock_comp.configure_mock(**{"__dict__": {"id": "comp_1", "name": "Test Component"}})
+        mock_comp = MockComponent(id="comp_1", name="Test Component")
 
         with patch("app.api.ops_cockpit_routes.load_components_map", return_value=[mock_comp]):
             client = _client()
@@ -93,10 +98,7 @@ class TestOverview:
 
     def test_overview_success(self):
         """Get overview successfully."""
-        mock_comp = MagicMock()
-        mock_comp.id = "comp_1"
-        mock_comp.name = "Test"
-        mock_comp.configure_mock(**{"__dict__": {"id": "comp_1", "name": "Test"}})
+        mock_comp = MockComponent(id="comp_1", name="Test")
 
         with patch("app.api.ops_cockpit_routes.load_components_map", return_value=[mock_comp]):
             with patch("app.api.ops_cockpit_routes.incident_service") as mock_inc_service:
