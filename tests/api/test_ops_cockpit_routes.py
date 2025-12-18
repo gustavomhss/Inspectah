@@ -91,10 +91,9 @@ class TestOverview:
 
     def test_overview_success(self):
         """Get overview successfully."""
-        mock_comp = MagicMock()
-        mock_comp.id = "comp_1"
-        mock_comp.name = "Test"
-        mock_comp.configure_mock(**{"__dict__": {"id": "comp_1", "name": "Test"}})
+        # Use SimpleNamespace instead of MagicMock to avoid __dict__ issues
+        from types import SimpleNamespace
+        mock_comp = SimpleNamespace(id="comp_1", name="Test")
 
         with patch("app.api.ops_cockpit_routes.load_components_map", return_value=[mock_comp]):
             with patch("app.api.ops_cockpit_routes.incident_service") as mock_inc_service:
