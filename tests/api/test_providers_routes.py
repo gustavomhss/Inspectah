@@ -5,9 +5,19 @@ Covers all endpoints and error paths to achieve 95%+ coverage.
 Extends existing test_providers_console.py tests.
 """
 import pytest
+from datetime import datetime
 from pathlib import Path
 from dataclasses import asdict
 from fastapi.testclient import TestClient
+
+
+def _to_json_dict(obj) -> dict:
+    """Convert dataclass to JSON-serializable dict (datetime -> ISO string)."""
+    data = asdict(obj)
+    for key, value in data.items():
+        if isinstance(value, datetime):
+            data[key] = value.isoformat()
+    return data
 
 from app.api import providers_routes
 from app.providers.models import (
@@ -77,12 +87,12 @@ class TestListProvidersEndpoint:
         client, svc, _ = _build_client(tmp_path)
         _create_provider(svc, "provider-news")
 
-        # Filter by news kind
-        response = client.get("/api/providers", params={"kind": "news"})
+        # Filter by news kind (enum value is "news_provider")
+        response = client.get("/api/providers", params={"kind": "news_provider"})
         assert response.status_code == 200
         data = response.json()
         # Should include the created provider
-        news_providers = [p for p in data if p["kind"] == "news"]
+        news_providers = [p for p in data if p["kind"] == "news_provider"]
         assert len(news_providers) >= 1
 
     def test_list_providers_with_status_filter(self, tmp_path: Path):
@@ -112,7 +122,7 @@ class TestCreateProviderEndpoint:
             description="Created via API",
             status=ProviderStatus.ACTIVE,
         )
-        provider_data = asdict(provider_obj)
+        provider_data = _to_json_dict(provider_obj)
 
         response = client.post("/api/providers", json=provider_data)
         assert response.status_code == 201
@@ -188,7 +198,7 @@ class TestCreateProfileEndpoint:
             enabled=True,
             status=ProviderStatus.ACTIVE,
         )
-        profile_data = asdict(profile_obj)
+        profile_data = _to_json_dict(profile_obj)
 
         response = client.post("/api/providers/profiles", json=profile_data)
         assert response.status_code == 201
@@ -209,7 +219,7 @@ class TestUpdateProfileEndpoint:
         profile = _create_profile(svc, provider.id, "update-me")
 
         # Update the profile
-        updated_data = asdict(profile)
+        updated_data = _to_json_dict(profile)
         updated_data["name"] = "Updated Profile Name"
         updated_data["frequency_minutes"] = 180
 
@@ -240,7 +250,7 @@ class TestUpdateProfileEndpoint:
             enabled=True,
             status=ProviderStatus.ACTIVE,
         )
-        profile_data = asdict(profile_obj)
+        profile_data = _to_json_dict(profile_obj)
 
         response = client.put("/api/providers/profiles/nonexistent", json=profile_data)
         assert response.status_code == 404
@@ -291,7 +301,7 @@ class TestUpdateProviderEndpoint:
         provider = _create_provider(svc, "update-provider")
 
         # Update the provider
-        updated_data = asdict(provider)
+        updated_data = _to_json_dict(provider)
         updated_data["name"] = "Updated Provider Name"
         updated_data["description"] = "New description"
 
@@ -314,7 +324,7 @@ class TestUpdateProviderEndpoint:
             description="Does not exist",
             status=ProviderStatus.ACTIVE,
         )
-        provider_data = asdict(provider_obj)
+        provider_data = _to_json_dict(provider_obj)
 
         response = client.put("/api/providers/nonexistent", json=provider_data)
         assert response.status_code == 404
