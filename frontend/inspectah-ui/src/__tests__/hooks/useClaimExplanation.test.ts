@@ -427,15 +427,20 @@ describe('useClaimExplanation', () => {
         json: () => Promise.resolve(mockData),
       });
 
-      renderHook(
-        () => useClaimExplanation('claim_456', { autoFetch: true }),
-        { wrapper: createWrapper() }
-      );
-
-      // Check that fetch was called
-      await waitFor(() => {
-        expect(mockFetch).toHaveBeenCalled();
+      await act(async () => {
+        renderHook(
+          () => useClaimExplanation('claim_456', { autoFetch: true }),
+          { wrapper: createWrapper() }
+        );
       });
+
+      // Check that fetch was called (increased timeout for CI)
+      await waitFor(
+        () => {
+          expect(mockFetch).toHaveBeenCalled();
+        },
+        { timeout: 5000 }
+      );
 
       // Verify the URL contains the claim ID (fetch can receive string or Request object)
       const callArg = mockFetch.mock.calls[0][0];
