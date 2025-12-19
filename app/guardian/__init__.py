@@ -43,6 +43,22 @@ from app.guardian.human_review import (
     ReviewerInfo,
     get_review_queue,
 )
+from app.guardian.committee import (
+    CommitteeConfig,
+    CommitteeManager,
+    CommitteeSelector,
+    MemberPool,
+    RiskLevel,
+    create_manager,
+    create_selector,
+)
+from app.guardian.schemas import (
+    CommitteeDetails,
+    OrchestrateRequest,
+    OrchestrateResponse,
+    ThresholdConfigSchema,
+    VoteResponse,
+)
 
 __all__ = [
     # Roles
@@ -80,4 +96,18 @@ __all__ = [
     "ReviewSubmission",
     "ReviewerInfo",
     "get_review_queue",
+    # Committee
+    "CommitteeConfig",
+    "CommitteeManager",
+    "CommitteeSelector",
+    "MemberPool",
+    "RiskLevel",
+    "create_manager",
+    "create_selector",
+    # Schemas
+    "CommitteeDetails",
+    "OrchestrateRequest",
+    "OrchestrateResponse",
+    "ThresholdConfigSchema",
+    "VoteResponse",
 ]

@@ -60,6 +60,11 @@ FEATURE_FLAGS: Dict[str, bool] = {
     # Scrapers
     "scrapers_v2_enabled": False,  # Enable Scrapers v2
     "scrapers_proxy_rotation": False,  # Enable proxy rotation
+    # S41: Governança v1
+    "s41_guardian_orchestrator": False,  # Enable GuardianOrchestrator
+    "s41_contestation": False,  # Enable contestation module
+    "s41_trails": False,  # Enable DecisionTrails
+    "s41_cases_lifecycle": False,  # Enable cases lifecycle management
 }
 
 
